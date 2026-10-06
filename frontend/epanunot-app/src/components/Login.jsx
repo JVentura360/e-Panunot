@@ -40,7 +40,7 @@ export default function Login({ onLogin }) {
       <section className="login-hero">
         <div className="brand">e<b>Panunot</b></div>
         <div>
-          <h1>Walang Kanin Mayor?.</h1>
+          <h1>Walang Kanin Mayor?</h1>
           <p>'Gang Kaibigan lang Talaga Kayo Sir.</p>
         </div>
       </section>

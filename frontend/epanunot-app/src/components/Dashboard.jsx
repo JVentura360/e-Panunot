@@ -162,7 +162,7 @@ export default function Dashboard({ user, onLogout }) {
               <button className="btn" onClick={() => setModal('task')}>Assign task</button>
             </div>
           )}
-          {user.role === 'student' && <button className="btn" onClick={() => setModal('mine')}>Add personal task</button>}
+          {user.role === 'Student' && <button className="btn" onClick={() => setModal('mine')}>Add personal task</button>}
         </header>
 
         {user.role === 'admin' ? (
@@ -193,13 +193,13 @@ export default function Dashboard({ user, onLogout }) {
               {assigned.length === 0 ? <div className="empty">Nothing assigned yet.</div> : (
                 <div className="list">
                   {[...assigned].sort((a, b) => a.due - b.due).map((t) => (
-                    <TaskItem key={t.id} t={t} onToggle={user.role === 'student' ? toggle : null} />
+                    <TaskItem key={t.id} t={t} onToggle={user.role === 'Student' ? toggle : null} />
                   ))}
                 </div>
               )}
             </section>
 
-            {user.role === 'student' && (
+            {user.role === 'Student' && (
               <section className="section">
                 <h3>My personal tasks</h3>
                 {personal.length === 0 ? <div className="empty">No personal tasks. Add one to track your own work.</div> :
