@@ -1,12 +1,10 @@
+import { useState } from 'react';
+import Login from "./components/Login.jsx";
+import Dashboard from "./components/Dashboard.jsx";
 
-function App() {
-
-  return (
-    <>
-      
-    </>
-  )
-
+export default function App() {
+  const [user, setUser] = useState(null);
+  return user
+    ? <Dashboard user={user} onLogout={() => setUser(null)} />
+    : <Login onLogin={setUser} />;
 }
-
-export default App
