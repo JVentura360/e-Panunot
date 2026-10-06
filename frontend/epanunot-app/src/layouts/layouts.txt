@@ -1,0 +1,1 @@
+Page layout for each role (Admin, Mayor, and Student)
