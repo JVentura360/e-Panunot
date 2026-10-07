@@ -1,0 +1,35 @@
+.backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(23, 54, 47, 0.5);
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    z-index: 200;
+}
+
+.modal {
+    background: var(--paper);
+    padding: 24px;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 400px;
+    display: grid;
+    gap: 12px;
+}
+
+.modal input,
+.modal select {
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 2px solid var(--mist);
+    font: inherit;
+    background: #fff;
+    width: 100%;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
