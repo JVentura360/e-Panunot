@@ -220,4 +220,11 @@
   .actions .btn {
     flex: 1;
   }
+
+  .motivation {
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-top: 6px;
+  max-width: 60ch;
+  }
 }

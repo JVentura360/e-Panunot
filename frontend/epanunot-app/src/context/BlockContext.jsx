@@ -12,8 +12,8 @@ export function BlockProvider({ children }) {
     const [blocks, setBlocks] = useState([]);
 
     // A student applies as mayor (call this from the Apply as Mayor popup)
-    const addApplication = ({ name, email, block }) => {
-        setApps((prev) => [...prev, { id: Date.now(), name, email, block, status: 'pending' }]);
+    const addApplication = ({ name, email, block, motivation }) => {
+        setApps((prev) => [...prev, { id: Date.now(), name, email, block, motivation, status: 'pending' }]);
     };
 
     // Returns { ok: true } or { ok: false, message }

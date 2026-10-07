@@ -1,0 +1,77 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 54, 47, 0.5);
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  z-index: 200;
+}
+
+.modal {
+  background: var(--paper);
+  padding: 24px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 400px;
+  display: grid;
+  gap: 12px;
+}
+
+.modal input,
+.modal textarea {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--mist);
+  font: inherit;
+  background: #fff;
+  width: 100%;
+}
+
+.modal textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.hint {
+  color: #4d6a63;
+  font-size: 0.88rem;
+}
+
+.error {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fde3d6;
+  border-left: 4px solid var(--clay);
+  font-size: 0.88rem;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- Success state ---------- */
+.success {
+  text-align: center;
+}
+
+.success .hint {
+  margin-top: 6px;
+}
+
+.check {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--sage);
+  display: grid;
+  place-items: center;
+  margin: 0 auto 12px;
+}

@@ -18,6 +18,7 @@ export default function MayorApplications({ apps, onApprove, onReject }) {
             <div>
                 <div className={styles.name}>{app.name}</div>
                 <div className={styles.meta}>{app.email} · Applying for: {app.block}</div>
+                {app.motivation && <div className={styles.motivation}>“{app.motivation}”</div>}
             </div>
 
             {app.status === 'pending' ? (
