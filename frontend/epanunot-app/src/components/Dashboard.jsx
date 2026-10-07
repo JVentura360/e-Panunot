@@ -93,61 +93,7 @@ export default function Dashboard({ user, onLogout }) {
 
   return (
     <div className="app-layout">
-      {/* Sticky Compact Header */}
-      <header className="app-header">
-        <div className="header-container">
-          <div className="header-left">
-            <div className="brand">e<b>Panunot</b></div>
-            <nav className="desktop-nav">
-              <button className={`nav-tab ${activeTab === 'Dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('Dashboard')}>
-                Dashboard
-              </button>
-              <button className={`nav-tab ${activeTab === 'Calendar' ? 'active' : ''}`} onClick={() => setActiveTab('Calendar')}>
-                {user.role === 'admin' ? 'Applications' : 'Calendar'}
-              </button>
-            </nav>
-          </div>
-
-          <div className="header-right">
-            {/* Notification Bell */}
-            <button className="icon-btn" aria-label="Notifications">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-              <span className="notif-badge">3</span>
-            </button>
-
-            {/* Profile Dropdown */}
-            <div className="profile-wrapper">
-              <button className="profile-btn" onClick={() => setProfileOpen(!profileOpen)} aria-expanded={profileOpen}>
-                <div className="avatar">{user.name.charAt(0)}</div>
-                <div className="user-info-text">
-                  <span className="user-name">{user.name}</span>
-                  <span className="user-badge">{user.role}{user.block !== '-' ? ` · ${user.block}` : ''}</span>
-                </div>
-                <svg className={`chevron ${profileOpen ? 'open' : ''}`} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M6 9l6 6 6-6"/>
-                </svg>
-              </button>
-
-              {profileOpen && (
-                <div className="profile-dropdown">
-                  <div className="dropdown-header">
-                    <strong>{user.name}</strong>
-                    <span>{user.role}{user.block !== '-' ? ` · ${user.block}` : ''}</span>
-                  </div>
-                  <hr className="dropdown-divider" />
-                  <button className="dropdown-item danger" onClick={onLogout}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
-                    Sign out
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+      
 
       {/* Main Content Area */}
       <main className="main">
@@ -216,16 +162,7 @@ export default function Dashboard({ user, onLogout }) {
       </main>
 
       {/* Mobile Bottom Navigation Bar */}
-      <nav className="mobile-bottom-nav">
-        <button className={`mobile-nav-item ${activeTab === 'Dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('Dashboard')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-          <span>Dashboard</span>
-        </button>
-        <button className={`mobile-nav-item ${activeTab === 'Calendar' ? 'active' : ''}`} onClick={() => setActiveTab('Calendar')}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-          <span>{user.role === 'admin' ? 'Apps' : 'Calendar'}</span>
-        </button>
-      </nav>
+      
 
       {modal === 'task' && <Modal title="Assign task" fields={taskFormFields} onSave={(v) => addTask(v, false)} onClose={() => setModal(null)} />}
       {modal === 'mine' && <Modal title="Add personal task" fields={taskFormFields} onSave={(v) => addTask(v, true)} onClose={() => setModal(null)} />}

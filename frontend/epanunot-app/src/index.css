@@ -229,6 +229,14 @@ button {
   gap: 6px;
 }
 
+.desktop-only {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  padding: 7px 14px;
+}
+
 .nav-tab {
   padding: 6px 16px;
   border-radius: 999px;
@@ -567,7 +575,12 @@ button {
 
   .login-hero h1 { font-size: 1.75rem; }
 
-  .desktop-nav, .user-info-text { display: none; }
+  .desktop-nav,
+  .user-info-text,
+  .btn.desktop-only {
+    display: none !important;
+  }
+
   .header-container { padding: 10px 16px; }
   .main { padding: 20px 16px 80px; }
   .stats { grid-template-columns: 1fr; }
