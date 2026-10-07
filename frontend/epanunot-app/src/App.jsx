@@ -5,6 +5,7 @@ import Dashboard from './features/dashboard/Dashboard.jsx';
 import Profile from './features/profile/Profile.jsx';
 import AdminDashboard from './features/admin/AdminDashboard.jsx';
 import MainLayout from './layouts/MainLayout.jsx';
+import BlockManagement from './features/block/BlockManagement.jsx';
 
 // Temporary stand-in until the Calendar page is built (features/calendar).
 function ComingSoon({ title }) {
@@ -45,10 +46,7 @@ export default function App() {
         <Route path="/profile" element={<Profile user={user} onUpdateUser={handleUpdateUser}/>} />
         <Route path="/calendar" element={member(<ComingSoon title="Calendar" />)} />
         <Route path="/concerns" element={member(<ComingSoon title="Concerns" />)} />
-        <Route
-          path="/block"
-          element={user.role === 'mayor' ? <ComingSoon title="Block Management" /> : <Navigate to="/" replace />}
-        />
+        <Route path="/block" element={<BlockManagement user={user} />} />
 
         <Route
           path="/admin"
@@ -57,6 +55,8 @@ export default function App() {
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
+
+      
     </Routes>
   );
 }

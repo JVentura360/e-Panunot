@@ -3,7 +3,6 @@ import Modal from '../../components/Modal.jsx';
 import TaskItem from './TaskItem.jsx';
 import { daysLeft } from './dateUtils';
 import { mayorTasks, announcements, PLATFORMS } from '../../data/mockData';
-import BlockManagement from '../block/BlockManagement.jsx';
 import styles from './Dashboard.module.css';
 
 // Student + Mayor dashboard. (Admins use /admin instead.)
@@ -60,7 +59,6 @@ export default function Dashboard({ user }) {
               <div className={styles.headerActions}>
                 <button className="btn alt" onClick={() => setModal('ann')}>New announcement</button>
                 <button className="btn" onClick={() => setModal('task')}>Assign task</button>
-                <button className="btn alt" onClick={() => setView('block')}>Manage block</button>
               </div>
             )}
             {isStudent && (

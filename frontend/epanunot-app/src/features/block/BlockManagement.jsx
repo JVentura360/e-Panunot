@@ -38,7 +38,6 @@ export default function BlockManagement({ onBack }) {
           <h1>Block Management (31-ITE-04)</h1>
           <p>Manage your blockmates, applications, and subjects.</p>
         </div>
-        <button className={styles.backBtn} onClick={onBack}>← Back</button>
       </header>
 
       <section className={styles.cards}>
