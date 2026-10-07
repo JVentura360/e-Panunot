@@ -66,3 +66,13 @@ button {
   border-radius: 12px;
   color: #4d6a63;
 }
+
+/* Hide scrollbars everywhere, but keep scrolling working */
+* {
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;    /* old Edge/IE */
+}
+
+*::-webkit-scrollbar {
+  display: none;               /* Chrome, Edge, Safari */
+}
