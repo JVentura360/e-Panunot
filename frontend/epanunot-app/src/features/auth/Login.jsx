@@ -35,8 +35,8 @@ export default function Login({ onLogin }) {
         <section className={styles.hero}>
             <div className={styles.brand}>e<b>Panunot</b></div>
             <div>
-            <h1>Walang Kanin Mayor?</h1>
-            <p>'Gang Kaibigan lang Talaga Kayo Sir.</p>
+            <h1>Walang Kanin Busseng?</h1>
+            <p>Pwede na mangarap.</p>
             </div>
         </section>
 

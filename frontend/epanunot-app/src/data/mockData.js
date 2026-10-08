@@ -12,7 +12,7 @@ const daysFromNow = (n) => {
 // Roles are always lowercase: 'student' | 'mayor' | 'admin'
 export const demoAccounts = [
   { name: 'Jonel Ventura', email: 'jonel.ventura@udd.edu.ph', role: 'student', block: '31-ITE-04' },
-  { name: 'Cyrah manongdo', email: 'cyrah.manongdo@udd.edu.ph', role: 'mayor', block: '31-ITE-04' },
+  { name: 'Cyrah Manongdo', email: 'cyrah.manongdo@udd.edu.ph', role: 'mayor', block: '31-ITE-04' },
   { name: 'Admin Office', email: 'admin@udd.edu.ph', role: 'admin', block: '-' },
 ];
 

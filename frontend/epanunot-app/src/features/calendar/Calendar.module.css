@@ -1,0 +1,564 @@
+.page {
+max-width: 1100px;
+margin: 0 auto;
+padding: 24px;
+}
+
+/* ---------- Toolbar ---------- */
+.toolbar {
+display: flex;
+align-items: center;
+justify-content: space-between;
+gap: 16px;
+flex-wrap: wrap;
+margin-bottom: 18px;
+}
+
+.titleRow {
+display: flex;
+align-items: center;
+gap: 16px;
+flex-wrap: wrap;
+}
+
+.title {
+font-size: 1.7rem;
+font-weight: 800;
+color: var(--forest);
+}
+
+.navBtns {
+display: flex;
+align-items: center;
+gap: 6px;
+}
+
+.navBtn,
+.todayBtn {
+border: 2px solid var(--mist);
+background: #fff;
+color: var(--ink);
+border-radius: 10px;
+font-weight: 600;
+}
+
+.navBtn {
+width: 36px;
+height: 36px;
+font-size: 1.2rem;
+line-height: 1;
+}
+
+.todayBtn {
+padding: 0 14px;
+height: 36px;
+font-size: 0.9rem;
+}
+
+.navBtn:hover,
+.todayBtn:hover {
+border-color: var(--sage);
+background: var(--paper);
+}
+
+.viewToggle {
+display: inline-flex;
+background: var(--sand);
+border-radius: 999px;
+padding: 4px;
+}
+
+.viewBtn {
+border: 0;
+background: transparent;
+padding: 6px 16px;
+border-radius: 999px;
+font-size: 0.88rem;
+font-weight: 600;
+color: var(--ink);
+}
+
+.viewBtnActive {
+background: var(--forest);
+color: #fff;
+}
+
+/* ---------- Layout ---------- */
+.layout {
+display: grid;
+grid-template-columns: minmax(0, 1fr) 340px;
+gap: 20px;
+align-items: start;
+}
+
+.main,
+.card {
+background: #fff;
+border: 1px solid var(--mist);
+border-radius: 14px;
+padding: 16px;
+}
+
+.side {
+display: flex;
+flex-direction: column;
+gap: 16px;
+}
+
+/* ---------- Month view ---------- */
+.weekdays {
+display: grid;
+grid-template-columns: repeat(7, 1fr);
+text-align: center;
+font-size: 0.78rem;
+font-weight: 600;
+color: #4d6a63;
+padding-bottom: 8px;
+}
+
+.grid {
+display: grid;
+grid-template-columns: repeat(7, minmax(0, 1fr));
+gap: 4px;
+}
+
+.cell {
+min-height: 98px;
+display: flex;
+flex-direction: column;
+align-items: stretch;
+gap: 4px;
+padding: 6px;
+text-align: left;
+background: var(--paper);
+border: 2px solid transparent;
+border-radius: 10px;
+color: var(--ink);
+overflow: hidden;
+}
+
+.cell:hover {
+border-color: var(--sage);
+}
+
+.outside {
+opacity: 0.45;
+}
+
+.selected {
+border-color: var(--forest);
+background: #fff;
+}
+
+.dayNum {
+font-size: 0.82rem;
+font-weight: 600;
+width: 24px;
+height: 24px;
+display: grid;
+place-items: center;
+border-radius: 50%;
+}
+
+.today .dayNum {
+background: var(--clay);
+color: #fff;
+}
+
+.chips {
+display: flex;
+flex-direction: column;
+gap: 3px;
+min-width: 0;
+}
+
+.chip {
+display: block;
+font-size: 0.7rem;
+font-weight: 500;
+padding: 2px 6px;
+border-radius: 6px;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+}
+
+.more {
+font-size: 0.68rem;
+color: #4d6a63;
+padding-left: 4px;
+}
+
+.dots {
+display: none;
+gap: 3px;
+justify-content: center;
+flex-wrap: wrap;
+}
+
+.dot {
+display: inline-block;
+width: 7px;
+height: 7px;
+border-radius: 50%;
+padding: 0;
+}
+
+/* shared color classes (chips, dots, week items, row bars) */
+.chipClass { background: var(--forest); color: #fff; }
+.chipPersonal { background: var(--sage); color: var(--ink); }
+.chipTask { background: var(--peach); color: var(--ink); }
+
+/* ---------- Week view ---------- */
+.weekGrid {
+display: grid;
+grid-template-columns: repeat(7, minmax(0, 1fr));
+gap: 6px;
+}
+
+.weekCol {
+background: var(--paper);
+border: 2px solid transparent;
+border-radius: 10px;
+padding: 6px;
+min-height: 260px;
+display: flex;
+flex-direction: column;
+gap: 6px;
+}
+
+.weekColSelected {
+border-color: var(--forest);
+background: #fff;
+}
+
+.weekHead {
+display: flex;
+flex-direction: column;
+align-items: center;
+gap: 2px;
+border: 0;
+background: transparent;
+color: var(--ink);
+font-size: 0.75rem;
+padding: 4px 0;
+border-radius: 8px;
+}
+
+.weekHead strong {
+font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
+font-size: 1.1rem;
+}
+
+.weekHeadToday strong {
+background: var(--clay);
+color: #fff;
+width: 30px;
+height: 30px;
+border-radius: 50%;
+display: grid;
+place-items: center;
+}
+
+.weekItems {
+display: flex;
+flex-direction: column;
+gap: 5px;
+}
+
+.weekItem {
+border: 0;
+text-align: left;
+font-size: 0.72rem;
+font-weight: 500;
+padding: 5px 6px;
+border-radius: 6px;
+}
+
+.weekEmpty {
+font-size: 0.72rem;
+color: #4d6a63;
+text-align: center;
+padding-top: 8px;
+}
+
+/* ---------- Agenda view ---------- */
+.agenda {
+display: flex;
+flex-direction: column;
+gap: 14px;
+}
+
+.agendaHead {
+width: 100%;
+display: flex;
+align-items: center;
+gap: 10px;
+text-align: left;
+border: 0;
+background: var(--sand);
+color: var(--ink);
+font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
+font-weight: 700;
+font-size: 0.95rem;
+padding: 8px 12px;
+border-radius: 10px;
+margin-bottom: 6px;
+}
+
+.agendaHeadActive {
+background: var(--forest);
+color: #fff;
+}
+
+.todayTag {
+font-family: 'Figtree', sans-serif;
+font-size: 0.7rem;
+font-weight: 600;
+background: var(--clay);
+color: #fff;
+padding: 2px 8px;
+border-radius: 999px;
+}
+
+/* ---------- Legend ---------- */
+.legend {
+display: flex;
+gap: 16px;
+flex-wrap: wrap;
+margin-top: 14px;
+padding-top: 12px;
+border-top: 1px solid #eef2f1;
+font-size: 0.78rem;
+color: #4d6a63;
+}
+
+.legend span {
+display: inline-flex;
+align-items: center;
+gap: 6px;
+}
+
+/* ---------- Side panel ---------- */
+.cardHead {
+margin-bottom: 12px;
+}
+
+.cardTitle {
+font-size: 1.1rem;
+font-weight: 700;
+color: var(--forest);
+}
+
+.actions {
+display: flex;
+gap: 8px;
+flex-wrap: wrap;
+margin-bottom: 14px;
+}
+
+.sectionLabel {
+font-size: 0.8rem;
+text-transform: uppercase;
+letter-spacing: 0.06em;
+color: #4d6a63;
+margin: 16px 0 8px;
+}
+
+.list {
+list-style: none;
+padding: 0;
+display: flex;
+flex-direction: column;
+gap: 8px;
+}
+
+.row,
+.todo {
+display: flex;
+align-items: center;
+gap: 10px;
+background: var(--paper);
+border-radius: 10px;
+padding: 8px 10px;
+}
+
+.rowBar {
+width: 5px;
+align-self: stretch;
+border-radius: 999px;
+flex-shrink: 0;
+padding: 0;
+}
+
+.rowBody {
+display: flex;
+flex-direction: column;
+min-width: 0;
+flex: 1;
+}
+
+.rowTitle {
+font-size: 0.9rem;
+font-weight: 600;
+}
+
+.rowMeta {
+font-size: 0.75rem;
+color: #4d6a63;
+}
+
+.overdue {
+color: var(--clay);
+font-weight: 600;
+}
+
+.rowDone .rowTitle {
+text-decoration: line-through;
+}
+
+.rowDone {
+opacity: 0.6;
+}
+
+.grow {
+flex: 1;
+}
+
+.iconBtn {
+border: 0;
+background: transparent;
+color: #4d6a63;
+width: 28px;
+height: 28px;
+border-radius: 50%;
+font-size: 0.8rem;
+flex-shrink: 0;
+}
+
+.iconBtn:hover {
+background: var(--sand);
+color: var(--clay);
+}
+
+input[type='checkbox'] {
+accent-color: var(--forest);
+width: 18px;
+height: 18px;
+flex-shrink: 0;
+}
+
+/* ---------- Forms ---------- */
+.form {
+display: flex;
+flex-direction: column;
+gap: 10px;
+background: var(--paper);
+border: 1px solid var(--mist);
+border-radius: 12px;
+padding: 12px;
+margin-bottom: 4px;
+}
+
+.field {
+display: flex;
+flex-direction: column;
+gap: 4px;
+font-size: 0.78rem;
+font-weight: 600;
+flex: 1;
+min-width: 0;
+}
+
+.field input,
+.field select,
+.todoForm input {
+font: inherit;
+font-size: 0.9rem;
+padding: 8px 10px;
+border: 2px solid var(--mist);
+border-radius: 8px;
+background: #fff;
+color: var(--ink);
+min-width: 0;
+}
+
+.fieldRow {
+display: flex;
+gap: 8px;
+}
+
+.formBtns {
+display: flex;
+gap: 8px;
+}
+
+.error {
+font-size: 0.8rem;
+color: var(--clay);
+font-weight: 600;
+}
+
+.todoForm {
+display: flex;
+gap: 8px;
+margin-bottom: 10px;
+}
+
+.todoForm input {
+flex: 1;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+    }
+
+    @media (max-width: 760px) {
+    .page {
+        padding: 16px 16px 90px; /* room for the mobile bottom nav */
+    }
+
+    .title {
+        font-size: 1.35rem;
+    }
+
+    .cell {
+        min-height: 54px;
+        align-items: center;
+        padding: 4px 2px;
+    }
+
+    .chips {
+        display: none;
+    }
+
+    .dots {
+        display: flex;
+    }
+
+    .weekGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .weekCol {
+        min-height: 0;
+        flex-direction: row;
+        align-items: flex-start;
+    }
+
+    .weekHead {
+        min-width: 48px;
+    }
+
+    .weekItems {
+        flex: 1;
+    }
+
+    .weekEmpty {
+        text-align: left;
+        padding-top: 12px;
+    }
+}

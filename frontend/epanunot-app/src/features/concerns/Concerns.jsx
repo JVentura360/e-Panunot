@@ -505,7 +505,7 @@ return (
             </div>
             {selectedId && (
                 <button type="button" className={`btn ghost ${styles.back}`} onClick={() => navigate('/concerns')}>
-                Back to concerns
+                {arrow} Back to concerns
                 </button>
             )}
             </div>

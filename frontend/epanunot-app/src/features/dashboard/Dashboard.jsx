@@ -73,6 +73,16 @@ export default function Dashboard({ user }) {
           </div>
 
           <section className={styles.section}>
+            <h3>Announcements</h3>
+            {anns.map((a) => (
+              <div className={styles.ann} key={a.id}>
+                <strong>{a.title}</strong>
+                <div>{a.body}</div>
+              </div>
+            ))}
+          </section>
+
+          <section className={styles.section}>
             <h3>{isMayor ? 'Tasks you assigned' : 'Tasks from your mayor'}</h3>
             {assigned.length === 0 ? (
               <div className="empty">Nothing assigned yet.</div>
@@ -97,16 +107,6 @@ export default function Dashboard({ user }) {
               )}
             </section>
           )}
-
-          <section className={styles.section}>
-            <h3>Announcements</h3>
-            {anns.map((a) => (
-              <div className={styles.ann} key={a.id}>
-                <strong>{a.title}</strong>
-                <div>{a.body}</div>
-              </div>
-            ))}
-          </section>
 
           {modal === 'task' && (
             <Modal title="Assign task" fields={taskFormFields} onSave={(v) => addTask(v, false)} onClose={() => setModal(null)} />

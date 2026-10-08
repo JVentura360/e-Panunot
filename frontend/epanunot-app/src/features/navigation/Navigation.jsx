@@ -61,7 +61,6 @@ const IconStar = () => (
 
 const BASE_NAV = [
   { label: 'Dashboard',       mobileLabel: 'Dashboard', to: '/',         icon: <IconDashboard /> },
-  { label: 'Student Profile', mobileLabel: 'Profile',   to: '/profile',  icon: <IconProfile /> },
   { label: 'Calendar',        mobileLabel: 'Calendar',  to: '/calendar', icon: <IconCalendar /> },
   { label: 'Concerns',        mobileLabel: 'Concerns',  to: '/concerns', icon: <IconConcerns /> },
 ];

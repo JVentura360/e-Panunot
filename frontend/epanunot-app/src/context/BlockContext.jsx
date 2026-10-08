@@ -31,7 +31,7 @@ export function BlockProvider({ children }) {
         })
         );
         setMayors((prev) => [...prev, { id: app.id, name: app.name, email: app.email, block: app.block }]);
-        setBlocks((prev) => [...prev, { id: app.id, name: app.block, mayor: app.name, members: 1 }]);
+        setBlocks((prev) => [...prev, { id: app.id, name: app.block, mayor: app.name, members: 67}]);
         return { ok: true };
     };
 

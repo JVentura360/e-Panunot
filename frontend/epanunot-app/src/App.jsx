@@ -8,6 +8,7 @@ import MainLayout from './layouts/MainLayout.jsx';
 import BlockManagement from './features/block/BlockManagement.jsx';
 import Concerns from './features/concerns/Concerns.jsx';
 import useSyncedConcerns from './features/concerns/useSyncedConcerns.js';
+import Calendar from './features/calendar/Calendar.jsx';
 
 // Temporary stand-in until the Calendar page is built (features/calendar).
 function ComingSoon({ title }) {
@@ -47,7 +48,7 @@ export default function App() {
 
         {/* Placeholders: swap each ComingSoon for the real page when it is built */}
         <Route path="/profile" element={<Profile user={user} onUpdateUser={handleUpdateUser}/>} />
-        <Route path="/calendar" element={member(<ComingSoon title="Calendar" />)} />
+        <Route path="/calendar" element={member(<Calendar user={user} />)} />
         <Route path="/concerns/*" element={member(<Concerns user={user} concerns={concerns} setConcerns={setConcerns} />)} />
         <Route path="/block" element={<BlockManagement user={user} />} />
 
