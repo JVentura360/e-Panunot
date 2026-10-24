@@ -35,7 +35,7 @@ CREATE TABLE users (
     google_id   VARCHAR(255) NULL UNIQUE,
     name        VARCHAR(255) NOT NULL,
     email       VARCHAR(255) NOT NULL UNIQUE,
-    role        ENUM('student','admin') NOT NULL DEFAULT 'student',
+    role        ENUM('student','mayor','admin') NOT NULL DEFAULT 'student',
     picture_url TEXT NULL,
     block_id    BIGINT UNSIGNED NULL,
     created_at  TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
