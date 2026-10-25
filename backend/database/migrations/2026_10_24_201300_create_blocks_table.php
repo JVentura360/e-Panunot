@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unsignedBigInteger('mayor_id')->nullable();
             $table->timestamps();
 
-            $table->unique(['term_id', 'program', 'year_level', block_number]);
+            $table->unique(['term_id', 'program', 'year_level', 'block_number']);
             $table->unique(['term_id', 'mayor_id']);
         });
     }
