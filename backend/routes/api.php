@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/concerns', [ConcernController::class, 'store']);
     Route::get('/concerns/{concern}/messages', [ConcernMessageController::class, 'index']);
     Route::post('/concerns/{concern}/messages', [ConcernMessageController::class, 'store']);
+    Route::get('/attachments/{attachment}', [ConcernController::class, 'download']);
 
     // Mayor only
     Route::middleware('role:mayor')->group(function () {
