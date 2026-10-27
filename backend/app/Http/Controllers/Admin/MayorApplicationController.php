@@ -1,7 +1,8 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
-
+use App\Http\Resources\MayorApplicationResource;
+use App\Services\MayorApprovalService;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -61,115 +62,27 @@ class MayorApplicationController extends Controller
     /**
      * POST /api/admin/mayor-applications/{id}/approve
      */
-    public function approve(Request $request, int $id)
+    public function approve(MayorApprovalService $service, int $id)
     {
-        $admin = $this->requireAdmin();
-
-        $data = DB::transaction(function () use ($id, $admin) {
-            $application = DB::table('mayor_applications')
-                ->where('id', $id)->lockForUpdate()->first();
-
-            abort_if(!$application, 404, 'Mayor application not found.');
-            if ($application->status !== 'pending') {
-                throw ValidationException::withMessages([
-                    'status' => 'Only pending applications can be approved.',
-                ]);
-            }
-
-            $term = DB::table('terms')->where('id', $application->term_id)->first();
-            abort_if(!$term, 422, 'The application term no longer exists.');
-
-            $block = DB::table('blocks')
-                ->where('term_id', $application->term_id)
-                ->where('program', $application->program)
-                ->where('year_level', $application->year_level)
-                ->where('block_number', $application->block_number)
-                ->lockForUpdate()
-                ->first();
-
-            if (!$block) {
-                $blockId = DB::table('blocks')->insertGetId([
-                    'term_id' => $application->term_id,
-                    'program' => $application->program,
-                    'year_level' => $application->year_level,
-                    'block_number' => $application->block_number,
-                    'mayor_id' => $application->user_id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            } else {
-                if ($block->mayor_id && (int) $block->mayor_id !== (int) $application->user_id) {
-                    throw ValidationException::withMessages([
-                        'block' => 'This block already has an assigned mayor.',
-                    ]);
-                }
-
-                $blockId = $block->id;
-                DB::table('blocks')->where('id', $blockId)->update([
-                    'mayor_id' => $application->user_id,
-                    'updated_at' => now(),
-                ]);
-            }
-
-            // The schema has no "mayor" value in users.role. A mayor is identified
-            // by blocks.mayor_id, so do not try to update users.role.
-            DB::table('mayor_applications')->where('id', $id)->update([
-                'status' => 'approved',
-                'block_id' => $blockId,
-                'reviewed_by' => $admin->id,
-                'reviewed_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            // Prevent another pending application for the same applicant/term from
-            // being approved later, while preserving the history of those records.
-            DB::table('mayor_applications')
-                ->where('user_id', $application->user_id)
-                ->where('term_id', $application->term_id)
-                ->where('id', '!=', $id)
-                ->where('status', 'pending')
-                ->update([
-                    'status' => 'rejected',
-                    'reviewed_by' => $admin->id,
-                    'reviewed_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-            return DB::table('mayor_applications')->where('id', $id)->first();
-        });
+        $application = $service->approve($id, $this->requireAdmin());
 
         return response()->json([
             'message' => 'Mayor application approved.',
-            'data' => $data,
+            'data' => new MayorApplicationResource($application),
         ]);
     }
 
     /**
      * POST /api/admin/mayor-applications/{id}/reject
      */
-    public function reject(Request $request, int $id)
+    public function reject(Request $request, MayorApprovalService $service, int $id)
     {
         $admin = $this->requireAdmin();
         $request->validate(['reason' => 'nullable|string|max:1000']);
 
-        $application = DB::table('mayor_applications')->where('id', $id)->first();
-        abort_if(!$application, 404, 'Mayor application not found.');
-        if ($application->status !== 'pending') {
-            throw ValidationException::withMessages([
-                'status' => 'Only pending applications can be rejected.',
-            ]);
-        }
-
-        DB::table('mayor_applications')->where('id', $id)->update([
-            'status' => 'rejected',
-            'reviewed_by' => $admin->id,
-            'reviewed_at' => now(),
-            'updated_at' => now(),
-        ]);
-
         return response()->json([
             'message' => 'Mayor application rejected.',
-            'data' => DB::table('mayor_applications')->where('id', $id)->first(),
+            'data' => new MayorApplicationResource($service->reject($id, $admin)),
         ]);
     }
 

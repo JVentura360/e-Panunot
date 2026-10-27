@@ -8,18 +8,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureRole
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  Closure(Request): (Response)  $next
-     */
-    public function handle(Request $request, Closure $next): Response
+    public function handle(Request $request, Closure $next, string ...$roles): Response
     {
         $user = $request->user();
+        $role = $user?->role instanceof \BackedEnum ? $user->role->value : $user?->role;
 
-        if (! $user || in_array($user->role->value, $roles)) {
+        if (! $user || ! in_array($role, $roles, true)) {
             abort(403, 'You do not have permission to do this.');
         }
+
         return $next($request);
     }
 }

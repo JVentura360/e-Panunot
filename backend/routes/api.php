@@ -1,5 +1,9 @@
 <?php
-
+use App\Http\Controllers\Admin\MayorApplicationController as AdminMayorApplicationController;
+use App\Http\Controllers\BlockController;
+use App\Http\Controllers\BlockMemberController;
+use App\Http\Controllers\Mayor\ApplicationController as MayorApplicationController;
+use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\ConcernController;
 use App\Http\Controllers\ConcernMessageController;
@@ -11,6 +15,31 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
+    });
+    // Mayor applications (student side). 'mine' must come before '{id}'.
+    Route::get('/mayor-applications/mine', [MayorApplicationController::class, 'mine']);
+    Route::get('/mayor-applications/{id}', [MayorApplicationController::class, 'showMine']);
+    Route::post('/mayor-applications', [MayorApplicationController::class, 'store']);
+
+    // Blocks, joining, members, subjects
+    Route::get('/blocks', [BlockController::class, 'index']);
+    Route::get('/blocks/{id}', [BlockController::class, 'show']);
+    Route::get('/blocks/{blockId}/members', [BlockMemberController::class, 'index']);
+    Route::post('/blocks/{blockId}/join-requests', [BlockMemberController::class, 'store']);
+    Route::get('/blocks/{blockId}/join-requests', [BlockMemberController::class, 'requests']);
+    Route::post('/blocks/{blockId}/join-requests/{requestId}/approve', [BlockMemberController::class, 'approve']);
+    Route::post('/blocks/{blockId}/join-requests/{requestId}/reject', [BlockMemberController::class, 'reject']);
+    Route::delete('/blocks/{blockId}/members/{memberId}', [BlockMemberController::class, 'destroyMember']);
+    Route::put('/blocks/{blockId}/subjects', [SubjectController::class, 'syncBlockSubjects']);
+    Route::get('/subjects', [SubjectController::class, 'index']);
+    Route::get('/subjects/{id}', [SubjectController::class, 'show']);
+
+    // Admin only
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/mayor-applications', [AdminMayorApplicationController::class, 'index']);
+        Route::get('/mayor-applications/{id}', [AdminMayorApplicationController::class, 'show']);
+        Route::post('/mayor-applications/{id}/approve', [AdminMayorApplicationController::class, 'approve']);
+        Route::post('/mayor-applications/{id}/reject', [AdminMayorApplicationController::class, 'reject']);
     });
 
     // Anyone in the block

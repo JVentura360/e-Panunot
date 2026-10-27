@@ -22,7 +22,7 @@ return new class extends Migration
             $table->text('motivation')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('reviewed_at')->nullable();
+            $table->timestamp('reviewed_at')->nullable();
             $table->timestamps();
 
             $table->index(['term_id', 'status', 'program', 'year_level', 'block_number'], 'idx_mayor_apps_lookup');
