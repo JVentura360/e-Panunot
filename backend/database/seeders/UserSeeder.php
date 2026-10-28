@@ -3,32 +3,36 @@
 namespace Database\Seeders;
 
 use App\Models\Block;
-use App\Models\User;
+use Database\Factories\UserFactory;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
         // One known admin account
-        User::factory()->admin()->create([
-            'name'  => 'Admin Office',
+        UserFactory::new()->admin()->create([
+            'name' => 'Admin Office',
             'email' => 'admin@udd.edu.ph',
         ]);
 
         // Seed each block with a mayor and several students
         Block::all()->each(function (Block $block) {
             // Create mayor as a student first, then promote
-            $mayor = User::factory()->create([
-                'role'     => 'student',
+            $mayor = UserFactory::new()->create([
+                'role' => 'student',
                 'block_id' => $block->id,
             ]);
 
             // Point the block to its mayor
-            $block->update(['mayor_id' => $mayor->id]);
+            DB::table('blocks')->where('id', $block->id)->update([
+                'mayor_id' => $mayor->id,
+                'updated_at' => now(),
+            ]);
 
             // 8 regular students per block
-            User::factory(8)->student($block)->create();
+            UserFactory::new()->count(8)->student($block)->create();
         });
     }
 }

@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\Block;
-use App\Models\Subject;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -31,15 +30,15 @@ class TaskFactory extends Factory
     public function definition(): array
     {
         return [
-            'block_id'                  => Block::factory(),
-            'created_by'                => User::factory(),
-            'subject_id'                => null,
-            'title'                     => fake()->randomElement(self::$taskTitles) . ' ' . fake()->numberBetween(1, 10),
-            'description'               => fake()->optional(0.7)->paragraph(),
-            'platform'                  => fake()->randomElement(['StepS', 'GradeVision', 'Face-To-Face', 'NetAcad', null]),
-            'due_date'                  => fake()->dateTimeBetween('now', '+30 days'),
+            'block_id' => BlockFactory::new(),
+            'created_by' => UserFactory::new(),
+            'subject_id' => null,
+            'title' => fake()->randomElement(self::$taskTitles).' '.fake()->numberBetween(1, 10),
+            'description' => fake()->optional(0.7)->paragraph(),
+            'platform' => fake()->randomElement(['StepS', 'GradeVision', 'Face-To-Face', 'NetAcad', null]),
+            'due_date' => fake()->dateTimeBetween('now', '+30 days'),
             'reminder_interval_minutes' => fake()->randomElement([60, 360, 720, 1440]),
-            'google_event_id'           => null,
+            'google_event_id' => null,
         ];
     }
 
@@ -47,7 +46,7 @@ class TaskFactory extends Factory
     public function forBlock(Block $block, User $creator): static
     {
         return $this->state([
-            'block_id'   => $block->id,
+            'block_id' => $block->id,
             'created_by' => $creator->id,
         ]);
     }

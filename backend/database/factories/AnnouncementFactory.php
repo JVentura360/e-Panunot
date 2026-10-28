@@ -27,17 +27,17 @@ class AnnouncementFactory extends Factory
     public function definition(): array
     {
         return [
-            'block_id'    => Block::factory(),
-            'title'       => fake()->randomElement(self::$announcementTitles),
+            'block_id' => BlockFactory::new(),
+            'title' => fake()->randomElement(self::$announcementTitles),
             'description' => fake()->paragraph(),
-            'created_by'  => User::factory(),
+            'created_by' => UserFactory::new(),
         ];
     }
 
     public function forBlock(Block $block, User $mayor): static
     {
         return $this->state([
-            'block_id'   => $block->id,
+            'block_id' => $block->id,
             'created_by' => $mayor->id,
         ]);
     }

@@ -2,16 +2,13 @@
 
 namespace Database\Seeders;
 
-use App\Models\Block;
-use App\Models\Term;
+use Database\Factories\BlockFactory;
 use Illuminate\Database\Seeder;
 
 class BlockSeeder extends Seeder
 {
     public function run(): void
     {
-        $activeTerm = Term::where('is_active', true)->firstOrFail();
-
         $blocks = [
             ['program' => 'BSIT', 'year_level' => 3, 'block_number' => 1],
             ['program' => 'BSIT', 'year_level' => 3, 'block_number' => 2],
@@ -20,12 +17,11 @@ class BlockSeeder extends Seeder
         ];
 
         foreach ($blocks as $data) {
-            Block::factory()->create([
-                'term_id'      => $activeTerm->id,
-                'program'      => $data['program'],
-                'year_level'   => $data['year_level'],
+            BlockFactory::new()->create([
+                'program' => $data['program'],
+                'year_level' => $data['year_level'],
                 'block_number' => $data['block_number'],
-                'mayor_id'     => null, // assigned in UserSeeder after mayors exist
+                'mayor_id' => null, // assigned in UserSeeder after mayors exist
             ]);
         }
     }

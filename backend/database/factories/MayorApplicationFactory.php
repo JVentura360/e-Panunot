@@ -3,7 +3,6 @@
 namespace Database\Factories;
 
 use App\Models\MayorApplication;
-use App\Models\Term;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -17,23 +16,22 @@ class MayorApplicationFactory extends Factory
     public function definition(): array
     {
         return [
-            'term_id'      => Term::factory(),
-            'user_id'      => User::factory(),
-            'program'      => fake()->randomElement(['BSIT', 'BSCS', 'BSED', 'BSN']),
-            'year_level'   => fake()->numberBetween(1, 4),
+            'user_id' => UserFactory::new(),
+            'program' => fake()->randomElement(['BSIT', 'BSCS', 'BSED', 'BSN']),
+            'year_level' => fake()->numberBetween(1, 4),
             'block_number' => fake()->numberBetween(1, 6),
-            'block_id'     => null,
-            'motivation'   => fake()->optional(0.8)->paragraph(),
-            'status'       => 'pending',
-            'reviewed_by'  => null,
-            'reviewed_at'  => null,
+            'block_id' => null,
+            'motivation' => fake()->optional(0.8)->paragraph(),
+            'status' => 'pending',
+            'reviewed_by' => null,
+            'reviewed_at' => null,
         ];
     }
 
     public function approved(User $reviewer): static
     {
         return $this->state([
-            'status'      => 'approved',
+            'status' => 'approved',
             'reviewed_by' => $reviewer->id,
             'reviewed_at' => now(),
         ]);
@@ -42,7 +40,7 @@ class MayorApplicationFactory extends Factory
     public function rejected(User $reviewer): static
     {
         return $this->state([
-            'status'      => 'rejected',
+            'status' => 'rejected',
             'reviewed_by' => $reviewer->id,
             'reviewed_at' => now(),
         ]);

@@ -2,9 +2,7 @@
 
 namespace Database\Factories;
 
-use App\Models\Block;
 use App\Models\Concern;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -17,15 +15,15 @@ class ConcernFactory extends Factory
     public function definition(): array
     {
         return [
-            'block_id'       => Block::factory(),
-            'student_id'     => User::factory(),
-            'subject_id'     => null,
-            'title'          => fake()->sentence(6),
-            'category'       => fake()->randomElement(['academic', 'schedule', 'other']),
-            'description'    => fake()->paragraph(),
-            'status'         => 'open',
+            'block_id' => BlockFactory::new(),
+            'student_id' => UserFactory::new(),
+            'subject_id' => null,
+            'title' => fake()->sentence(6),
+            'category' => fake()->randomElement(['academic', 'schedule', 'other']),
+            'description' => fake()->paragraph(),
+            'status' => 'open',
             'student_unread' => false,
-            'mayor_unread'   => true,
+            'mayor_unread' => true,
         ];
     }
 
@@ -37,9 +35,9 @@ class ConcernFactory extends Factory
     public function resolved(): static
     {
         return $this->state([
-            'status'         => 'resolved',
+            'status' => 'resolved',
             'student_unread' => true,
-            'mayor_unread'   => false,
+            'mayor_unread' => false,
         ]);
     }
 
