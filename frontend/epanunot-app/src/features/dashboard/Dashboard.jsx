@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from '../../components/Modal.jsx';
+import PlannerEmpty from '../../components/PlannerEmpty.jsx';
 import TaskItem from './TaskItem.jsx';
 import { daysLeft } from './dateUtils';
 import { mayorTasks, announcements, PLATFORMS } from '../../data/mockData';
@@ -32,7 +33,7 @@ export default function Dashboard({ user }) {
   };
   const taskFields = [
     { key: 'title', label: 'Task title', placeholder: 'e.g. Submit your laboratory report', required: true },
-    { key: 'due', label: 'Deadline', type: 'date', required: true },
+    { key: 'due', label: 'Deadline', type: 'date', required: true, disallowPast: true },
     { key: 'platform', label: 'Platform or location', type: 'select', options: PLATFORMS },
   ];
 
@@ -41,18 +42,18 @@ export default function Dashboard({ user }) {
       <header className={styles.top}>
         <div>
           <p className={styles.eyebrow}>{user.block && user.block !== '-' ? user.block : 'Your workspace'} <span> / </span> Overview</p>
-          <h1>A little clarity for your day.</h1>
-          <p>Hello, {user.name.split(' ')[0]}. Here’s what’s happening in your block.</p>
+          <h1>{isMayor ? 'A little clarity for your day.' : `Hello, ${user.name.split(' ')[0]}.`}</h1>
+          <p>{isMayor ? 'Here’s what’s happening in your block.' : 'Let’s take today one task at a time.'}</p>
         </div>
         <div className={styles.headerActions}>
-          {isMayor && <button className="btn alt" onClick={() => setModal('ann')}>New announcement</button>}
-          <button className="btn" onClick={() => setModal(isMayor ? 'task' : 'mine')}>{isMayor ? 'Assign a task' : 'Add personal task'}</button>
+          {isMayor && <button className="btn alt" onClick={() => setModal('ann')}>New Announcement</button>}
+          <button className="btn" onClick={() => setModal(isMayor ? 'task' : 'mine')}>{isMayor ? 'Assign a Task' : 'Add personal task'}</button>
         </div>
       </header>
 
       <div className={styles.stats} aria-label="Task summary">
         <div className={styles.stat}><span>To Do</span><strong>{pending.length.toString().padStart(2, '0')}</strong><small>One task at a time.</small></div>
-        <div className={styles.stat}><span>Due soon</span><strong>{dueSoon.toString().padStart(2, '0')}</strong><small>Overdue, today or tomorrow</small></div>
+        <div className={styles.stat}><span>Due Soon</span><strong>{dueSoon.toString().padStart(2, '0')}</strong><small>Overdue, today or tomorrow</small></div>
         <div className={styles.stat}><span>Completed</span><strong>{completed.toString().padStart(2, '0')}</strong><small>{tasks.length ? Math.round(completed / tasks.length * 100) + '% of your tasks checked off' : 'Your progress starts here'}</small></div>
       </div>
 
@@ -66,11 +67,11 @@ export default function Dashboard({ user }) {
           </div>
           <section className={styles.section}>
             <h3>{isMayor ? 'Assigned to your block' : 'From your mayor'} <span>{assigned.length}</span></h3>
-            {assigned.length ? <div className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={isMayor ? null : toggle} />)}</div> : <div className="empty">{filter === 'done' ? 'Completed class tasks will appear here.' : 'You’re all caught up here.'}</div>}
+            {assigned.length ? <div className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={isMayor ? null : toggle} />)}</div> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
           </section>
           {!isMayor && <section className={styles.section}>
             <h3>Personal tasks <span>{personal.length}</span></h3>
-            {personal.length ? <div className={styles.list}>{personal.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} />)}</div> : <div className="empty">{filter === 'done' ? 'Your completed personal tasks will appear here.' : 'A little space for your own plans.'}{filter !== 'done' && <button className={styles.inlineAction} onClick={() => setModal('mine')}>Add your first task</button>}</div>}
+            {personal.length ? <div className={styles.list}>{personal.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} />)}</div> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'A fresh page for your own plans.'}{filter !== 'done' && <button className={styles.inlineAction} onClick={() => setModal('mine')}>Add your first task</button>}</PlannerEmpty>}
           </section>}
         </div>
 
@@ -81,8 +82,8 @@ export default function Dashboard({ user }) {
         </aside>
       </div>
 
-      {(modal === 'task' || modal === 'mine') && <Modal title={modal === 'task' ? 'Assign a task' : 'Add a personal task'} description={modal === 'task' ? 'Give your block a clear task and deadline.' : 'Keep your own deadlines alongside your class tasks.'} submitLabel={modal === 'task' ? 'Assign task' : 'Add task'} fields={taskFields} onSave={(values) => addTask(values, modal === 'mine')} onClose={() => setModal(null)} />}
-      {modal === 'ann' && <Modal title="New announcement" description="Share an update with your block." submitLabel="Post announcement" fields={[{ key: 'title', label: 'Title', required: true }, { key: 'body', label: 'Message', type: 'textarea', required: true }]} onSave={(values) => { setAnns((previous) => [{ id: Date.now(), ...values }, ...previous]); setModal(null); }} onClose={() => setModal(null)} />}
+      {(modal === 'task' || modal === 'mine') && <Modal title={modal === 'task' ? 'Assign a Task' : 'Add a personal task'} description={modal === 'task' ? 'Give your block a clear task and deadline.' : 'Keep your own deadlines alongside your class tasks.'} submitLabel={modal === 'task' ? 'Assign task' : 'Add task'} fields={taskFields} onSave={(values) => addTask(values, modal === 'mine')} onClose={() => setModal(null)} />}
+      {modal === 'ann' && <Modal title="New Announcement" description="Share an update with your block." submitLabel="Post announcement" fields={[{ key: 'title', label: 'Title', required: true }, { key: 'body', label: 'Message', type: 'textarea', required: true }]} onSave={(values) => { setAnns((previous) => [{ id: Date.now(), ...values }, ...previous]); setModal(null); }} onClose={() => setModal(null)} />}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import styles from './Concerns.module.css';
+import PlannerEmpty from '../../components/PlannerEmpty.jsx';
 import {
 DEMO_STUDENT_ID,
 SUBJECTS,
@@ -78,13 +79,13 @@ return (
     </p>
 
     {shown.length === 0 ? (
-        <div className="empty">
+        <PlannerEmpty>
         {concerns.length === 0
             ? isMayor
             ? 'No concerns from your block yet.'
             : "You haven't raised any concerns yet. Use New concern to start one."
             : 'No concerns match these filters.'}
-        </div>
+        </PlannerEmpty>
     ) : (
         <ul className={styles.list}>
         {shown.map((c) => {
@@ -513,11 +514,11 @@ return (
             />
         ) : (
             <div className={styles.paneEmpty}>
-            <div className="empty">
+            <PlannerEmpty>
                 {selectedId
                 ? "This concern doesn't exist or isn't available to you."
                 : 'Select a concern to read the conversation.'}
-            </div>
+            </PlannerEmpty>
             {selectedId && (
                 <button type="button" className={`btn ghost ${styles.back}`} onClick={() => navigate('/concerns')}>
                 Back to concerns

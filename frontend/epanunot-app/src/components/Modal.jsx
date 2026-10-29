@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import styles from './Modal.module.css';
 import DatePicker from './DatePicker';
+import { dateKey } from './datePickerUtils.js';
+import { validDeadline } from './taskListUtils.js';
 
 export default function Modal({ title, description, fields, onSave, onClose, submitLabel = 'Save' }) {
   const id = useId();
@@ -29,6 +31,13 @@ export default function Modal({ title, description, fields, onSave, onClose, sub
       input.reportValidity();
       return;
     }
+    const invalidDeadline = fields.find((field) => field.disallowPast && !validDeadline(values[field.key], dateKey(new Date())));
+    if (invalidDeadline) {
+      const input = event.currentTarget.elements.namedItem(invalidDeadline.key);
+      input.setCustomValidity('Choose today or a future date for the deadline.');
+      input.reportValidity();
+      return;
+    }
     onSave(values);
   };
   return (
@@ -50,7 +59,7 @@ export default function Modal({ title, description, fields, onSave, onClose, sub
             return <div className={styles.field} key={field.key}>
               <label htmlFor={common.id}>{field.label}{field.required && <span aria-hidden="true"> *</span>}</label>
               {field.type === 'select' ? <select {...common}>{field.options.map((option) => <option key={option} value={option}>{option}</option>)}</select>
-                : field.type === 'date' ? <DatePicker {...common} />
+                : field.type === 'date' ? <DatePicker {...common} min={field.disallowPast ? dateKey(new Date()) : field.min} />
                 : field.type === 'textarea' ? <textarea {...common} placeholder={field.placeholder} rows={4} maxLength={5000} />
                   : <input {...common} type={field.type || 'text'} placeholder={field.placeholder} maxLength={field.type === 'date' ? undefined : 255} />}
             </div>;

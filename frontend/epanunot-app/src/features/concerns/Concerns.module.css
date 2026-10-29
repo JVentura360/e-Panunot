@@ -117,7 +117,7 @@
     overflow: hidden;
 }
 
-.paneEmpty { padding: 20px; display: grid; gap: 12px; }
+.paneEmpty { padding: 20px; display: grid; gap: 12px; margin-block: auto; }
 
 .back {
     display: none;

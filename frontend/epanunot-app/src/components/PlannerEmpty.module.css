@@ -1,0 +1,5 @@
+.empty { padding: 28px 20px; text-align: center; border: 1px dashed var(--mist); border-radius: 14px; background: color-mix(in srgb, var(--sage) 7%, var(--paper)); color: var(--muted); font-size: .9rem; }
+.paper { position: relative; display: grid; align-content: center; gap: 5px; width: 38px; height: 44px; padding: 9px; margin: 0 auto 16px; border: 1px solid var(--mist); border-radius: 5px; background: var(--surface); transform: rotate(-7deg); box-shadow: 5px 4px 0 var(--sand); }
+.paper::before { content: ''; position: absolute; width: 18px; height: 6px; top: -3px; left: 9px; border-radius: 2px; background: var(--peach); transform: rotate(5deg); }
+.paper i { height: 2px; border-radius: 2px; background: var(--mist); }
+.paper i:last-child { width: 65%; }

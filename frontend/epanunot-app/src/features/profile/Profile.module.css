@@ -16,6 +16,7 @@
 
 /* ---------- Identity banner ---------- */
 .identity {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 20px;
@@ -26,6 +27,9 @@
   margin-bottom: 28px;
 }
 
+.identity::before { content: ''; position: absolute; top: -6px; right: 28px; width: 40px; height: 13px; border-radius: 3px; background: var(--peach); transform: rotate(5deg); pointer-events: none; }
+.identity > div:last-child { min-width: 0; overflow-wrap: anywhere; }
+
 .identity h2 { font-size: 1.5rem; color: #fff; }
 .identity .muted { color: var(--mist); }
 
@@ -33,7 +37,7 @@
   flex-shrink: 0;
   width: 72px;
   height: 72px;
-  border-radius: 50%;
+  border-radius: 22px 26px 20px 26px;
   background: var(--clay);
   color: #fff;
   display: grid;
@@ -141,12 +145,15 @@
 }
 
 .notice {
+  animation: savedIn 200ms ease-out;
   margin-top: 12px;
   padding: 10px 14px;
   border-radius: 10px;
   background: var(--mist);
   font-size: 0.9rem;
 }
+
+@keyframes savedIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
 /* ---------- Role section ---------- */
 .stats {

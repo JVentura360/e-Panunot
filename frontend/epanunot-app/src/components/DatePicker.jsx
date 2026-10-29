@@ -84,7 +84,15 @@ export default function DatePicker({ value = '', onChange, onInput, className = 
     <button ref={triggerRef} type="button" disabled={props.disabled} className={styles.trigger}
       aria-label="Choose date" aria-haspopup="dialog" aria-controls={popupId} aria-expanded={open}
       popoverTarget={popupId} onClick={() => setView(parseDate(value) || new Date())}>
-      <span className={styles.calendarIcon} aria-hidden="true">▦</span>
+      <svg className={styles.calendarIcon} width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="3" y="3" width="18" height="19" rx="4" />
+        <path d="M6 2v3M9 2v3M12 2v3M15 2v3M18 2v3M3 8h18" />
+        <g fill="currentColor" stroke="none">
+          {[11, 15, 19].map((y) => [7, 11, 15].map((x) => (
+            <rect key={`${x}-${y}`} x={x} y={y} width="2" height="2" />
+          )))}
+        </g>
+      </svg>
     </button>
     <div id={popupId} ref={popupRef} popover="auto" role="dialog" aria-label="Choose a date" className={styles.popup}
       onToggle={(event) => setOpen(event.newState === 'open')}>
