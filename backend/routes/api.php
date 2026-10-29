@@ -9,6 +9,8 @@ use App\Http\Controllers\ConcernController;
 use App\Http\Controllers\ConcernMessageController;
 use App\Http\Controllers\TaskCompletionController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\CalendarEventController;
+use App\Http\Controllers\PersonalTodoController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -47,6 +49,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tasks/{task}/complete', [TaskCompletionController::class, 'store']);
     Route::delete('/tasks/{task}/complete', [TaskCompletionController::class, 'destroy']);
     Route::get('/announcements', [AnnouncementController::class, 'index']);
+    
+    Route::get('/calendar', [CalendarEventController::class, 'index']);
+    Route::post('/calendar-events', [CalendarEventController::class, 'store']);
+    Route::put('/calendar-events/{calendarEvent}', [CalendarEventController::class, 'update']);
+    Route::delete('/calendar-events/{calendarEvent}', [CalendarEventController::class, 'destroy']);
+
+    Route::get('/personal-todos', [PersonalTodoController::class, 'index']);
+    Route::post('/personal-todos', [PersonalTodoController::class, 'store']);
+    Route::match(['put', 'patch'], '/personal-todos/{personalTodo}', [PersonalTodoController::class, 'update']);
+    Route::delete('/personal-todos/{personalTodo}', [PersonalTodoController::class, 'destroy']);
 
     Route::get('/concerns', [ConcernController::class, 'index']);
     Route::post('/concerns', [ConcernController::class, 'store']);
@@ -66,4 +78,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
         Route::patch('/concerns/{concern}/status', [ConcernController::class, 'updateStatus']);
     });
+
 });
