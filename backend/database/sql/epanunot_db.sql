@@ -21,9 +21,9 @@ CREATE TABLE blocks (
     term_id      BIGINT UNSIGNED NOT NULL,
     program      VARCHAR(20)  NOT NULL,            
     year_level   TINYINT UNSIGNED NOT NULL,        
-    block_number TINYINT UNSIGNED NOT NULL,
-    google_calendar_id VARCHAR(255) NULL AFTER mayor_id;        
+    block_number TINYINT UNSIGNED NOT NULL,       
     mayor_id     BIGINT UNSIGNED NULL,
+    google_calendar_id VARCHAR(255) NULL,
     created_at   TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE CASCADE,
