@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'google' => [
+        'enabled'     => env('GOOGLE_CALENDAR_ENABLED', false),
+        'credentials' => env('GOOGLE_CREDENTIALS_PATH', storage_path('app/private/google/service-account.json')),
+        'timezone'    => env('GOOGLE_CALENDAR_TIMEZONE', 'Asia/Manila'),
+        'owner_email' => env('GOOGLE_CALENDAR_OWNER_EMAIL'),
+    ],
+
 ];

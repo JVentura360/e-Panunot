@@ -1,4 +1,5 @@
 <?php
+use App\Http\Controllers\BlockGoogleCalendarController;
 use App\Http\Controllers\Admin\MayorApplicationController as AdminMayorApplicationController;
 use App\Http\Controllers\BlockController;
 use App\Http\Controllers\BlockMemberController;
@@ -35,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/blocks/{blockId}/subjects', [SubjectController::class, 'syncBlockSubjects']);
     Route::get('/subjects', [SubjectController::class, 'index']);
     Route::get('/subjects/{id}', [SubjectController::class, 'show']);
+    Route::get('/blocks/{blockId}/google-calendar', [BlockGoogleCalendarController::class, 'show']);
 
     // Admin only
     Route::middleware('role:admin')->prefix('admin')->group(function () {
@@ -49,7 +51,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/tasks/{task}/complete', [TaskCompletionController::class, 'store']);
     Route::delete('/tasks/{task}/complete', [TaskCompletionController::class, 'destroy']);
     Route::get('/announcements', [AnnouncementController::class, 'index']);
-    
+
     Route::get('/calendar', [CalendarEventController::class, 'index']);
     Route::post('/calendar-events', [CalendarEventController::class, 'store']);
     Route::put('/calendar-events/{calendarEvent}', [CalendarEventController::class, 'update']);

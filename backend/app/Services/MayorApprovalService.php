@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Jobs\SyncBlockCalendarAccess;
 use App\Enums\ApplicationStatus;
 use App\Enums\Role;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -136,7 +137,7 @@ class MayorApprovalService
                         'updated_at' => now(),
                     ]);
 
-                // Hook for later: notify the new mayor (push) and the rejected applicants.
+                SyncBlockCalendarAccess::dispatch($blockId, $applicant->email, true)->afterCommit();
 
                 return $this->findWithTerm($application->id);
             });

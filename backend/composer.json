@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "google/apiclient": "^2.20",
         "laravel-notification-channels/webpush": "^13.0",
         "laravel/framework": "^13.17",
         "laravel/sanctum": "^4.0",
@@ -35,6 +36,7 @@
         }
     },
     "scripts": {
+        "pre-autoload-dump": "Google\\Task\\Composer::cleanup",
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
@@ -73,7 +75,8 @@
     "extra": {
         "laravel": {
             "dont-discover": []
-        }
+        },
+        "google/apiclient-services": ["Calendar"]
     },
     "config": {
         "optimize-autoloader": true,

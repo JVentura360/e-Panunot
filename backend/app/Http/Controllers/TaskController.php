@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SyncTaskToGoogle;
+use App\Jobs\DeleteGoogleEvent;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Http\Resources\TaskResource;
@@ -62,7 +64,7 @@ class TaskController extends Controller
 
             return $task;
         });
-
+        SyncTaskToGoogle::dispatch($task->id);
         return new TaskResource($task->load('subject'));
     }
 
@@ -82,7 +84,7 @@ class TaskController extends Controller
         $this->ensureOwnBlock($request, $task);
 
         $task->update($request->validated());
-
+        SyncTaskToGoogle::dispatch($task->id);
         return new TaskResource($task->load('subject'));
     }
 
@@ -92,7 +94,8 @@ class TaskController extends Controller
     public function destroy(Request $request, Task $task)
     {
         $this->ensureOwnBlock($request, $task);
-
+        $task->google_event_id
+        $task->block_id
         $task->delete();
 
         return response()->noContent();

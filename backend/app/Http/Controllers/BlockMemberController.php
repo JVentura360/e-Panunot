@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SyncBlockCalendarAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -156,6 +157,7 @@ class BlockMemberController extends Controller
                     'updated_at' => now(),
                 ]);
 
+            SyncBlockCalendarAccess::dispatch($blockId, $student->email, true)->afterCommit();
             return [
                 'request' => DB::table('block_join_requests')->where('id', $requestId)->first(),
                 'member_count' => DB::table('users')->where('block_id', $blockId)->count(),
@@ -212,7 +214,7 @@ class BlockMemberController extends Controller
             'block_id' => null,
             'updated_at' => now(),
         ]);
-
+        SyncBlockCalendarAccess::dispatch($blockId, $member->email, false);
         return response()->json(['message' => 'Member removed from block.']);
     }
 

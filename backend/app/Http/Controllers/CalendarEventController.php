@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\DeleteGoogleEvent;
+use App\Jobs\SyncCalendarEventToGoogle;
 use App\Http\Requests\StoreCalendarEventRequest;
 use App\Http\Resources\CalendarEventResource;
 use App\Models\CalendarEvent;
@@ -112,6 +114,9 @@ class CalendarEventController extends Controller
         // GOOGLE SYNC HOOK: for class events (block_id set), dispatch the job that
         // creates the event in the block's Google calendar, e.g.
         //   SyncCalendarEventToGoogle::dispatch($event->id)->afterCommit();
+        if ($event->block_id !== null) {
+            SyncCalendarEventToGoogle::dispatch($event->id);
+        }
 
         return $this->respond($event, 201);
     }
@@ -134,6 +139,9 @@ class CalendarEventController extends Controller
         ]);
 
         // GOOGLE SYNC HOOK: re-sync this event to Google if it is a class event.
+        if ($calendarEvent->block_id !== null) {
+            SyncCalendarEventToGoogle::dispatch($calendarEvent->id);
+        }
 
         return $this->respond($calendarEvent);
     }
@@ -148,6 +156,14 @@ class CalendarEventController extends Controller
         // GOOGLE SYNC HOOK: read $calendarEvent->google_event_id and
         // $calendarEvent->block_id BEFORE deleting, and pass them to the job that
         // removes the event from Google (the row will be gone by the time it runs).
+        $googleEventId = $calendarEvent->google_event_id;
+        $blockId = $calendarEvent->block_id;
+
+        $calendarEvent->delete();
+
+        if ($googleEventId && $blockId) {
+            DeleteGoogleEvent::dispatch((int) $blockId, $googleEventId);
+        }
 
         $calendarEvent->delete();
 
