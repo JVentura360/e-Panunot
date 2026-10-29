@@ -20,7 +20,7 @@ const APPLICATIONS_INIT = [
   { id: 1, name: 'Juan Dela Cruz', block: 'BSIT 3-A' }
 ];
 
-export default function BlockManagement({ onBack }) {
+export default function BlockManagement() {
   const [applications, setApplications] = useState(APPLICATIONS_INIT);
 
   const removeApp = (id) => {

@@ -228,3 +228,18 @@
   max-width: 60ch;
   }
 }
+
+/* Align administrative views with the student workspace */
+.page { max-width: 1200px; padding: 40px 32px; }
+.title { font-size: clamp(1.8rem, 3vw, 2.4rem); }
+.subtitle { font-size: 0.9rem; margin-top: 8px; }
+.tabs { border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.tab { border-radius: 7px; min-height: 44px; }
+.row { border-color: var(--line); border-left-width: 3px; padding: 20px; }
+.btn { min-height: 44px; }
+@media (max-width: 760px) {
+  .page { padding: 24px 16px; }
+  .tabs { width: 100%; }
+  .tab { flex: 1; padding-inline: 12px; }
+  .row { padding: 16px; flex-wrap: wrap; }
+}

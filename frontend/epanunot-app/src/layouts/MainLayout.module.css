@@ -1,5 +1,5 @@
 .layout {
-    min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
 }
@@ -10,6 +10,6 @@
 
 @media (max-width: 760px) {
     .main {
-        padding-bottom: 64px;
+        padding-bottom: calc(104px + env(safe-area-inset-bottom));
     }
 }

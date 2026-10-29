@@ -290,12 +290,20 @@ const [category, setCategory] = useState('');
 const [description, setDescription] = useState('');
 const [files, setFiles] = useState([]); // file names only: no real upload in the prototype
 const fileInput = useRef(null);
+const dialogRef = useRef(null);
 
 useEffect(() => {
-    const onKey = (e) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-}, [onClose]);
+    const dialog = dialogRef.current;
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    dialog.showModal();
+    document.body.style.overflow = 'hidden';
+    return () => {
+        dialog.close();
+        document.body.style.overflow = previousOverflow;
+        if (previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+}, []);
 
 const addFiles = (e) => {
     const names = Array.from(e.target.files).map((f) => f.name);
@@ -315,16 +323,23 @@ const submit = (e) => {
 };
 
 return (
-    <div
-    className={styles.overlay}
-    onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    <dialog
+    ref={dialogRef}
+    className={styles.dialog}
+    aria-labelledby="new-concern-title"
+    onCancel={(e) => { e.preventDefault(); onClose(); }}
+    onClick={(e) => {
+        if (e.target !== e.currentTarget) return;
+        const bounds = e.currentTarget.getBoundingClientRect();
+        if (e.clientX < bounds.left || e.clientX > bounds.right || e.clientY < bounds.top || e.clientY > bounds.bottom) onClose();
+    }}
     >
-    <form className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="new-concern-title" onSubmit={submit}>
+    <form className={styles.modal} onSubmit={submit}>
         <h2 id="new-concern-title">New concern</h2>
 
         <div className={styles.field}>
         <label htmlFor="nc-title">Title</label>
-        <input id="nc-title" className={styles.input} value={title} maxLength={100} required autoFocus
+        <input id="nc-title" className={styles.input} value={title} maxLength={100} required
             placeholder="Short summary of the issue" onChange={(e) => setTitle(e.target.value)} />
         </div>
 
@@ -375,7 +390,7 @@ return (
         <button type="submit" className="btn">Send concern</button>
         </div>
     </form>
-    </div>
+    </dialog>
 );
 }
 
@@ -505,7 +520,7 @@ return (
             </div>
             {selectedId && (
                 <button type="button" className={`btn ghost ${styles.back}`} onClick={() => navigate('/concerns')}>
-                {arrow} Back to concerns
+                Back to concerns
                 </button>
             )}
             </div>

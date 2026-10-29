@@ -562,3 +562,20 @@ flex: 1;
         padding-top: 12px;
     }
 }
+/* Shared workspace rhythm */
+.page { max-width: 1200px; padding: 40px 32px; }
+.toolbar { margin-bottom: 28px; gap: 20px; }
+.title { font-size: clamp(1.65rem, 3vw, 2.2rem); color: var(--ink); }
+.navBtn, .todayBtn { min-height: 44px; border-width: 1px; }
+.navBtn { min-width: 44px; }
+.viewBtn { min-height: 40px; }
+.main, .card { border-color: var(--line); }
+.dayNum { font-variant-numeric: tabular-nums; }
+.field input, .field select, .todoForm input { min-height: 44px; }
+@media (max-width: 760px) {
+  .page { padding: 24px 16px; }
+  .toolbar { gap: 16px; }
+  .titleRow { gap: 12px; }
+  .viewToggle { width: 100%; }
+  .viewBtn { flex: 1; }
+}

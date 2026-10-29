@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import styles from './Calendar.module.css';
+import DatePicker from '../../components/DatePicker';
 
 /* ---------- helpers ---------- */
 const pad = (n) => String(n).padStart(2, '0');
@@ -406,10 +407,10 @@ return (
                 Title
                 <input value={form.title} onChange={setField('title')} placeholder="e.g. Study session" />
                 </label>
-                <label className={styles.field}>
-                Date
-                <input type="date" value={form.date} onChange={setField('date')} />
-                </label>
+                <div className={styles.field}>
+                <label htmlFor="calendar-event-date">Date</label>
+                <DatePicker id="calendar-event-date" value={form.date} onChange={setField('date')} />
+                </div>
                 <div className={styles.fieldRow}>
                 <label className={styles.field}>
                     Start
@@ -442,10 +443,10 @@ return (
                     ))}
                 </select>
                 </label>
-                <label className={styles.field}>
-                Due date
-                <input type="date" value={form.date} onChange={setField('date')} />
-                </label>
+                <div className={styles.field}>
+                <label htmlFor="calendar-task-date">Due date</label>
+                <DatePicker id="calendar-task-date" value={form.date} onChange={setField('date')} />
+                </div>
                 {error && <p className={styles.error}>{error}</p>}
                 <div className={styles.formBtns}>
                 <button type="submit" className="btn">Create task</button>

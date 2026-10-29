@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useLayoutEffect, useRef, useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ApplyMayorModal from './ApplyMayorModal.jsx';
 import styles from './Navigation.module.css';
 
@@ -74,6 +74,39 @@ function getNavItems(role) {
   return items;
 }
 
+// One shared highlight moves between links instead of repainting each tab.
+function SlidingNav({ className, label, children }) {
+  const navRef = useRef(null);
+  const indicatorRef = useRef(null);
+  const { pathname } = useLocation();
+
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const indicator = indicatorRef.current;
+    let mounted = true;
+    const positionIndicator = () => {
+      if (!mounted) return;
+      const active = nav.querySelector('[aria-current="page"]');
+      indicator.hidden = !active || !nav.getClientRects().length;
+      if (indicator.hidden) return;
+      indicator.style.width = `${active.offsetWidth}px`;
+      indicator.style.height = `${active.offsetHeight}px`;
+      indicator.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
+    };
+    positionIndicator();
+    const observer = new ResizeObserver(positionIndicator);
+    observer.observe(nav);
+    nav.querySelectorAll('a').forEach((link) => observer.observe(link));
+    document.fonts.ready.then(positionIndicator);
+    return () => { mounted = false; observer.disconnect(); };
+  }, [pathname, children]);
+
+  return <nav ref={navRef} className={className} aria-label={label}>
+    <span ref={indicatorRef} className={styles.navIndicator} aria-hidden="true" hidden />
+    {children}
+  </nav>;
+}
+
 // ─── Navigation ───────────────────────────────────────────────────────────────
 //
 // Props:
@@ -103,7 +136,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
 
           <div className={styles.left}>
             <div className={styles.brand}>e<b>Panunot</b></div>
-            <nav className={styles.desktopNav} aria-label="Main navigation">
+            <SlidingNav className={styles.desktopNav} label="Main navigation">
               {navItems.map(({ to, label }) => (
                 <NavLink
                   key={to}
@@ -114,7 +147,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
                   {label}
                 </NavLink>
               ))}
-            </nav>
+            </SlidingNav>
           </div>
 
           <div className={styles.right}>
@@ -124,7 +157,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
               </button>
             )}
 
-            <button className={styles.iconBtn} aria-label={`Notifications${notifCount > 0 ? `, ${notifCount} unread` : ''}`}>
+            <button className={styles.iconBtn} disabled title="Notifications are coming soon" aria-label="Notifications (coming soon)">
               <IconBell />
               {notifCount > 0 && <span className={styles.notifBadge} aria-hidden="true">{notifCount}</span>}
             </button>
@@ -132,6 +165,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
             <div className={styles.profileWrapper}>
               <button
                 className={styles.profileBtn}
+                aria-label={`Account menu for ${user.name}`}
                 onClick={() => setProfileOpen((v) => !v)}
                 aria-expanded={profileOpen}
                 aria-haspopup="true"
@@ -177,7 +211,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
 
       {/* ── Mobile bottom bar (only when there is more than one page) ── */}
       {(navItems.length > 1 || canApply) && (
-        <nav className={styles.mobileNav} aria-label="Mobile navigation">
+        <SlidingNav className={styles.mobileNav} label="Mobile navigation">
           {navItems.map(({ to, mobileLabel, icon }) => (
             <NavLink
               key={to}
@@ -197,7 +231,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
               <span>Apply</span>
             </button>
           )}
-        </nav>
+        </SlidingNav>
       )}
 
       {applyOpen && <ApplyMayorModal user={user} onClose={() => setApplyOpen(false)} />}

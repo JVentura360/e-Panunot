@@ -68,7 +68,6 @@
   border-radius: 12px;
   background: #fff;
   border: 1px solid var(--mist);
-  border-left: 6px solid var(--sage);
 }
 
 .row {
@@ -174,7 +173,6 @@
   border-radius: 12px;
   background: #fff;
   border: 1px solid var(--mist);
-  border-left: 6px solid var(--sage);
 }
 
 .status {
@@ -198,3 +196,9 @@
   .row { grid-template-columns: 1fr; gap: 4px; }
   .stats { grid-template-columns: 1fr; }
 }
+/* Shared typography and spacing */
+.page { max-width: 1200px; padding: 40px 32px; }
+.top h1 { font-size: clamp(1.8rem, 3vw, 2.4rem); }
+.identity { border-color: var(--line); }
+.row { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 760px) { .page { padding: 24px 16px; } }
