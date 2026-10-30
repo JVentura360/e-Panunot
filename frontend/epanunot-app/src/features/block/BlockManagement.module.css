@@ -14,11 +14,11 @@
 }
 
 .top h1 { font-size: 2rem; }
-.top p { color: #4d6a63; margin-top: 4px; }
+.top p { color: var(--muted); margin-top: 4px; }
 
 .backBtn {
   background: var(--forest);
-  color: #fff;
+  color: var(--on-primary);
   border: 1px solid var(--sage);
   padding: 8px 16px;
   border-radius: 8px;
@@ -105,18 +105,18 @@
   gap: 14px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--mist);
   border-left: 6px solid var(--sage);
 }
 
 .grow { flex: 1; }
 .name { font-weight: 600; }
-.meta { font-size: 0.85rem; color: #4d6a63; }
+.meta { font-size: 0.85rem; color: var(--muted); }
 
 .acceptBtn {
   background: var(--forest);
-  color: #fff;
+  color: var(--on-primary);
   border: none;
   padding: 6px 14px;
   border-radius: 8px;
@@ -126,7 +126,7 @@
 
 .rejectBtn {
   background: var(--clay);
-  color: #fff;
+  color: var(--on-primary);
   border: 1px solid var(--sage);
   padding: 6px 14px;
   border-radius: 8px;

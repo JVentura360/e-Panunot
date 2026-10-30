@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ApplyMayorModal from './ApplyMayorModal.jsx';
 import styles from './Navigation.module.css';
+import { applyTheme } from '../../theme.js';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -119,6 +120,12 @@ function SlidingNav({ className, label, children }) {
 export default function Navigation({ user, onLogout, notifCount = 0 }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [applyOpen, setApplyOpen] = useState(false);
+  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    setTheme(next);
+  };
   const navigate = useNavigate();
 
   const navItems = getNavItems(user.role);
@@ -191,12 +198,13 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
                       <IconProfile /> My profile
                     </button>
                   )}
-                  {canApply && (
-                    <button className={styles.dropdownItem} role="menuitem"
-                      onClick={() => { setProfileOpen(false); setApplyOpen(true); }}>
-                      <IconStar /> Apply as Mayor
-                    </button>
-                  )}
+                  <button className={styles.dropdownItem} role="menuitemcheckbox" aria-label="Dark theme" aria-checked={theme === 'dark'} onClick={toggleTheme}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
+                    </svg>
+                    <span>Theme</span>
+                    <span className={styles.themeChoice}>{theme === 'dark' ? 'Dark' : 'Light'}<span className={styles.themeSwitch} data-dark={theme === 'dark'} aria-hidden="true" /></span>
+                  </button>
                   <hr className={styles.divider} />
                   <button className={`${styles.dropdownItem} ${styles.danger}`} role="menuitem" onClick={onLogout}>
                     <IconSignOut /> Sign out

@@ -4,6 +4,9 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { BlockProvider } from './context/BlockContext.jsx';
 import './index.css';
+import { initializeTheme } from './theme.js';
+
+initializeTheme();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

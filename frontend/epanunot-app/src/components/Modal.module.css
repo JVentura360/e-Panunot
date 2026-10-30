@@ -1,5 +1,5 @@
-.modal { position: fixed; inset: 0; margin: auto; width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; border: 1px solid var(--mist); border-radius: 20px; padding: 28px; background: var(--paper); color: var(--ink); box-shadow: 0 24px 80px rgb(23 54 47 / 20%); }
-.modal::backdrop { background: rgb(23 54 47 / 55%); }
+.modal { position: fixed; inset: 0; margin: auto; width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; border: 1px solid var(--mist); border-radius: 20px; padding: 28px; background: var(--paper); color: var(--ink); box-shadow: 0 24px 80px rgb(var(--shadow-rgb) / 20%); }
+.modal::backdrop { background: rgb(var(--shadow-rgb) / 55%); }
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .header h2 { font-size: 1.6rem; line-height: 1.2; margin-top: 6px; }
 .eyebrow { color: var(--forest); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; }
@@ -10,7 +10,7 @@
 .field { display: grid; gap: 8px; }
 .field label { font-weight: 600; font-size: 0.8rem; }
 .field label span { color: var(--forest); }
-.field input, .field select, .field textarea { width: 100%; min-height: 48px; border: 1px solid var(--mist); border-radius: 8px; padding: 12px; background: var(--surface); }
+.field input, .field select, .field textarea { width: 100%; min-height: 48px; border: 1px solid var(--control-border); border-radius: 8px; padding: 12px; background: var(--surface); }
 .field textarea { resize: vertical; }
 .field input:hover, .field select:hover, .field textarea:hover { border-color: var(--forest); }
 .actions { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line); padding-top: 20px; }
