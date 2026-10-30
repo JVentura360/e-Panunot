@@ -4,11 +4,12 @@ import Modal from '../../components/Modal.jsx';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
 import TaskItem from './TaskItem.jsx';
 import { daysLeft } from './dateUtils';
-import { mayorTasks, announcements, PLATFORMS } from '../../data/mockData';
+import { announcements, PLATFORMS } from '../../data/mockData';
+import { useTasks } from '../../context/TaskContext.jsx';
 import styles from './Dashboard.module.css';
 
 export default function Dashboard({ user }) {
-  const [tasks, setTasks] = useState(mayorTasks);
+  const { tasks, addTask: saveTask, toggleTask: toggle } = useTasks(); // shared with Calendar
   const [anns, setAnns] = useState(announcements);
   const [modal, setModal] = useState(null);
   const [filter, setFilter] = useState('open');
@@ -20,14 +21,12 @@ export default function Dashboard({ user }) {
   const assigned = tasks.filter((task) => !task.personal && matchesFilter(task))
     .sort((a, b) => Number(a.done) - Number(b.done) || a.due - b.due);
   const personal = tasks.filter((task) => task.personal && matchesFilter(task));
-  const toggle = (id) => setTasks((previous) => previous.map((task) => task.id === id ? { ...task, done: !task.done } : task));
 
   const addTask = (values, personalTask) => {
-    setTasks((previous) => [...previous, {
-      id: Date.now(), title: values.title.trim(),
-      due: new Date(values.due + 'T23:59:00'), platform: values.platform,
-      by: user.name, done: false, personal: personalTask,
-    }]);
+    saveTask({
+      title: values.title, date: values.due, platform: values.platform,
+      by: user.name, personal: personalTask,
+    });
     setFilter('open');
     setModal(null);
   };
