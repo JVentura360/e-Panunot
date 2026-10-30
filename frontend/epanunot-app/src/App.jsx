@@ -1,3 +1,4 @@
+import { TaskProvider } from './context/TaskContext.jsx';
 import { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import Login from './features/auth/Login.jsx';
@@ -32,7 +33,7 @@ export default function App() {
   const handleUpdateUser = (changes) => setUser((prev) => ({...prev, ...changes}));
 
   return (
-    <Routes>
+    <TaskProvider user={user}><Routes>
       <Route element={<MainLayout user={user} onLogout={handleLogout} />}>
         {/* Admins land on /admin, everyone else gets the dashboard */}
         <Route path="/" element={member(<Dashboard user={user} />)} />
@@ -51,6 +52,6 @@ export default function App() {
       <Route path="*" element={<Navigate to="/" replace />} />
 
       
-    </Routes>
+    </Routes></TaskProvider>
   );
 }

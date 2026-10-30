@@ -4,6 +4,7 @@ import DatePicker from '../../components/DatePicker';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
 import AnimatedList from '../../components/AnimatedList.jsx';
 import { unfinishedFirst, validDeadline } from '../../components/taskListUtils.js';
+import { useTasks } from '../../context/TaskContext.jsx';
 
 /* ---------- helpers ---------- */
 const pad = (n) => String(n).padStart(2, '0');
@@ -51,18 +52,6 @@ const SEED_EVENTS = [
 { id: 'e8', title: 'MATH 21 Midterm review', date: rel(12), start: '15:00', end: '17:00', subject: 'MATH 21', type: 'class' },
 ];
 
-const SEED_TASKS = [
-{ id: 't1', title: 'Activity 3', subject: 'CS 101', date: rel(2) },
-{ id: 't2', title: 'Problem Set 4', subject: 'MATH 21', date: rel(4) },
-{ id: 't3', title: 'Essay draft', subject: 'ENG 12', date: rel(7) },
-{ id: 't4', title: 'Reflection paper', subject: 'NSTP 1', date: rel(-1) },
-];
-
-const SEED_TODOS = [
-{ id: 'd1', text: 'Buy a blue book', done: false },
-{ id: 'd2', text: 'Print readings for ENG 12', done: true },
-];
-
 const EMPTY_FORM = { title: '', date: TODAY_KEY, start: '09:00', end: '10:00', subject: SUBJECTS[0] };
 
 function chipClass(item) {
@@ -78,9 +67,15 @@ const [cursor, setCursor] = useState(TODAY);
 const [selected, setSelected] = useState(TODAY_KEY);
 
 const [events, setEvents] = useState(SEED_EVENTS);
-const [tasks, setTasks] = useState(() => [...SEED_TASKS].sort((a, b) => a.date.localeCompare(b.date)));
-const [doneTasks, setDoneTasks] = useState([]);
-const [todos, setTodos] = useState(SEED_TODOS);
+// Tasks and to-dos come from the store shared with the Dashboard.
+// Mayor-assigned tasks (personal: false) are the class tasks + calendar entries;
+// the student's own tasks (personal: true) are the "My to-dos".
+const { tasks: allTasks, addTask, toggleTask, deleteTask } = useTasks();
+const tasks = useMemo(
+    () => allTasks.filter((t) => !t.personal),
+    [allTasks]
+);
+const todos = useMemo(() => allTasks.filter((t) => t.personal), [allTasks]);
 const [todoText, setTodoText] = useState('');
 
 const [panel, setPanel] = useState(null); // 'event' | 'task' | null
@@ -94,14 +89,12 @@ const itemsByDay = useMemo(() => {
     (map[key] = map[key] || []).push(item);
     };
     events.forEach((e) => push(e.date, { ...e, kind: 'event' }));
-    tasks.forEach((t) =>
-    push(t.date, { ...t, kind: 'task', done: doneTasks.includes(t.id) })
-    );
+    tasks.forEach((t) => push(t.date, { ...t, kind: 'task' }));
     Object.values(map).forEach((list) =>
     list.sort((a, b) => (a.start || '99:99').localeCompare(b.start || '99:99'))
     );
     return map;
-}, [events, tasks, doneTasks]);
+}, [events, tasks]);
 
 const monthDays = useMemo(() => {
     const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
@@ -133,7 +126,7 @@ const weekYear = weekStart.getFullYear() === weekEnd.getFullYear()
     ? String(weekEnd.getFullYear()) : `${weekStart.getFullYear()}–${weekEnd.getFullYear()}`;
 
 const selectedItems = itemsByDay[selected] || [];
-const sortedTasks = unfinishedFirst(tasks, (task) => doneTasks.includes(task.id), doneTasks);
+const sortedTasks = unfinishedFirst(tasks);
 const sortedTodos = unfinishedFirst(todos);
 const today = toKey(new Date());
 
@@ -181,40 +174,28 @@ const submitTask = (e) => {
     e.preventDefault();
     if (!form.title.trim()) return setError('Please add a title.');
     if (!validDeadline(form.date, toKey(new Date()))) return setError('Choose today or a future date for the deadline.');
-    setTasks((prev) => [
-    { id: uid(), title: form.title.trim(), subject: form.subject, date: form.date },
-    ...prev,
-    ]);
+    addTask({ title: form.title, subject: form.subject, date: form.date, by: user?.name, personal: false });
     finishForm();
 };
 
 const deleteItem = (item) => {
     if (item.kind === 'event') setEvents((p) => p.filter((x) => x.id !== item.id));
-    else setTasks((p) => p.filter((x) => x.id !== item.id));
+    else deleteTask(item.id);
 };
 
 const canDelete = (item) => (item.kind === 'event' ? item.type === 'personal' : isMayor);
-
-const toggleTask = (id) =>
-    setDoneTasks((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
 const addTodo = (e) => {
     e.preventDefault();
     const text = todoText.trim();
     if (!text) return;
-    setTodos((p) => [{ id: uid(), text, done: false }, ...p]);
+    addTask({ title: text, date: toKey(new Date()), by: user?.name, personal: true });
     setTodoText('');
 };
 
-const toggleTodo = (id) => setTodos((previous) => {
-    const task = previous.find((item) => item.id === id);
-    if (!task) return previous;
-    const updated = { ...task, done: !task.done };
-    const remaining = previous.filter((item) => item.id !== id);
-    return updated.done ? [...remaining, updated] : [updated, ...remaining];
-});
+const toggleTodo = toggleTask;
 
-const deleteTodo = (id) => setTodos((p) => p.filter((t) => t.id !== id));
+const deleteTodo = deleteTask;
 
 /* ---------- small render helpers ---------- */
 const itemLabel = (item) =>
@@ -491,7 +472,7 @@ return (
             ) : (
             <AnimatedList className={styles.list}>
                 {sortedTasks.map((t) => {
-                const done = doneTasks.includes(t.id);
+                const done = t.done;
                 const overdue = !done && t.date < TODAY_KEY;
                 return (
                     <li key={t.id} data-sort-id={t.id} className={`${styles.todo} ${done ? styles.rowDone : ''}`}>
@@ -504,7 +485,7 @@ return (
                     <div className={styles.rowBody}>
                         <span className={styles.rowTitle}>{t.title}</span>
                         <span className={`${styles.rowMeta} ${overdue ? styles.overdue : ''}`}>
-                        {t.subject} · {overdue ? 'Overdue, ' : 'Due '}{fmtShort(t.date)}
+                        {t.subject ? `${t.subject} · ` : ''}{overdue ? 'Overdue, ' : 'Due '}{fmtShort(t.date)}
                         </span>
                     </div>
                     {isMayor && (
@@ -543,14 +524,14 @@ return (
                     type="checkbox"
                     checked={t.done}
                     onChange={() => toggleTodo(t.id)}
-                    aria-label={`Mark ${t.text} done`}
+                    aria-label={`Mark ${t.title} done`}
                     />
-                    <span className={`${styles.rowTitle} ${styles.grow}`}>{t.text}</span>
+                    <span className={`${styles.rowTitle} ${styles.grow}`}>{t.title}</span>
                     <button
                     type="button"
                     className={styles.iconBtn}
                     onClick={() => deleteTodo(t.id)}
-                    aria-label={`Delete ${t.text}`}
+                    aria-label={`Delete ${t.title}`}
                     >
                     ✕
                     </button>
