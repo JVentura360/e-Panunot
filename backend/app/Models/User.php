@@ -20,7 +20,7 @@ use Laravel\Sanctum\HasApiTokens;
 ])]
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     public function block(): BelongsTo
     {

@@ -12,6 +12,7 @@ use App\Http\Controllers\TaskCompletionController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\PersonalTodoController;
+use App\Http\Controllers\MeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -19,6 +20,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    Route::get('/me', [MeController::class, 'show']);
+    
     // Mayor applications (student side). 'mine' must come before '{id}'.
     Route::get('/mayor-applications/mine', [MayorApplicationController::class, 'mine']);
     Route::get('/mayor-applications/{id}', [MayorApplicationController::class, 'showMine']);

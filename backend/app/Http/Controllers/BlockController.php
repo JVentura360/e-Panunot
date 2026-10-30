@@ -31,6 +31,7 @@ class BlockController extends Controller
                 't.semester',
                 't.is_active as term_is_active',
                 'mayor.name as mayor_name',
+                'mayor.email as mayor_email',
                 DB::raw('(SELECT COUNT(*) FROM users u WHERE u.block_id = b.id) as member_count')
             );
 
@@ -41,7 +42,7 @@ class BlockController extends Controller
         }
 
         return response()->json($query->orderBy('b.program')
-            ->orderBy('b.year_level')->orderBy('b.block_number')->paginate(20));
+            ->orderBy('b.year_level')->orderBy('b.block_number')->paginate(min((int) $request->input('per_page', 20), 100)));
     }
 
     public function show(int $id)

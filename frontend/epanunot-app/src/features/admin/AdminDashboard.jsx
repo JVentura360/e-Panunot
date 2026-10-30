@@ -1,50 +1,80 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useBlocks } from '../../context/BlockContext';
 import MayorApplications from './MayorApplications.jsx';
 import MayorsAndBlocks from './MayorsAndBlocks.jsx';
 import styles from './AdminDashboard.module.css';
 
 export default function AdminDashboard() {
-  const { apps, mayors, blocks, approve, reject } = useBlocks();
-  const [tab, setTab] = useState('apps');
-  const [notice, setNotice] = useState('');
+    const {
+        apps,
+        mayors,
+        blocks,
+        approve,
+        reject,
+        load,
+    } = useBlocks();
 
-  const handleApprove = (app) => {
-    const result = approve(app);
-    setNotice(result.ok ? '' : result.message);
-  };
+    const [tab, setTab] = useState('apps');
+    const [notice, setNotice] = useState('');
 
-  const pendingCount = apps.filter((a) => a.status === 'pending').length;
+    useEffect(() => {
+        load();
+    }, [load]);
 
-  return (
-    <div className={styles.page}>
-      <h1 className={styles.title}>Admin Dashboard</h1>
-      <p className={styles.subtitle}>
-        {pendingCount} pending application{pendingCount === 1 ? '' : 's'}. Approving one creates the mayor and block.
-      </p>
+    const handleApprove = async (app) => {
+        const result = await approve(app);
+        setNotice(result.ok ? '' : result.message);
+    };
 
-      <div className={styles.tabs}>
-        <button
-          className={`${styles.tab} ${tab === 'apps' ? styles.tabActive : ''}`}
-          onClick={() => setTab('apps')}
-        >
-          Mayor Applications
-        </button>
-        <button
-          className={`${styles.tab} ${tab === 'list' ? styles.tabActive : ''}`}
-          onClick={() => setTab('list')}
-        >
-          Mayors &amp; Blocks
-        </button>
-      </div>
+    const pendingCount = apps.filter(
+        (a) => a.status === 'pending'
+    ).length;
 
-      {notice && <div className={styles.notice} role="alert">{notice}</div>}
+    return (
+        <div className={styles.page}>
+            <h1 className={styles.title}>Admin Dashboard</h1>
 
-      {tab === 'apps' ? (
-        <MayorApplications apps={apps} onApprove={handleApprove} onReject={reject} />
-      ) : (
-        <MayorsAndBlocks mayors={mayors} blocks={blocks} />
-      )}
-    </div>
-  );
+            <p className={styles.subtitle}>
+                {pendingCount} pending application
+                {pendingCount === 1 ? '' : 's'}.
+                Approving one creates the mayor and block.
+            </p>
+
+            <div className={styles.tabs}>
+                <button
+                    className={`${styles.tab} ${tab === 'apps' ? styles.tabActive : ''}`}
+                    onClick={() => setTab('apps')}
+                >
+                    Mayor Applications
+                </button>
+
+                <button
+                    className={`${styles.tab} ${tab === 'list' ? styles.tabActive : ''}`}
+                    onClick={() => setTab('list')}
+                >
+                    Mayors &amp; Blocks
+                </button>
+            </div>
+
+            {notice && (
+                <div className={styles.notice} role="alert">
+                    {notice}
+                </div>
+            )}
+
+            {tab === 'apps' ? (
+                <MayorApplications
+                    apps={apps}
+                    onApprove={handleApprove}
+                    onReject={reject}
+                />
+            ) : (
+                <MayorsAndBlocks
+                    mayors={mayors}
+                    blocks={blocks}
+                />
+            )}
+        </div>
+    );
 }

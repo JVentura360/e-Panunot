@@ -1,9 +1,6 @@
 import { useState } from 'react';
-import { demoAccounts } from '../../data/mockData';
+import { api, setToken, errorMessage } from '../../api/client.js';
 import styles from './Login.module.css';
-
-const ALLOWED = ['@udd.edu.ph', '@cdd.edu.ph'];
-const isAllowed = (email) => ALLOWED.some((d) => email.toLowerCase().endsWith(d));
 
 const GoogleG = () => (
     <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
@@ -17,61 +14,91 @@ const GoogleG = () => (
 export default function Login({ onLogin }) {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [token, setTokenText] = useState('');
 
-    // Mock sign-in. Swap for @react-oauth/google, then POST the credential to Laravel.
-    // Always re-check the email domain on the backend too, never trust the client alone.
-    const signIn = (account) => {
+    const signInWithToken = async () => {
         setError('');
-        if (!isAllowed(account.email)) {
-        setError('Use your school account ending in @udd.edu.ph or @cdd.edu.ph.');
-        return;
-        }
         setLoading(true);
-        setTimeout(() => { setLoading(false); onLogin(account); }, 600);
+
+        try {
+            setToken(token.trim());
+            onLogin((await api('/me')).data);
+        } catch (e) {
+            setToken(null);
+            setError(errorMessage(e));
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <main className={styles.login}>
-        <div className={styles.scenery} aria-hidden="true">
-            <span className={styles.cornerRing} />
-            <span className={styles.bottomRing} />
-        </div>
-        <section className={styles.panel} aria-label="Sign in">
-            <div className={styles.card}>
-            <div className={styles.illustration} aria-hidden="true">
-                <div className={styles.backNote} />
-                <div className={styles.frontNote}>
-                    <span className={styles.noteTab} />
-                    <span className={styles.noteRow}><i /><b /></span>
-                    <span className={styles.noteRow}><i /><b /></span>
-                    <span className={styles.noteRow}><i /><b /></span>
-                </div>
-                <span className={styles.noteDot} />
+            <div className={styles.scenery} aria-hidden="true">
+                <span className={styles.cornerRing} />
+                <span className={styles.bottomRing} />
             </div>
-            <h1 className={styles.brand}>e<b>Panunot</b></h1>
 
-            <button className={styles.gbtn} disabled={loading} aria-busy={loading} onClick={() => signIn(demoAccounts[0])}>
-                <span className={styles.providerIcon}><GoogleG /></span>
-                <span>{loading ? 'Signing in...' : 'Continue with UdD/CdD account'}</span>
-                {loading && <span className={styles.loadingIndicator} aria-hidden="true" />}
-            </button>
-            <p className={styles.schoolNote}>For @udd.edu.ph and @cdd.edu.ph accounts.</p>
+            <section className={styles.panel} aria-label="Sign in">
+                <div className={styles.card}>
+                    <div className={styles.illustration} aria-hidden="true">
+                        <div className={styles.backNote} />
+                        <div className={styles.frontNote}>
+                            <span className={styles.noteTab} />
+                            <span className={styles.noteRow}><i /><b /></span>
+                            <span className={styles.noteRow}><i /><b /></span>
+                            <span className={styles.noteRow}><i /><b /></span>
+                        </div>
+                        <span className={styles.noteDot} />
+                    </div>
 
-            {error && <div className={styles.error} role="alert">{error}</div>}
+                    <h1 className={styles.brand}>e<b>Panunot</b></h1>
 
-            <details className={styles.demo}>
-                <summary>Prototype options</summary>
-                <p className={styles.demoHint}>Choose a role to preview its workspace. Google sign-in is not connected yet.</p>
-                <div className={styles.demoRow}>
-                {demoAccounts.map((d) => (
-                    <button key={d.role} disabled={loading} className={styles.chip} onClick={() => signIn(d)}>
-                    {d.role === 'admin' ? 'Administrator' : d.role === 'mayor' ? 'Block mayor' : 'Student'}
+                    <button
+                        className={styles.gbtn}
+                        disabled={loading}
+                        aria-busy={loading}
+                        onClick={() => setError('Google sign-in is not connected yet.')}
+                    >
+                        <span className={styles.providerIcon}><GoogleG /></span>
+                        <span>Continue with UdD/CdD account</span>
                     </button>
-                ))}
+
+                    <p className={styles.schoolNote}>
+                        For @udd.edu.ph and @cdd.edu.ph accounts.
+                    </p>
+
+                    {error && (
+                        <div className={styles.error} role="alert">
+                            {error}
+                        </div>
+                    )}
+
+                    <details className={styles.demo}>
+                        <summary>Prototype options</summary>
+
+                        <p className={styles.demoHint}>
+                            Paste your API token to access your account.
+                        </p>
+
+                        <div className={styles.demoRow}>
+                            <input
+                                type="password"
+                                value={token}
+                                onChange={(e) => setTokenText(e.target.value)}
+                                placeholder="Paste API token"
+                            />
+
+                            <button
+                                className={styles.chip}
+                                disabled={loading || !token.trim()}
+                                onClick={signInWithToken}
+                            >
+                                {loading ? 'Signing in...' : 'Sign in with token'}
+                            </button>
+                        </div>
+                    </details>
                 </div>
-            </details>
-            </div>
-        </section>
+            </section>
         </main>
     );
 }

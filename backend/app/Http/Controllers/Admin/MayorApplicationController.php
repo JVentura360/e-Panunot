@@ -38,7 +38,7 @@ class MayorApplicationController extends Controller
             $query->where('ma.status', $request->input('status'));
         }
 
-        return response()->json($query->orderByDesc('ma.created_at')->paginate(15));
+        return response()->json($query->orderByDesc('ma.created_at')->paginate(min((int) $request->input('per_page', 15), 100)));
     }
 
     public function show(int $id)

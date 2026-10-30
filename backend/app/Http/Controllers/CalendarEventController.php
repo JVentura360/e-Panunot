@@ -165,8 +165,6 @@ class CalendarEventController extends Controller
             DeleteGoogleEvent::dispatch((int) $blockId, $googleEventId);
         }
 
-        $calendarEvent->delete();
-
         return response()->noContent();
     }
 
