@@ -7,6 +7,12 @@ const daysFromNow = (n) => {
   d.setDate(d.getDate() + n);
   return d;
 };
+// 'YYYY-MM-DD' (local time), the format the shared task store uses
+const dateKey = (n) => {
+  const d = daysFromNow(n);
+  const pad = (x) => String(x).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+};
 
 // auth login shortcut
 // Roles are always lowercase: 'student' | 'mayor' | 'admin'
@@ -25,14 +31,17 @@ export const mayorApplications = [
 // dashboard data
 export const PLATFORMS = ['StepS', 'GradeVision', 'Face-To-Face', 'NetAcad'];
 
-export const mayorTasks = [
-  { id: 1, title: 'Submit Capstone Proposal', due: daysFromNow(1), by: 'Mayor Cyrah', platform: 'StepS', done: false },
-  { id: 2, title: 'Pay class shirt contribution', due: daysFromNow(4), by: 'Mayor Cyrah', platform: 'Face-To-Face', done: true },
-  { id: 3, title: 'Lab Report 2: Data Structures', due: daysFromNow(7), by: 'Mayor Cyrah', platform: 'GradeVision', done: false },
+// Shared by Dashboard AND Calendar (see context/TaskContext.jsx).
+// personal: false = assigned by the mayor, true = the student's own task.
+export const initialTasks = [
+  { id: 1, title: 'Submit Capstone Proposal', date: dateKey(1), by: 'Mayor Cyrah', platform: 'StepS', subject: '', done: false, personal: false },
+  { id: 2, title: 'Pay class shirt contribution', date: dateKey(4), by: 'Mayor Cyrah', platform: 'Face-To-Face', subject: '', done: true, personal: false },
+  { id: 3, title: 'Lab Report 2: Data Structures', date: dateKey(7), by: 'Mayor Cyrah', platform: 'GradeVision', subject: '', done: false, personal: false },
+  { id: 'p1', title: 'Buy a blue book', date: dateKey(0), by: '', platform: '', subject: '', done: false, personal: true },
+  { id: 'p2', title: 'Print readings for ENG 12', date: dateKey(0), by: '', platform: '', subject: '', done: true, personal: true },
 ];
 
 export const announcements = [
   { id: 1, title: 'No classes on Friday', body: 'Faculty meeting all day. Online modules will be posted.' },
   { id: 2, title: 'Block meeting', body: 'Monday, 1 PM at Room 204. Attendance counts.' },
 ];
-
