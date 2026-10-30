@@ -10,7 +10,7 @@
 }
 
 .subtitle {
-  color: #4d6a63;
+  color: var(--muted);
   margin: 4px 0 24px;
 }
 
@@ -37,13 +37,13 @@
 }
 
 .tab:hover {
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--surface);
 }
 
 .tabActive,
 .tabActive:hover {
   background: var(--forest);
-  color: #fff;
+  color: var(--on-primary);
   font-weight: 600;
 }
 
@@ -52,7 +52,7 @@
   margin-bottom: 16px;
   padding: 12px 14px;
   border-radius: 10px;
-  background: #fde3d6;
+  background: var(--danger-soft);
   border-left: 4px solid var(--clay);
   font-size: 0.92rem;
 }
@@ -80,7 +80,7 @@
   gap: 14px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: #fff;
+  background: var(--surface);
   border: 1px solid var(--mist);
   border-left: 6px solid var(--peach);
 }
@@ -100,7 +100,7 @@
 
 .meta {
   font-size: 0.85rem;
-  color: #4d6a63;
+  color: var(--muted);
   margin-top: 2px;
 }
 
@@ -116,7 +116,7 @@
   border: 0;
   font-weight: 600;
   font-size: 0.88rem;
-  color: #fff;
+  color: var(--on-primary);
 }
 
 .accept {
@@ -124,17 +124,17 @@
 }
 
 .accept:hover {
-  background: #245a42;
+  background: var(--primary-hover);
 }
 
 .reject {
   background: transparent;
-  color: var(--clay);
-  border: 2px solid var(--clay);
+  color: var(--danger);
+  border: 2px solid var(--danger);
 }
 
 .reject:hover {
-  background: #fde3d6;
+  background: var(--danger-soft);
 }
 
 /* ---------- Status tags ---------- */
@@ -153,8 +153,8 @@
 }
 
 .rejected {
-  background: #fde3d6;
-  color: var(--clay);
+  background: var(--danger-soft);
+  color: var(--danger);
 }
 
 /* ---------- Tables ---------- */
@@ -162,7 +162,7 @@
   overflow-x: auto;
   border-radius: 12px;
   border: 1px solid var(--mist);
-  background: #fff;
+  background: var(--surface);
 }
 
 .table {
@@ -181,7 +181,7 @@
 
 .table td {
   padding: 12px 16px;
-  border-bottom: 1px solid #eef2f1;
+  border-bottom: 1px solid var(--line);
   font-size: 0.92rem;
 }
 
@@ -199,7 +199,7 @@
   text-align: center;
   border: 2px dashed var(--mist);
   border-radius: 12px;
-  color: #4d6a63;
+  color: var(--muted);
 }
 
 /* ---------- Responsive ---------- */

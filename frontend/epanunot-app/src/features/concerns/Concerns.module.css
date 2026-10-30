@@ -17,7 +17,7 @@
 }
 
 .top h1 { font-size: 2rem; }
-.top p { color: #4d6a63; margin-top: 4px; }
+.top p { color: var(--muted); margin-top: 4px; }
 
 /* ---------- Two-pane shell ---------- */
 .shell {
@@ -32,15 +32,15 @@
 .filters { display: flex; flex-wrap: wrap; gap: 8px; }
 .filterSelect { flex: 1 1 140px; width: auto; min-width: 0; }
 
-.count { font-size: 0.85rem; color: #4d6a63; }
+.count { font-size: 0.85rem; color: var(--muted); }
 
 /* ---------- Shared form controls ---------- */
 .input {
     width: 100%;
     padding: 9px 12px;
-    border: 1px solid var(--mist);
+    border: 1px solid var(--control-border);
     border-radius: 10px;
-    background: #fff;
+    background: var(--surface);
     color: var(--ink);
     font: inherit;
 }
@@ -62,22 +62,22 @@
     gap: 4px;
     padding: 14px 16px;
     border-radius: 12px;
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--mist);
     color: inherit;
     text-decoration: none;
 }
 
-.item:hover { background: #fffaf5; }
+.item:hover { background: var(--paper); }
 .selected, .selected:hover { background: var(--sand); }
 
 
 .itemTop { display: flex; align-items: flex-start; gap: 8px; }
 .itemTitle { flex: 1; min-width: 0; font-weight: 500; overflow-wrap: anywhere; }
 .unreadTitle { font-weight: 600; }
-.itemMeta { font-size: 0.85rem; color: #4d6a63; }
+.itemMeta { font-size: 0.85rem; color: var(--muted); }
 .itemBottom { display: flex; justify-content: space-between; gap: 8px; }
-.itemDate { font-size: 0.85rem; color: #4d6a63; white-space: nowrap; }
+.itemDate { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
 .itemDateUnread { color: var(--clay); font-weight: 600; }
 
 .dot {
@@ -103,7 +103,7 @@
 .tag[data-status="open"] { background: var(--peach); }
 .tag[data-status="in_progress"] { background: var(--mist); }
 .tag[data-status="resolved"] { background: var(--forest); color: var(--sand); }
-.tag[data-status="closed"] { background: var(--sand); color: #3f5a53; }
+.tag[data-status="closed"] { background: var(--sand); color: var(--muted); }
 
 /* ---------- Thread pane ---------- */
 .threadPane {
@@ -111,7 +111,7 @@
     flex-direction: column;
     min-width: 0;
     min-height: 420px;
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--mist);
     border-radius: 14px;
     overflow: hidden;
@@ -131,7 +131,7 @@
 .threadTitleRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .threadTitleRow h2 { font-size: 1.4rem; overflow-wrap: anywhere; }
 
-.facts { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 0.85rem; color: #4d6a63; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.9rem; line-height: 1.65; color: var(--ink); }
 .facts strong { color: var(--ink); font-weight: 600; }
 
 .desc { max-width: 70ch; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -166,12 +166,12 @@
     border-bottom: 1px solid var(--mist);
 }
 
-.actionNote { flex: 1 1 220px; font-size: 0.9rem; color: #4d6a63; }
+.actionNote { flex: 1 1 220px; font-size: 0.9rem; color: var(--muted); }
 
 /* ---------- Messages ---------- */
 .messages { flex: 1; display: grid; align-content: start; gap: 12px; padding: 20px; }
 
-.noReplies { color: #4d6a63; text-align: center; padding: 12px 0; }
+.noReplies { color: var(--muted); text-align: center; padding: 12px 0; }
 
 .msg {
     justify-self: start;
@@ -192,13 +192,13 @@
 .msgMeta { font-size: 0.75rem; opacity: 0.85; margin-bottom: 2px; }
 .msgText { line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; }
 
-.system { justify-self: center; text-align: center; font-size: 0.8rem; color: #4d6a63; }
+.system { justify-self: center; text-align: center; font-size: 0.8rem; color: var(--muted); }
 
 /* ---------- Composer ---------- */
 .composer { display: grid; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--mist); }
 .composer textarea { min-height: 72px; resize: vertical; }
 .composerRow { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.hint { font-size: 0.8rem; color: #4d6a63; }
+.hint { font-size: 0.8rem; color: var(--muted); }
 .composer button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* ---------- New concern modal ---------- */
@@ -215,10 +215,10 @@
     color: var(--ink);
     overflow-y: auto;
     overscroll-behavior: contain;
-    box-shadow: 0 24px 80px rgb(23 54 47 / 20%);
+    box-shadow: 0 24px 80px rgb(var(--shadow-rgb) / 20%);
 }
 .dialog::backdrop {
-    background: rgba(23, 54, 47, 0.55);
+    background: rgb(var(--shadow-rgb) / 0.55);
 }
 
 .modal {

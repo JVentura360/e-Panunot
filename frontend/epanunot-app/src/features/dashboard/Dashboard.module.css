@@ -8,9 +8,9 @@
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 36px; gap: 16px; }
 .stat { position: relative; overflow: hidden; isolation: isolate; background: var(--sand); padding: 20px 24px; border-radius: 16px; }
 .stat::after { content: ''; position: absolute; z-index: -1; width: 76px; height: 76px; right: -28px; bottom: -28px; border: 12px solid currentColor; border-radius: 50%; opacity: .07; pointer-events: none; }
-.stat:first-child { background: var(--forest); color: var(--paper); }
-.stat:nth-child(2) { background: var(--peach); }
-.stat:last-child { background: color-mix(in srgb, var(--sage) 27%, var(--paper)); }
+.stat:first-child { background: var(--surface); color: var(--ink); }
+.stat:nth-child(2) { background: var(--sand); color: var(--ink); }
+.stat:last-child { background: var(--sage-soft); }
 .stat > span { font-size: 0.85rem; font-weight: 600; }
 .stat strong { display: block; font-family: 'Bricolage Grotesque', sans-serif; font-size: 2.75rem; line-height: 1.25; margin: 8px 0; font-variant-numeric: tabular-nums; }
 .stat small { font-size: 0.75rem; }
@@ -23,7 +23,7 @@
 .filters { display: flex; gap: 4px; padding: 4px; border: 1px solid var(--line); background: var(--surface); border-radius: 10px; width: fit-content; margin-bottom: 24px; }
 .filters button { border: 0; padding: 8px 16px; min-height: 40px; background: transparent; color: var(--muted); border-radius: 7px; font-size: 0.8rem; font-weight: 600; }
 .filters button:hover { background: var(--paper); }
-.filters .activeFilter, .filters .activeFilter:hover { background: var(--forest); color: var(--paper); }
+.filters .activeFilter, .filters .activeFilter:hover { background: var(--forest); color: var(--on-primary); }
 .section { margin-bottom: 28px; }
 .section > h3 { font-family: 'Figtree', sans-serif; font-size: 0.8rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .section > h3 span, .count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; background: var(--sand); border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
@@ -41,7 +41,7 @@
 .grow { min-width: 0; }
 .tag { font-size: 0.65rem; font-weight: 600; padding: 4px 8px; border-radius: 5px; background: color-mix(in srgb, var(--mist) 30%, var(--surface)); white-space: nowrap; }
 .due { font-weight: 600; font-size: 0.73rem; color: var(--forest); white-space: nowrap; }
-.urgent .due { color: var(--ink); background: var(--sand); border-radius: 5px; padding: 4px 8px; }
+.urgent .due { color: var(--warning); background: var(--warning-soft); border-radius: 5px; padding: 4px 8px; }
 .ann { position: relative; border-top: 1px solid var(--line); padding: 20px 0 20px 36px; }
 .ann h3 { font-family: 'Figtree', sans-serif; font-size: 0.9rem; margin-bottom: 8px; line-height: 1.45; overflow-wrap: anywhere; }
 .ann p { font-size: 0.8rem; color: var(--muted); overflow-wrap: anywhere; white-space: pre-wrap; }

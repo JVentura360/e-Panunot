@@ -9,17 +9,61 @@ Page/component styles live in each feature's
 */
 
 :root {
-  --forest: #2D6A4F;
-  --sage: #8EBBA7;
-  --mist: #B9CDCB;
-  --sand: #F2DDCC;
-  --peach: #FCAC89;
-  --clay: #D97745;
-  --ink: #17362f;
-  --paper: #fffdf5;
-  --surface: #ffffff;
-  --muted: #4d6a63;
-  --line: color-mix(in srgb, var(--mist) 60%, var(--paper));
+  /* Dark aurora. Existing aliases preserve shared component theming. */
+  color-scheme: dark;
+  --forest: #68B7AA;
+  --primary-hover: #89C8BC;
+  --aurora-laser: #28F5CC;
+  --raven: #747C88;
+  --header-bg: #04372F;
+  --header-ink: #F1F4F7;
+  --brand-accent: #68B7AA;
+  --aurora-green: #04AD7B;
+  --sage: #344B4F;
+  --sage-soft: #293E3E;
+  --mist: #596777;
+  --sand: #303D4A;
+  --peach: #344A48;
+  --clay: #9AD0C1;
+  --ink: #F1F4F7;
+  --paper: #10171F;
+  --surface: #2A3444;
+  --muted: #C2CAD4;
+  --line: #485363;
+  --control-border: #8995A3;
+  --on-primary: #0C2522;
+  --on-header-muted: #D0DED9;
+  --danger: #FFB4A8;
+  --danger-soft: #482B2D;
+  --warning: #F2CB8D;
+  --warning-soft: #3E3422;
+  --shadow-rgb: 3 7 12;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --forest: #286B62;
+  --primary-hover: #20584F;
+  --aurora-laser: #19806D;
+  --aurora-green: #087D61;
+  --brand-accent: #90CCBE;
+  --sage: #C5DDD7;
+  --sage-soft: #E1EDE8;
+  --mist: #AFBEC6;
+  --sand: #E5EBEE;
+  --peach: #D5E7DF;
+  --clay: #286B62;
+  --ink: #202D38;
+  --paper: #F3F5F7;
+  --surface: #FFFFFF;
+  --muted: #4E5E6C;
+  --line: #CED7DF;
+  --control-border: #788895;
+  --on-primary: #FFFFFF;
+  --danger: #9B3D35;
+  --danger-soft: #F8E3DC;
+  --warning: #795218;
+  --warning-soft: #F6E9CF;
 }
 
 * {
@@ -38,7 +82,8 @@ body {
 html { scrollbar-gutter: stable; }
 ::selection { background: var(--sand); color: var(--ink); }
 button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
-input, select, textarea { font: inherit; color: var(--ink); accent-color: var(--forest); }
+input, select, textarea { font: inherit; color: var(--ink); accent-color: var(--forest); caret-color: var(--forest); }
+input::placeholder, textarea::placeholder { color: var(--muted); opacity: 1; }
 button, a, input, select, textarea { touch-action: manipulation; }
 button:disabled { cursor: not-allowed; opacity: 0.6; }
 button, a { transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
@@ -54,7 +99,7 @@ button {
 }
 
 :focus-visible {
-  outline: 3px solid var(--clay);
+  outline: 3px solid var(--forest);
   outline-offset: 2px;
 }
 
@@ -66,13 +111,13 @@ button {
   border-radius: 10px;
   border: 0;
   background: var(--forest);
-  color: #fff;
+  color: var(--on-primary);
   font-weight: 600;
 }
 
 .btn:active:not(:disabled) { transform: scale(.98); }
 
-.btn:hover:not(:disabled) { background: var(--ink); }
+.btn:hover:not(:disabled) { background: var(--primary-hover); }
 .btn.alt { background: var(--sand); color: var(--ink); }
 .btn.alt:hover:not(:disabled) { background: var(--peach); }
 .btn.ghost { background: transparent; color: var(--forest); border: 1px solid var(--mist); }
@@ -83,10 +128,10 @@ button {
   text-align: center;
   border: 1px dashed var(--mist);
   border-radius: 12px;
-  color: #4d6a63;
+  color: var(--muted);
 }
 
-* { scrollbar-width: thin; scrollbar-color: var(--sage) transparent; }
+* { scrollbar-width: thin; scrollbar-color: var(--raven) transparent; }
 .skipLink { position: fixed; top: 8px; left: 16px; z-index: 500; padding: 12px 20px; background: var(--paper); color: var(--ink); border: 2px solid var(--forest); border-radius: 8px; transform: translateY(-160%); }
 .skipLink:focus { transform: translateY(0); }
 
@@ -96,7 +141,7 @@ button {
   max-inline-size: 100%;
   min-height: 46px;
   padding: 10px 14px;
-  border: 1px solid var(--mist);
+  border: 1px solid var(--control-border);
   border-radius: 10px;
   background-color: var(--surface);
   color: var(--ink);
@@ -138,7 +183,7 @@ select option { background: var(--paper); color: var(--ink); }
     border: 1px solid var(--mist);
     border-radius: 14px;
     background: var(--paper);
-    box-shadow: 0 12px 32px rgb(23 54 47 / 16%);
+    box-shadow: 0 12px 32px rgb(var(--shadow-rgb) / 16%);
     min-inline-size: anchor-size(width);
     max-inline-size: min(420px, calc(100vw - 32px));
     max-block-size: min(340px, 50dvh);
