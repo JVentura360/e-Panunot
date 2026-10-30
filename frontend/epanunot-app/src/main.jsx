@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { BlockProvider } from './context/BlockContext.jsx';
-import { TaskProvider } from './context/TaskContext.jsx';
 import './index.css';
 import { initializeTheme } from './theme.js';
 
@@ -13,9 +12,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <BlockProvider>
-        <TaskProvider>
-          <App />
-        </TaskProvider>
+        <App />
       </BlockProvider>
     </BrowserRouter>
   </StrictMode>

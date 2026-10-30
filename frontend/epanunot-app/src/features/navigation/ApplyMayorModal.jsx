@@ -5,7 +5,7 @@ import styles from './ApplyMayorModal.module.css';
 
 const PROGRAMS = ['ITE']; // Add other programs when available.
 
-export default function ApplyMayorModal({ user, onClose }) {
+export default function ApplyMayorModal({ onClose }) {
     const [form, setForm] = useState({
         year_level: '1',
         program: PROGRAMS[0],

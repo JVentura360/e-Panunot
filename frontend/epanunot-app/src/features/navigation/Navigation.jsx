@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ApplyMayorModal from './ApplyMayorModal.jsx';
 import styles from './Navigation.module.css';
@@ -119,6 +119,28 @@ function SlidingNav({ className, label, children }) {
 
 export default function Navigation({ user, onLogout, notifCount = 0 }) {
   const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+  const profileButtonRef = useRef(null);
+  useEffect(() => {
+    if (!profileOpen) return;
+    const dismissOutside = (event) => {
+      if (!profileRef.current?.contains(event.target)) setProfileOpen(false);
+    };
+    const dismissOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setProfileOpen(false);
+        profileButtonRef.current?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', dismissOutside, true);
+    document.addEventListener('focusin', dismissOutside);
+    document.addEventListener('keydown', dismissOnEscape);
+    return () => {
+      document.removeEventListener('pointerdown', dismissOutside, true);
+      document.removeEventListener('focusin', dismissOutside);
+      document.removeEventListener('keydown', dismissOnEscape);
+    };
+  }, [profileOpen]);
   const [applyOpen, setApplyOpen] = useState(false);
   const [theme, setTheme] = useState(() => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
   const toggleTheme = () => {
@@ -169,8 +191,9 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
               {notifCount > 0 && <span className={styles.notifBadge} aria-hidden="true">{notifCount}</span>}
             </button>
 
-            <div className={styles.profileWrapper}>
+            <div ref={profileRef} className={styles.profileWrapper}>
               <button
+                ref={profileButtonRef}
                 className={styles.profileBtn}
                 aria-label={`Account menu for ${user.name}`}
                 onClick={() => setProfileOpen((v) => !v)}

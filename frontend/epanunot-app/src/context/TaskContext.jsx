@@ -1,100 +1,77 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { TASK_STORAGE_KEY as KEY, readTasks, saveTasks } from './taskStorage.js';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { initialTasks } from '../data/mockData';
+import { validDeadline, unfinishedFirst } from '../components/taskListUtils.js';
 
-const KEY = 'tasks-v1';
+
 const TaskContext = createContext(null);
-
-// Tasks are stored with a plain 'YYYY-MM-DD' date string so they survive
-// JSON/localStorage. The Dashboard wants a Date (`due`), so we derive it.
-//
-// Stored shape:
-//   { id, title, date, subject, platform, by, done, personal }
-//   personal: false = assigned by the mayor (Dashboard "From your mayor",
-//                     Calendar "Class tasks" + calendar grid)
-//   personal: true  = the student's own task (Dashboard "Personal tasks",
-//                     Calendar "My to-dos")
-
-export const toKey = (d) => {
-    const pad = (n) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 };
-
-const withDue = (t) => ({ ...t, due: new Date(`${t.date}T23:59:00`) });
-
-function load() {
-    try {
-        const raw = localStorage.getItem(KEY);
-        if (raw) return JSON.parse(raw);
-    } catch {
-        /* ignore corrupt or unavailable storage */
-    }
-    return initialTasks;
+function read() {
+  try { return readTasks(localStorage); } catch { return {}; }
 }
 
-// One shared task list for Dashboard and Calendar.
-export function TaskProvider({ children }) {
-    const [stored, setStored] = useState(load);
+export function TaskProvider({ user, children }) {
+  const [store, setStore] = useState(read);
+  const current = useRef(store);
+  const account = user.email || String(user.id);
+  const block = user.block_id || user.block || account;
+  const classKey = `block:${block}`;
+  const personalKey = `personal:${account}`;
+  const completionKey = `completed:${account}`;
+  const seeds = (personal) => initialTasks.filter((t) => t.personal === personal);
+  const classTasks = store[classKey] || seeds(false);
+  const personalTasks = store[personalKey] || seeds(true);
+  const completions = store[completionKey] || {};
 
-    // Same signature as a normal setState (value or updater function).
-    // The updater runs against the latest stored data, so a change made
-    // in another tab is never overwritten by a stale copy.
-    const setTasksRaw = useCallback((updater) => {
-        const base = load();
-        const next = typeof updater === 'function' ? updater(base) : updater;
-        try {
-            localStorage.setItem(KEY, JSON.stringify(next));
-        } catch {
-            /* storage full or blocked: still update this tab */
-        }
-        setStored(next);
-    }, []);
+  const update = (change) => {
+    const next = change(current.current);
+    current.current = next;
+    try { saveTasks(localStorage, next); } catch { /* Keep working in memory. */ }
+    setStore(next);
+  };
+  useEffect(() => {
+    const sync = (event) => {
+      if (event.key !== KEY && event.key !== null) return;
+      const next = read();
+      current.current = next;
+      setStore(next);
+    };
+    window.addEventListener('storage', sync);
+    return () => window.removeEventListener('storage', sync);
+  }, []);
 
-    // Keep other tabs in sync.
-    useEffect(() => {
-        const onStorage = (e) => {
-            if (e.key === KEY && e.newValue) setStored(JSON.parse(e.newValue));
-        };
-        window.addEventListener('storage', onStorage);
-        return () => window.removeEventListener('storage', onStorage);
-    }, []);
+  const tasks = unfinishedFirst([...classTasks, ...personalTasks].map((task) => ({
+    ...task, done: completions[task.id] ?? task.done,
+    due: new Date(`${task.date}T23:59:00`),
+  })));
 
-    const tasks = useMemo(() => stored.map(withDue), [stored]);
-
-    // values: { title, date: 'YYYY-MM-DD', subject?, platform?, by?, personal? }
-    const addTask = useCallback((values) => {
-        setTasksRaw((prev) => [
-            ...prev,
-            {
-                id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-                title: values.title.trim(),
-                date: values.date,
-                subject: values.subject || '',
-                platform: values.platform || '',
-                by: values.by || '',
-                personal: Boolean(values.personal),
-                done: false,
-            },
-        ]);
-    }, [setTasksRaw]);
-
-    const toggleTask = useCallback((id) => {
-        setTasksRaw((prev) => prev.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
-    }, [setTasksRaw]);
-
-    const deleteTask = useCallback((id) => {
-        setTasksRaw((prev) => prev.filter((t) => t.id !== id));
-    }, [setTasksRaw]);
-
-    return (
-        <TaskContext.Provider value={{ tasks, addTask, toggleTask, deleteTask }}>
-            {children}
-        </TaskContext.Provider>
-    );
+  const addTask = (values) => {
+    if (!values.title.trim() || !validDeadline(values.date, today())) return;
+    if (!values.personal && user.role !== 'mayor') return;
+    const key = values.personal ? personalKey : classKey;
+    const task = { ...values, id: crypto.randomUUID(), title: values.title.trim(), personal: Boolean(values.personal), done: false };
+    update((prev) => ({ ...prev, [key]: [task, ...(prev[key] || seeds(task.personal))] }));
+  };
+  const toggleTask = (id) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task) return;
+    update((prev) => ({ ...prev, [completionKey]: { ...prev[completionKey], [id]: !task.done } }));
+  };
+  const deleteTask = (id) => {
+    const task = tasks.find((t) => t.id === id);
+    if (!task || (!task.personal && user.role !== 'mayor')) return;
+    const key = task.personal ? personalKey : classKey;
+    update((prev) => ({ ...prev, [key]: (prev[key] || seeds(task.personal)).filter((t) => t.id !== id) }));
+  };
+  return <TaskContext.Provider value={{ tasks, addTask, toggleTask, deleteTask }}>{children}</TaskContext.Provider>;
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
 export function useTasks() {
-    const ctx = useContext(TaskContext);
-    if (!ctx) throw new Error('useTasks must be used inside <TaskProvider>');
-    return ctx;
+  const context = useContext(TaskContext);
+  if (!context) throw new Error('useTasks requires TaskProvider');
+  return context;
 }

@@ -4,7 +4,7 @@ import styles from './Dashboard.module.css';
 export default function TaskItem({ t, onToggle }) {
   const left = daysLeft(t.due);
   return (
-    <div className={`${styles.item} ${left <= 1 && !t.done ? styles.urgent : ''} ${t.done ? styles.done : ''}`}>
+    <li data-sort-id={t.id} className={`${styles.item} ${left <= 1 && !t.done ? styles.urgent : ''} ${t.done ? styles.done : ''}`}>
       {onToggle && (
         <input
           type="checkbox"
@@ -19,6 +19,6 @@ export default function TaskItem({ t, onToggle }) {
       </div>
       <span className={styles.tag}>{t.platform || 'StepS'}</span>
       <span className={styles.due}>{t.done ? 'Completed' : left < 0 ? `${Math.abs(left)}d overdue` : left === 0 ? 'Due today' : left === 1 ? 'Tomorrow' : fmt(t.due)}</span>
-    </div>
+    </li>
   );
 }

@@ -1,3 +1,4 @@
+import AnimatedList from '../../components/AnimatedList.jsx';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from '../../components/Modal.jsx';
@@ -19,7 +20,7 @@ export default function Dashboard({ user }) {
   const dueSoon = pending.filter((task) => daysLeft(task.due) <= 1).length;
   const matchesFilter = (task) => filter === 'all' || (filter === 'open' ? !task.done : task.done);
   const assigned = tasks.filter((task) => !task.personal && matchesFilter(task))
-    .sort((a, b) => Number(a.done) - Number(b.done) || a.due - b.due);
+    .sort((a, b) => Number(a.done) - Number(b.done));
   const personal = tasks.filter((task) => task.personal && matchesFilter(task));
 
   const addTask = (values, personalTask) => {
@@ -66,11 +67,11 @@ export default function Dashboard({ user }) {
           </div>
           <section className={styles.section}>
             <h3>{isMayor ? 'Assigned to your block' : 'From your mayor'} <span>{assigned.length}</span></h3>
-            {assigned.length ? <div className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={isMayor ? null : toggle} />)}</div> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
+            {assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={isMayor ? null : toggle} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
           </section>
           {!isMayor && <section className={styles.section}>
             <h3>Personal tasks <span>{personal.length}</span></h3>
-            {personal.length ? <div className={styles.list}>{personal.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} />)}</div> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'A fresh page for your own plans.'}{filter !== 'done' && <button className={styles.inlineAction} onClick={() => setModal('mine')}>Add your first task</button>}</PlannerEmpty>}
+            {personal.length ? <AnimatedList className={styles.list}>{personal.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'A fresh page for your own plans.'}{filter !== 'done' && <button className={styles.inlineAction} onClick={() => setModal('mine')}>Add your first task</button>}</PlannerEmpty>}
           </section>}
         </div>
 

@@ -72,7 +72,7 @@ const [events, setEvents] = useState(SEED_EVENTS);
 // the student's own tasks (personal: true) are the "My to-dos".
 const { tasks: allTasks, addTask, toggleTask, deleteTask } = useTasks();
 const tasks = useMemo(
-    () => allTasks.filter((t) => !t.personal).sort((a, b) => a.date.localeCompare(b.date)),
+    () => allTasks.filter((t) => !t.personal),
     [allTasks]
 );
 const todos = useMemo(() => allTasks.filter((t) => t.personal), [allTasks]);

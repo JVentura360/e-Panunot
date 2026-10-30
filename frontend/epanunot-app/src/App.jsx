@@ -1,3 +1,4 @@
+import { TaskProvider } from './context/TaskContext.jsx';
 import { useState, useCallback, useEffect } from 'react';
 import { api, getToken, setToken } from './api/client.js';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
@@ -30,7 +31,10 @@ export default function App() {
         // Restore the session after a page refresh.
         if (!getToken()) return;
 
-        refreshUser().finally(() => setBooting(false));
+        api('/me')
+            .then((response) => setUser(response.data))
+            .catch(() => { /* Expired sessions return to login. */ })
+            .finally(() => setBooting(false));
     }, [refreshUser]);
 
     useEffect(() => {
@@ -75,7 +79,7 @@ export default function App() {
         setUser((prev) => ({ ...prev, ...changes }));
 
     return (
-        <Routes>
+        <TaskProvider user={user}><Routes>
             <Route element={<MainLayout user={user} onLogout={handleLogout} />}>
                 {/* Admins land on /admin, everyone else gets the dashboard */}
                 <Route
@@ -125,6 +129,6 @@ export default function App() {
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        </Routes></TaskProvider>
     );
 }
