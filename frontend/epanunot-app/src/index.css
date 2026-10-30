@@ -17,6 +17,9 @@ Page/component styles live in each feature's
   --clay: #D97745;
   --ink: #17362f;
   --paper: #fffdf5;
+  --surface: #ffffff;
+  --muted: #4d6a63;
+  --line: color-mix(in srgb, var(--mist) 60%, var(--paper));
 }
 
 * {
@@ -28,7 +31,17 @@ body {
   font-family: 'Figtree', system-ui, sans-serif;
   background: var(--paper);
   color: var(--ink);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
 }
+
+html { scrollbar-gutter: stable; }
+::selection { background: var(--sand); color: var(--ink); }
+button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+input, select, textarea { font: inherit; color: var(--ink); accent-color: var(--forest); }
+button, a, input, select, textarea { touch-action: manipulation; }
+button:disabled { cursor: not-allowed; opacity: 0.6; }
+button, a { transition: background-color 160ms ease, color 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
 
 h1, h2, h3 {
   font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
@@ -47,32 +60,118 @@ button {
 
 /* ---------- Shared utilities (used by many pages) ---------- */
 .btn {
+  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
   padding: 10px 18px;
+  min-height: 44px;
   border-radius: 10px;
   border: 0;
-  background: var(--clay);
+  background: var(--forest);
   color: #fff;
   font-weight: 600;
 }
 
-.btn:hover { background: #cf7142; }
-.btn.alt { background: var(--forest); }
-.btn.ghost { background: transparent; color: var(--forest); border: 2px solid var(--forest); }
+.btn:active:not(:disabled) { transform: scale(.98); }
+
+.btn:hover:not(:disabled) { background: var(--ink); }
+.btn.alt { background: var(--sand); color: var(--ink); }
+.btn.alt:hover:not(:disabled) { background: var(--peach); }
+.btn.ghost { background: transparent; color: var(--forest); border: 1px solid var(--mist); }
+.btn.ghost:hover:not(:disabled) { background: var(--sand); }
 
 .empty {
   padding: 24px;
   text-align: center;
-  border: 2px dashed var(--mist);
+  border: 1px dashed var(--mist);
   border-radius: 12px;
   color: #4d6a63;
 }
 
-/* Hide scrollbars everywhere, but keep scrolling working */
-* {
-  scrollbar-width: none;       /* Firefox */
-  -ms-overflow-style: none;    /* old Edge/IE */
+* { scrollbar-width: thin; scrollbar-color: var(--sage) transparent; }
+.skipLink { position: fixed; top: 8px; left: 16px; z-index: 500; padding: 12px 20px; background: var(--paper); color: var(--ink); border: 2px solid var(--forest); border-radius: 8px; transform: translateY(-160%); }
+.skipLink:focus { transform: translateY(0); }
+
+/* Shared select treatment for filters, calendar fields and dialog forms. */
+:root select:not([multiple]) {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  min-height: 46px;
+  padding: 10px 14px;
+  border: 1px solid var(--mist);
+  border-radius: 10px;
+  background-color: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  cursor: pointer;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+:root select:not([multiple]):hover { border-color: var(--sage); }
+:root select:not([multiple]):focus-visible {
+  border-color: var(--forest);
+  outline: 2px solid var(--forest);
+  outline-offset: 2px;
+}
+:root select:disabled { cursor: not-allowed; opacity: 0.6; }
+select option { background: var(--paper); color: var(--ink); }
+
+/* Enhance the native control where customizable pickers are supported.
+   Other browsers retain their accessible native option menu. */
+@supports (appearance: base-select) {
+  :root select:not([multiple]),
+  select:not([multiple])::picker(select) { appearance: base-select; }
+
+  :root select:not([multiple]) { align-items: center; gap: 12px; }
+  :root select:not([multiple]):open {
+    border-color: var(--forest);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--sage) 25%, transparent);
+  }
+  select::picker-icon {
+    color: var(--forest);
+    margin-inline-start: auto;
+    transition: rotate 180ms ease;
+  }
+  select:open::picker-icon { rotate: 180deg; }
+  select:not([multiple])::picker(select) {
+    margin-block: 8px;
+    padding: 6px;
+    border: 1px solid var(--mist);
+    border-radius: 14px;
+    background: var(--paper);
+    box-shadow: 0 12px 32px rgb(23 54 47 / 16%);
+    min-inline-size: anchor-size(width);
+    max-inline-size: min(420px, calc(100vw - 32px));
+    max-block-size: min(340px, 50dvh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+  select option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    cursor: pointer;
+  }
+  select option + option { margin-top: 2px; }
+  select option:hover, select option:focus { background: var(--sand); outline: none; }
+  select option:checked, select option:checked:hover, select option:checked:focus {
+    background: var(--forest);
+    color: var(--paper);
+    font-weight: 600;
+  }
+  select option:disabled { color: var(--muted); opacity: 0.65; cursor: default; }
+  select option:disabled:checked { background: var(--paper); color: var(--muted); font-weight: 400; }
+  select option::checkmark { display: none; }
 }
 
-*::-webkit-scrollbar {
-  display: none;               /* Chrome, Edge, Safari */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }

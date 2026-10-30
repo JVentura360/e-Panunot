@@ -1,5 +1,9 @@
 import { useMemo, useState } from 'react';
 import styles from './Calendar.module.css';
+import DatePicker from '../../components/DatePicker';
+import PlannerEmpty from '../../components/PlannerEmpty.jsx';
+import AnimatedList from '../../components/AnimatedList.jsx';
+import { unfinishedFirst, validDeadline } from '../../components/taskListUtils.js';
 
 /* ---------- helpers ---------- */
 const pad = (n) => String(n).padStart(2, '0');
@@ -74,7 +78,7 @@ const [cursor, setCursor] = useState(TODAY);
 const [selected, setSelected] = useState(TODAY_KEY);
 
 const [events, setEvents] = useState(SEED_EVENTS);
-const [tasks, setTasks] = useState(SEED_TASKS);
+const [tasks, setTasks] = useState(() => [...SEED_TASKS].sort((a, b) => a.date.localeCompare(b.date)));
 const [doneTasks, setDoneTasks] = useState([]);
 const [todos, setTodos] = useState(SEED_TODOS);
 const [todoText, setTodoText] = useState('');
@@ -122,8 +126,16 @@ const title =
     ? `${weekDays[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – ${weekDays[6].toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
     : cursor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+const weekStart = weekDays[0];
+const weekEnd = weekDays[6];
+const weekRange = `${weekStart.getMonth() + 1}/${weekStart.getDate()} - ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`;
+const weekYear = weekStart.getFullYear() === weekEnd.getFullYear()
+    ? String(weekEnd.getFullYear()) : `${weekStart.getFullYear()}–${weekEnd.getFullYear()}`;
+
 const selectedItems = itemsByDay[selected] || [];
-const sortedTasks = [...tasks].sort((a, b) => a.date.localeCompare(b.date));
+const sortedTasks = unfinishedFirst(tasks, (task) => doneTasks.includes(task.id), doneTasks);
+const sortedTodos = unfinishedFirst(todos);
+const today = toKey(new Date());
 
 /* ---------- actions ---------- */
 const shift = (dir) => {
@@ -141,7 +153,7 @@ const openPanel = (type) => {
     setPanel(null);
     return;
     }
-    setForm({ ...EMPTY_FORM, date: selected });
+    setForm({ ...EMPTY_FORM, date: type === 'task' && selected < today ? today : selected });
     setError('');
     setPanel(type);
 };
@@ -168,9 +180,10 @@ const submitEvent = (e) => {
 const submitTask = (e) => {
     e.preventDefault();
     if (!form.title.trim()) return setError('Please add a title.');
+    if (!validDeadline(form.date, toKey(new Date()))) return setError('Choose today or a future date for the deadline.');
     setTasks((prev) => [
-    ...prev,
     { id: uid(), title: form.title.trim(), subject: form.subject, date: form.date },
+    ...prev,
     ]);
     finishForm();
 };
@@ -189,12 +202,17 @@ const addTodo = (e) => {
     e.preventDefault();
     const text = todoText.trim();
     if (!text) return;
-    setTodos((p) => [...p, { id: uid(), text, done: false }]);
+    setTodos((p) => [{ id: uid(), text, done: false }, ...p]);
     setTodoText('');
 };
 
-const toggleTodo = (id) =>
-    setTodos((p) => p.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
+const toggleTodo = (id) => setTodos((previous) => {
+    const task = previous.find((item) => item.id === id);
+    if (!task) return previous;
+    const updated = { ...task, done: !task.done };
+    const remaining = previous.filter((item) => item.id !== id);
+    return updated.done ? [...remaining, updated] : [updated, ...remaining];
+});
 
 const deleteTodo = (id) => setTodos((p) => p.filter((t) => t.id !== id));
 
@@ -246,7 +264,9 @@ return (
             <button type="button" className={styles.todayBtn} onClick={goToday}>Today</button>
             <button type="button" className={styles.navBtn} onClick={() => shift(1)} aria-label="Next">›</button>
         </div>
-        <h1 className={styles.title}>{title}</h1>
+        <h1 className={`${styles.title} ${view === 'week' ? styles.weekTitle : ''}`} aria-label={view === 'week' ? `${weekRange}, ${weekYear}` : undefined}>
+            {view === 'week' ? `${weekRange}, ${weekYear}` : title}
+        </h1>
         </div>
 
         <div className={styles.viewToggle} role="group" aria-label="Calendar view">
@@ -355,7 +375,7 @@ return (
         {view === 'agenda' && (
             <div className={styles.agenda}>
             {agendaDays.length === 0 && (
-                <div className="empty">Nothing scheduled this month.</div>
+                <PlannerEmpty>A fresh month, room for new plans.</PlannerEmpty>
             )}
             {agendaDays.map((key) => (
                 <div key={key} className={styles.agendaDay}>
@@ -406,10 +426,10 @@ return (
                 Title
                 <input value={form.title} onChange={setField('title')} placeholder="e.g. Study session" />
                 </label>
-                <label className={styles.field}>
-                Date
-                <input type="date" value={form.date} onChange={setField('date')} />
-                </label>
+                <div className={styles.field}>
+                <label htmlFor="calendar-event-date">Date</label>
+                <DatePicker id="calendar-event-date" value={form.date} onChange={setField('date')} />
+                </div>
                 <div className={styles.fieldRow}>
                 <label className={styles.field}>
                     Start
@@ -442,10 +462,10 @@ return (
                     ))}
                 </select>
                 </label>
-                <label className={styles.field}>
-                Due date
-                <input type="date" value={form.date} onChange={setField('date')} />
-                </label>
+                <div className={styles.field}>
+                <label htmlFor="calendar-task-date">Due date</label>
+                <DatePicker id="calendar-task-date" value={form.date} min={today} required onChange={setField('date')} />
+                </div>
                 {error && <p className={styles.error}>{error}</p>}
                 <div className={styles.formBtns}>
                 <button type="submit" className="btn">Create task</button>
@@ -456,7 +476,7 @@ return (
 
             <h3 className={styles.sectionLabel}>Schedule</h3>
             {selectedItems.length === 0 ? (
-            <div className="empty">Nothing scheduled for this day.</div>
+            <PlannerEmpty>A little breathing room. Nothing scheduled for this day.</PlannerEmpty>
             ) : (
             <ul className={styles.list}>{selectedItems.map(renderRow)}</ul>
             )}
@@ -469,12 +489,12 @@ return (
             {sortedTasks.length === 0 ? (
             <div className="empty">No class tasks yet.</div>
             ) : (
-            <ul className={styles.list}>
+            <AnimatedList className={styles.list}>
                 {sortedTasks.map((t) => {
                 const done = doneTasks.includes(t.id);
                 const overdue = !done && t.date < TODAY_KEY;
                 return (
-                    <li key={t.id} className={`${styles.todo} ${done ? styles.rowDone : ''}`}>
+                    <li key={t.id} data-sort-id={t.id} className={`${styles.todo} ${done ? styles.rowDone : ''}`}>
                     <input
                         type="checkbox"
                         checked={done}
@@ -500,7 +520,7 @@ return (
                     </li>
                 );
                 })}
-            </ul>
+            </AnimatedList>
             )}
 
             <h3 className={styles.sectionLabel}>My to-dos</h3>
@@ -516,9 +536,9 @@ return (
             {todos.length === 0 ? (
             <div className="empty">You're all caught up.</div>
             ) : (
-            <ul className={styles.list}>
-                {todos.map((t) => (
-                <li key={t.id} className={`${styles.todo} ${t.done ? styles.rowDone : ''}`}>
+            <AnimatedList className={styles.list}>
+                {sortedTodos.map((t) => (
+                <li key={t.id} data-sort-id={t.id} className={`${styles.todo} ${t.done ? styles.rowDone : ''}`}>
                     <input
                     type="checkbox"
                     checked={t.done}
@@ -536,7 +556,7 @@ return (
                     </button>
                 </li>
                 ))}
-            </ul>
+            </AnimatedList>
             )}
         </div>
         </aside>

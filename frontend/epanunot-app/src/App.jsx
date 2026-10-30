@@ -10,15 +10,6 @@ import Concerns from './features/concerns/Concerns.jsx';
 import useSyncedConcerns from './features/concerns/useSyncedConcerns.js';
 import Calendar from './features/calendar/Calendar.jsx';
 
-// Temporary stand-in until the Calendar page is built (features/calendar).
-function ComingSoon({ title }) {
-  return (
-    <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px' }}>
-      <div className="empty">{title} is coming soon.</div>
-    </div>
-  );
-}
-
 export default function App() {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
@@ -46,7 +37,6 @@ export default function App() {
         {/* Admins land on /admin, everyone else gets the dashboard */}
         <Route path="/" element={member(<Dashboard user={user} />)} />
 
-        {/* Placeholders: swap each ComingSoon for the real page when it is built */}
         <Route path="/profile" element={<Profile user={user} onUpdateUser={handleUpdateUser}/>} />
         <Route path="/calendar" element={member(<Calendar user={user} />)} />
         <Route path="/concerns/*" element={member(<Concerns user={user} concerns={concerns} setConcerns={setConcerns} />)} />

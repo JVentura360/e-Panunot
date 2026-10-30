@@ -1,0 +1,25 @@
+.field { position: relative; width: 100%; min-width: 0; }
+:root input.input { width: 100%; min-height: 48px; padding-right: 52px; font: inherit; color: var(--ink); border: 1px solid var(--mist); border-radius: 10px; background: var(--surface); }
+.trigger { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border: 0; border-radius: 7px; background: transparent; color: var(--forest); display: none; place-items: center; }
+@supports selector(:popover-open) {
+  .input::-webkit-calendar-picker-indicator { display: none; }
+  .trigger { display: grid; }
+}
+.trigger:hover { background: var(--sand); }
+.calendarIcon { font-size: 24px; line-height: 1; }
+.popup { position: fixed; inset: auto; margin: 0; padding: 16px; width: min(320px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--mist); border-radius: 16px; background: var(--paper); color: var(--ink); box-shadow: 0 12px 36px rgb(23 54 47 / 18%); }
+.heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 12px; font-weight: 600; font-size: 0.9rem; }
+.monthNav { display: flex; gap: 4px; }
+.monthNav button { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--forest); font-size: 1.4rem; }
+.monthNav button:hover { background: var(--sand); }
+.grid { width: 100%; border-collapse: separate; border-spacing: 2px; table-layout: fixed; }
+.grid th { font-size: 0.7rem; color: var(--muted); font-weight: 500; padding-bottom: 8px; text-align: center; }
+.grid td { padding: 0; }
+.day { display: grid; place-items: center; width: 100%; min-height: 36px; padding: 4px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--ink); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.day:hover:not(:disabled) { background: var(--sand); }
+.outside { color: var(--muted); }
+.day[aria-current="date"] { border-color: var(--forest); font-weight: 600; }
+.day.selected, .day.selected:hover { background: var(--forest); color: var(--paper); font-weight: 600; }
+.footer { display: flex; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 10px; margin-top: 12px; }
+.footer button { min-height: 40px; padding: 8px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--forest); font-size: 0.8rem; font-weight: 600; }
+.footer button:hover:not(:disabled) { background: var(--sand); }

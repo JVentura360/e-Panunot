@@ -32,41 +32,44 @@ export default function Login({ onLogin }) {
 
     return (
         <main className={styles.login}>
-        <section className={styles.hero}>
-            <div className={styles.brand}>e<b>Panunot</b></div>
-            <div>
-            <h1>Walang Kanin Busseng?</h1>
-            <p>Pwede na mangarap.</p>
-            </div>
-        </section>
-
-        <section className={styles.panel}>
+        <div className={styles.scenery} aria-hidden="true">
+            <span className={styles.cornerRing} />
+            <span className={styles.bottomRing} />
+        </div>
+        <section className={styles.panel} aria-label="Sign in">
             <div className={styles.card}>
-            <h2>Sign in</h2>
-            <p>Use your UDD or CDD school Google account.</p>
+            <div className={styles.illustration} aria-hidden="true">
+                <div className={styles.backNote} />
+                <div className={styles.frontNote}>
+                    <span className={styles.noteTab} />
+                    <span className={styles.noteRow}><i /><b /></span>
+                    <span className={styles.noteRow}><i /><b /></span>
+                    <span className={styles.noteRow}><i /><b /></span>
+                </div>
+                <span className={styles.noteDot} />
+            </div>
+            <h1 className={styles.brand}>e<b>Panunot</b></h1>
 
-            <button className={styles.gbtn} disabled={loading} onClick={() => signIn(demoAccounts[0])}>
-                <GoogleG /> {loading ? 'Signing in...' : 'Continue with Google'}
+            <button className={styles.gbtn} disabled={loading} aria-busy={loading} onClick={() => signIn(demoAccounts[0])}>
+                <span className={styles.providerIcon}><GoogleG /></span>
+                <span>{loading ? 'Signing in...' : 'Continue with UdD/CdD account'}</span>
+                {loading && <span className={styles.loadingIndicator} aria-hidden="true" />}
             </button>
+            <p className={styles.schoolNote}>For @udd.edu.ph and @cdd.edu.ph accounts.</p>
 
             {error && <div className={styles.error} role="alert">{error}</div>}
 
-            <div className={styles.demo}>
-                Prototype shortcuts
+            <details className={styles.demo}>
+                <summary>Prototype options</summary>
+                <p className={styles.demoHint}>Choose a role to preview its workspace. Google sign-in is not connected yet.</p>
                 <div className={styles.demoRow}>
                 {demoAccounts.map((d) => (
-                    <button key={d.role} className={styles.chip} onClick={() => signIn(d)}>
-                    Sign in as {d.role}
+                    <button key={d.role} disabled={loading} className={styles.chip} onClick={() => signIn(d)}>
+                    {d.role === 'admin' ? 'Administrator' : d.role === 'mayor' ? 'Block mayor' : 'Student'}
                     </button>
                 ))}
-                <button
-                    className={styles.chip}
-                    onClick={() => signIn({ name: 'Test', email: 'test@gmail.com', role: 'student' })}
-                >
-                    Try a non-school email
-                </button>
                 </div>
-            </div>
+            </details>
             </div>
         </section>
         </main>

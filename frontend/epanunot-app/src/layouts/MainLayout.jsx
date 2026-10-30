@@ -7,9 +7,9 @@ import styles from './MainLayout.module.css';
 export default function MainLayout({ user, onLogout }) {
   return (
     <div className={styles.layout}>
-      {/* TODO: replace the hardcoded 3 with the real unread count from the notifications feature */}
-      <Navigation user={user} onLogout={onLogout} notifCount={3} />
-      <main className={styles.main}>
+      <a href="#main-content" className="skipLink">Skip to content</a>
+      <Navigation user={user} onLogout={onLogout} />
+      <main id="main-content" tabIndex={-1} className={styles.main}>
         <Outlet />
       </main>
     </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useBlocks } from '../../context/BlockContext.jsx';
 import styles from './Profile.module.css';
+import PlannerEmpty from '../../components/PlannerEmpty.jsx';
 
 const NAME_MAX = 60;
 
@@ -95,7 +96,7 @@ function RoleSection({ user }) {
             <span className={`${styles.status} ${styles[latest.status]}`}>{latest.status}</span>
           </div>
         ) : (
-          <div className="empty">You have not applied to be a mayor.</div>
+          <PlannerEmpty>Ready to help your block grow? Apply as Mayor from the navigation.</PlannerEmpty>
         )}
       </section>
     );

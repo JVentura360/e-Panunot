@@ -562,3 +562,26 @@ flex: 1;
         padding-top: 12px;
     }
 }
+/* Shared workspace rhythm */
+.page { max-width: 1200px; padding: 40px 32px; }
+.toolbar { margin-bottom: 28px; gap: 20px; }
+.title { font-size: clamp(1.65rem, 3vw, 2.2rem); color: var(--ink); }
+.navBtn, .todayBtn { min-height: 44px; border-width: 1px; }
+.navBtn { min-width: 44px; }
+.viewBtn { min-height: 40px; }
+.main, .card { border-color: var(--line); }
+.dayNum { font-variant-numeric: tabular-nums; }
+.field input, .field select, .todoForm input { min-height: 44px; }
+@media (max-width: 760px) {
+  .page { padding: 24px 16px; }
+  .toolbar { gap: 16px; }
+  .titleRow { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 16px; width: 100%; }
+  .title { font-size: clamp(1.1rem, 5.6vw, 1.65rem); line-height: 1.2; text-align: right; overflow-wrap: anywhere; transform: translateX(-8px); }
+  .titleRow:has(.weekTitle) { display: flex; flex-wrap: wrap; gap: 12px 8px; }
+  .weekTitle { flex: 1 0 auto; max-width: 100%; white-space: nowrap; overflow-wrap: normal; }
+  .navBtns { gap: 4px; }
+  .navBtn { width: 40px; min-width: 40px; }
+  .todayBtn { padding-inline: 10px; font-size: .85rem; }
+  .viewToggle { width: 100%; }
+  .viewBtn { flex: 1; }
+}
