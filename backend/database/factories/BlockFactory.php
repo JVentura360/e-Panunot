@@ -15,6 +15,7 @@ class BlockFactory extends Factory
     public function definition(): array
     {
         return [
+            'term_id' => TermFactory::new(),
             'program' => fake()->randomElement(['BSIT', 'BSCS', 'BSED', 'BSN', 'BSBA']),
             'year_level' => fake()->numberBetween(1, 4),
             'block_number' => fake()->numberBetween(1, 6),

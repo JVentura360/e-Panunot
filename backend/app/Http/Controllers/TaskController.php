@@ -94,8 +94,8 @@ class TaskController extends Controller
     public function destroy(Request $request, Task $task)
     {
         $this->ensureOwnBlock($request, $task);
-        $task->google_event_id
-        $task->block_id
+        $task->google_event_id;
+        $task->block_id;
         $task->delete();
 
         return response()->noContent();
