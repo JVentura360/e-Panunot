@@ -33,7 +33,7 @@ class UpdateTaskRequest extends FormRequest
                     ->where('block_id', $this->user()->block_id),
             ],
             'platform' => ['nullable', Rule::enum(TaskPlatform::class)],
-            'due_date' => ['sometimes', 'required', 'date'],
+            'due_date' => ['sometimes', 'required', 'date', 'after_or_equal:today'],
             'reminder_interval_minutes' => ['nullable', 'integer', 'min:1'],
         ];
     }
