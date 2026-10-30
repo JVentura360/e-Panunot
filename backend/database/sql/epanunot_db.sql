@@ -21,8 +21,9 @@ CREATE TABLE blocks (
     term_id      BIGINT UNSIGNED NOT NULL,
     program      VARCHAR(20)  NOT NULL,            
     year_level   TINYINT UNSIGNED NOT NULL,        
-    block_number TINYINT UNSIGNED NOT NULL,        
+    block_number TINYINT UNSIGNED NOT NULL,       
     mayor_id     BIGINT UNSIGNED NULL,
+    google_calendar_id VARCHAR(255) NULL,
     created_at   TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE CASCADE,
@@ -35,7 +36,7 @@ CREATE TABLE users (
     google_id   VARCHAR(255) NULL UNIQUE,
     name        VARCHAR(255) NOT NULL,
     email       VARCHAR(255) NOT NULL UNIQUE,
-    role        ENUM('student','admin') NOT NULL DEFAULT 'student',
+    role        ENUM('student','mayor','admin') NOT NULL DEFAULT 'student',
     picture_url TEXT NULL,
     block_id    BIGINT UNSIGNED NULL,
     created_at  TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
@@ -193,3 +194,32 @@ CREATE TABLE concern_attachments (
     FOREIGN KEY (concern_id) REFERENCES concerns(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
+CREATE TABLE calendar_events (
+    id              BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    block_id        BIGINT UNSIGNED NULL,
+    created_by      BIGINT UNSIGNED NULL,
+    subject_id      BIGINT UNSIGNED NULL,
+    title           VARCHAR(255) NOT NULL,
+    starts_at       DATETIME NOT NULL,
+    ends_at         DATETIME NOT NULL,
+    google_event_id VARCHAR(255) NULL,
+    created_at      TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (block_id)   REFERENCES blocks(id)   ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id)    ON DELETE SET NULL,
+    FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE SET NULL,
+    INDEX idx_events_block_starts   (block_id, starts_at),
+    INDEX idx_events_creator_starts (created_by, starts_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE personal_todos (
+    id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id        BIGINT UNSIGNED NOT NULL,
+    title          VARCHAR(255) NOT NULL,
+    is_done        TINYINT(1) NOT NULL DEFAULT 0,
+    google_task_id VARCHAR(255) NULL,
+    created_at     TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_todos_user_done (user_id, is_done)
+) ENGINE=InnoDB;
