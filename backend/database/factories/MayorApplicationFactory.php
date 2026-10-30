@@ -16,6 +16,7 @@ class MayorApplicationFactory extends Factory
     public function definition(): array
     {
         return [
+            'term_id' => TermFactory::new(),
             'user_id' => UserFactory::new(),
             'program' => fake()->randomElement(['BSIT', 'BSCS', 'BSED', 'BSN']),
             'year_level' => fake()->numberBetween(1, 4),
