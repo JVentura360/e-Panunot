@@ -43,6 +43,10 @@ class BlockController extends Controller
             }
         }
 
+        if (! $request->filled('term_id')) {
+            $query->where('t.is_active', true);
+        }
+
         return response()->json($query->orderBy('b.program')
             ->orderBy('b.year_level')->orderBy('b.block_number')->paginate(min((int) $request->input('per_page', 20), 100)));
     }

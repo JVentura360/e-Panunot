@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useBlocks } from '../../context/BlockContext';
 import MayorApplications from './MayorApplications.jsx';
 import MayorsAndBlocks from './MayorsAndBlocks.jsx';
+import SchoolYearSettings from './SchoolYearSettings.jsx';
 import styles from './AdminDashboard.module.css';
 
 export default function AdminDashboard() {
@@ -49,6 +50,7 @@ export default function AdminDashboard() {
             </p>
 
             <div className={styles.tabs}>
+                <button className={`${styles.tab} ${tab === 'term' ? styles.tabActive : ''}`} onClick={() => setTab('term')}>School Year</button>
                 <button
                     className={`${styles.tab} ${tab === 'apps' ? styles.tabActive : ''}`}
                     onClick={() => setTab('apps')}
@@ -70,7 +72,7 @@ export default function AdminDashboard() {
                 </div>
             )}
 
-            {tab === 'apps' ? (
+            {tab === 'term' ? <SchoolYearSettings onUpdated={load} /> : tab === 'apps' ? (
                 <MayorApplications
                     apps={apps}
                     onApprove={handleApprove}

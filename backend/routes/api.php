@@ -46,6 +46,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Admin only
     Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/terms/current', [\App\Http\Controllers\Admin\TermController::class, 'show']);
+        Route::put('/terms/current', [\App\Http\Controllers\Admin\TermController::class, 'update']);
         Route::get('/mayor-applications', [AdminMayorApplicationController::class, 'index']);
         Route::get('/mayor-applications/{id}', [AdminMayorApplicationController::class, 'show']);
         Route::post('/mayor-applications/{id}/approve', [AdminMayorApplicationController::class, 'approve']);

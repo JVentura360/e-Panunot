@@ -20,6 +20,7 @@ class MayorApplicationController extends Controller
         $query = DB::table('mayor_applications as ma')
             ->join('users as u', 'u.id', '=', 'ma.user_id')
             ->join('terms as t', 't.id', '=', 'ma.term_id')
+            ->where('t.is_active', true)
             ->leftJoin('blocks as b', 'b.id', '=', 'ma.block_id')
             ->select(
                 'ma.*',

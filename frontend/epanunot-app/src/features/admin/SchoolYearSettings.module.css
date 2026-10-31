@@ -1,0 +1,15 @@
+.panel { max-width: 760px; padding: 28px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.panel h2 { font-size: 1.4rem; }
+.description { margin: 8px 0 24px; color: var(--muted); }
+.current { padding: 14px 16px; margin-bottom: 24px; background: var(--sage-soft); border-radius: 8px; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; padding: 0; border: 0; margin-bottom: 24px; }
+.fields label { display: grid; gap: 8px; font-size: .9rem; font-weight: 600; }
+.fields input, .fields select { width: 100%; min-width: 0; min-height: 46px; padding: 10px 12px; background: var(--paper); border: 1px solid var(--control-border); border-radius: 8px; }
+.warning { padding: 16px; margin-bottom: 20px; background: var(--warning-soft); color: var(--warning); border-radius: 8px; font-size: .9rem; line-height: 1.6; }
+.confirm { display: flex; gap: 12px; align-items: center; margin-top: 12px; min-height: 44px; cursor: pointer; }
+.confirm input { width: 20px; height: 20px; flex-shrink: 0; }
+.error, .success { padding: 14px 16px; margin-bottom: 20px; border-radius: 8px; }
+.error { background: var(--danger-soft); color: var(--danger); }
+.error button { margin-top: 8px; }
+.success { background: var(--sage-soft); color: var(--ink); }
+@media (max-width: 540px) { .panel { padding: 20px 16px; } .fields { grid-template-columns: 1fr; } .panel form > button { width: 100%; } }

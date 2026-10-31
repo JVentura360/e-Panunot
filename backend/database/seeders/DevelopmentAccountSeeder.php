@@ -18,8 +18,9 @@ class DevelopmentAccountSeeder extends Seeder
         }
 
         DB::transaction(function (): void {
-            $term = Term::where('is_active', true)->first() ?? Term::firstOrCreate(['school_year' => '2099-2100', 'semester' => 1], [
-                'starts_on' => '2099-08-01', 'ends_on' => '2100-01-31',
+            (new CurrentSchoolYearSeeder)->run();
+            $term = Term::where('is_active', true)->first() ?? Term::firstOrCreate(['school_year' => '2026-2027', 'semester' => 1], [
+                'starts_on' => '2026-08-01', 'ends_on' => '2027-01-31',
             ]);
             if (! $term->is_active) {
                 $term->forceFill(['is_active' => true])->save();
