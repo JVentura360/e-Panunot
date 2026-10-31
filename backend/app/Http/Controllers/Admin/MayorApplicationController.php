@@ -90,7 +90,7 @@ class MayorApplicationController extends Controller
     {
         $user = auth()->user();
         abort_unless($user, 401, 'Unauthenticated.');
-        abort_unless($user->role === 'admin', 403, 'Admin access required.');
+        abort_unless($user->role === \App\Enums\Role::Admin, 403, 'Admin access required.');
         return $user;
     }
 }

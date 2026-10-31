@@ -38,7 +38,7 @@ class BlockMemberController extends Controller
     public function store(Request $request, int $blockId)
     {
         $user = $this->requireUser();
-        abort_if($user->role === 'admin', 403, 'Admins cannot submit student join requests.');
+        abort_if($user->role === \App\Enums\Role::Admin, 403, 'Admins cannot submit student join requests.');
 
         $block = $this->findBlock($blockId);
 
@@ -228,7 +228,7 @@ class BlockMemberController extends Controller
     private function authorizeBlockManager($user, $block): void
     {
         abort_unless(
-            $user->role === 'admin' || (int) $block->mayor_id === (int) $user->id,
+            $user->role === \App\Enums\Role::Admin || (int) $block->mayor_id === (int) $user->id,
             403,
             'Only an admin or this block’s mayor can manage its members.'
         );

@@ -1,6 +1,6 @@
 import { TaskProvider } from './context/TaskContext.jsx';
 import { useState, useCallback, useEffect } from 'react';
-import { api, getToken, setToken } from './api/client.js';
+import { api, logout, errorMessage } from './api/client.js';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
 import Login from './features/auth/Login.jsx';
@@ -15,7 +15,8 @@ import Calendar from './features/calendar/Calendar.jsx';
 
 export default function App() {
     const [user, setUser] = useState(null);
-    const [booting, setBooting] = useState(() => Boolean(getToken()));
+    const [booting, setBooting] = useState(true);
+    const [authError, setAuthError] = useState('');
     const navigate = useNavigate();
     const [concerns, setConcerns] = useSyncedConcerns();
 
@@ -29,16 +30,16 @@ export default function App() {
 
     useEffect(() => {
         // Restore the session after a page refresh.
-        if (!getToken()) return;
-
         api('/me')
             .then((response) => setUser(response.data))
-            .catch(() => { /* Expired sessions return to login. */ })
+            .catch((error) => {
+                if (error.status !== 401) setAuthError(errorMessage(error));
+            })
             .finally(() => setBooting(false));
     }, [refreshUser]);
 
     useEffect(() => {
-        // Token expired -> back to Login.
+        // Session expired -> back to Login.
         const onExpired = () => setUser(null);
 
         window.addEventListener('auth:expired', onExpired);
@@ -55,10 +56,15 @@ export default function App() {
         return () => window.removeEventListener('focus', refreshUser);
     }, [user, refreshUser]);
 
-    const handleLogout = () => {
-        setToken(null);
-        setUser(null);
-        navigate('/');
+    const handleLogout = async () => {
+        try {
+            await logout();
+            setUser(null);
+            setAuthError('');
+            navigate('/');
+        } catch (error) {
+            window.alert(errorMessage(error));
+        }
     };
 
     if (booting) {
@@ -66,7 +72,7 @@ export default function App() {
     }
 
     if (!user) {
-        return <Login onLogin={setUser} />;
+        return <Login error={authError} onLogin={setUser} />;
     }
 
     const isAdmin = user.role === 'admin';

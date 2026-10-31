@@ -2,6 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readTasks, saveTasks } from './taskStorage.js';
 
+test('old preset tasks are removed while manually created records remain', () => {
+  const manual = { id: 'new-task', title: 'Submit Capstone Proposal', date: '2026-11-01' };
+  const preset = { id: 1, title: 'Submit Capstone Proposal', date: '2026-11-01' };
+  const storage = { getItem: () => JSON.stringify({ 'block:one': [preset, manual] }) };
+  assert.deepEqual(readTasks(storage)['block:one'], [manual]);
+});
+
 test('tasks, private lists and individual completion survive storage roundtrip', () => {
   let raw;
   const storage = { getItem: () => raw, setItem: (_key, value) => { raw = value; } };

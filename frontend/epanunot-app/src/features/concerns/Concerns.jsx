@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import styles from './Concerns.module.css';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
 import {
-DEMO_STUDENT_ID,
 SUBJECTS,
 CATEGORIES,
 STATUS_LABEL,
@@ -405,12 +404,12 @@ const selectedId = splat ? splat.replace(/\/$/, '') : null;
 
 const isMayor = user.role === 'mayor';
 const viewerRole = isMayor ? 'mayor' : 'student';
-const uid = user.id ?? DEMO_STUDENT_ID;
+const uid = user.id;
 const displayName = user.name ?? (isMayor ? 'Block mayor' : 'Student');
 
 // Students only see their own concerns; the mayor sees the whole block's.
 const visible = useMemo(
-    () => (isMayor ? concerns : concerns.filter((c) => c.studentId === uid || c.studentId === DEMO_STUDENT_ID)),
+    () => (isMayor ? concerns : concerns.filter((c) => c.studentId === uid)),
     [concerns, isMayor, uid]
 );
 const selected = visible.find((c) => c.id === selectedId) ?? null;

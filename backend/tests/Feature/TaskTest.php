@@ -20,7 +20,7 @@ class TaskTest extends TestCase
     {
         $term  = Term::factory()->active()->create();
         $block = Block::factory()->create(['term_id' => $term->id]);
-        $mayor = User::factory()->student($block)->create();
+        $mayor = User::factory()->student($block)->create(['role' => 'mayor']);
         $block->update(['mayor_id' => $mayor->id]);
 
         return [$block, $mayor];
@@ -39,7 +39,7 @@ class TaskTest extends TestCase
         ];
 
         $response = $this->actingAs($mayor)
-            ->postJson("/api/blocks/{$block->id}/tasks", $payload);
+            ->postJson('/api/tasks', $payload);
 
         $response->assertStatus(201)
             ->assertJsonFragment(['title' => 'Submit Lab Report 3']);
@@ -57,7 +57,7 @@ class TaskTest extends TestCase
         [$block, $mayor] = $this->makeBlockWithMayor();
 
         $response = $this->actingAs($mayor)
-            ->postJson("/api/blocks/{$block->id}/tasks", [
+            ->postJson('/api/tasks', [
                 'due_date' => now()->addDays(3)->toDateTimeString(),
             ]);
 
@@ -70,7 +70,7 @@ class TaskTest extends TestCase
         [$block, $mayor] = $this->makeBlockWithMayor();
 
         $response = $this->actingAs($mayor)
-            ->postJson("/api/blocks/{$block->id}/tasks", [
+            ->postJson('/api/tasks', [
                 'title' => 'Missing deadline task',
             ]);
 
@@ -86,7 +86,7 @@ class TaskTest extends TestCase
         $student = User::factory()->student($block)->create();
 
         $response = $this->actingAs($student)
-            ->postJson("/api/blocks/{$block->id}/tasks", [
+            ->postJson('/api/tasks', [
                 'title'    => 'Unauthorized task',
                 'due_date' => now()->addDays(5)->toDateTimeString(),
             ]);
@@ -108,7 +108,7 @@ class TaskTest extends TestCase
         ]);
 
         $response = $this->actingAs($student)
-            ->patchJson("/api/task-assignments/{$assignment->id}/complete");
+            ->postJson("/api/tasks/{$task->id}/complete");
 
         $response->assertStatus(200);
 
@@ -124,7 +124,7 @@ class TaskTest extends TestCase
         $term  = Term::factory()->active()->create();
         $block = Block::factory()->create(['term_id' => $term->id]);
 
-        $this->getJson("/api/blocks/{$block->id}/tasks")
+        $this->getJson('/api/tasks')
             ->assertStatus(401);
     }
 }

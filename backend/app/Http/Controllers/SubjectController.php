@@ -25,7 +25,7 @@ class SubjectController extends Controller
 
             // Subjects for a block are visible to admins, its mayor, and its members.
             abort_unless(
-                $user->role === 'admin' ||
+                $user->role === \App\Enums\Role::Admin ||
                 (int) $block->mayor_id === (int) $user->id ||
                 (int) $user->block_id === $blockId,
                 403,
@@ -118,7 +118,7 @@ class SubjectController extends Controller
         $block = DB::table('blocks')->where('id', $blockId)->first();
         abort_if(!$block, 404, 'Block not found.');
         abort_unless(
-            $user->role === 'admin' || (int) $block->mayor_id === (int) $user->id,
+            $user->role === \App\Enums\Role::Admin || (int) $block->mayor_id === (int) $user->id,
             403,
             'Only an admin or this block’s mayor can assign subjects.'
         );
@@ -162,7 +162,7 @@ class SubjectController extends Controller
     private function requireAdmin()
     {
         $user = $this->requireUser();
-        abort_unless($user->role === 'admin', 403, 'Admin access required.');
+        abort_unless($user->role === \App\Enums\Role::Admin, 403, 'Admin access required.');
         return $user;
     }
 }

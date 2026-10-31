@@ -1,26 +1,13 @@
 import { useState } from 'react';
 import styles from './BlockManagement.module.css';
 
-const BLOCKMATES = [
-  { id: 1, name: 'Charles Gonzales', subjects: ['Systems Integration and Architecture', 'Event-Driven Programming', 'Routing and Switching Essentials'] },
-  { id: 2, name: 'Cyrah Manongdo', subjects: ['Systems Integration and Architecture', 'Event-Driven Programming', 'Routing and Switching Essentials'] },
-  { id: 3, name: 'Jhomar Salazar', subjects: ['Systems Integration and Architecture', 'Event-Driven Programming', 'Routing and Switching Essentials'] },
-  { id: 4, name: 'Jonel Ventura', subjects: ['Systems Integration and Architecture', 'Event-Driven Programming', 'Routing and Switching Essentials'] },
-  { id: 5, name: 'Kyle Denzel Audrey', subjects: ['Systems Integration and Architecture', 'Event-Driven Programming', 'Routing and Switching Essentials'] },
-  { id: 6, name: 'Zyrus Sibulangcao', subjects: ['Systems Integration and Architecture', 'Event-Driven Programming', 'Routing and Switching Essentials'] },
-];
+const BLOCKMATES = [];
 
-const SUBJECTS = [
-  { id: 1, code: 'ITP09', name: 'Systems Integration and Architecture' },
-  { id: 2, code: 'ITP10', name: 'Event-Driven Programming' },
-  { id: 3, code: 'ITP11', name: 'Routing and Switching Essentials' },
-];
+const SUBJECTS = [];
 
-const APPLICATIONS_INIT = [
-  { id: 1, name: 'Juan Dela Cruz', block: 'BSIT 3-A' }
-];
+const APPLICATIONS_INIT = [];
 
-export default function BlockManagement() {
+export default function BlockManagement({ user }) {
   const [applications, setApplications] = useState(APPLICATIONS_INIT);
 
   const removeApp = (id) => {
@@ -35,7 +22,7 @@ export default function BlockManagement() {
     <div className={styles.page}>
       <header className={styles.top}>
         <div>
-          <h1>Block Management (31-ITE-04)</h1>
+          <h1>Block Management{user.block ? ` (${user.block})` : ''}</h1>
           <p>Manage your blockmates, applications, and subjects.</p>
         </div>
       </header>
@@ -75,6 +62,7 @@ export default function BlockManagement() {
 
       <section className={styles.section} id="blockmates">
         <h3>Blockmates</h3>
+        {BLOCKMATES.length === 0 && <div className="empty">No blockmates loaded yet.</div>}
         <div className={styles.list}>
           {BLOCKMATES.map((m) => (
             <div className={styles.item} key={m.id}>
@@ -109,6 +97,7 @@ export default function BlockManagement() {
 
       <section className={styles.section} id="subjects">
         <h3>Subjects</h3>
+        {SUBJECTS.length === 0 && <div className="empty">No subjects loaded yet.</div>}
         <div className={styles.list}>
           {SUBJECTS.map((s) => (
             <div className={styles.item} key={s.id}>

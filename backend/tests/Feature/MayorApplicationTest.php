@@ -99,7 +99,7 @@ class MayorApplicationTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)
-            ->patchJson("/api/mayor-applications/{$application->id}", [
+            ->postJson("/api/admin/mayor-applications/{$application->id}/approve", [
                 'status' => 'approved',
             ]);
 
@@ -131,7 +131,7 @@ class MayorApplicationTest extends TestCase
         ]);
 
         $response = $this->actingAs($admin)
-            ->patchJson("/api/mayor-applications/{$application->id}", [
+            ->postJson("/api/admin/mayor-applications/{$application->id}/reject", [
                 'status' => 'rejected',
             ]);
 
@@ -156,7 +156,7 @@ class MayorApplicationTest extends TestCase
         ]);
 
         $this->actingAs($student)
-            ->patchJson("/api/mayor-applications/{$application->id}", [
+            ->postJson("/api/admin/mayor-applications/{$application->id}/approve", [
                 'status' => 'approved',
             ])
             ->assertStatus(403);
