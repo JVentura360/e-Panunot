@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useApiQuery } from '../../api/useApiQuery.js';
 import { api, errorMessage } from '../../api/client.js';
 import styles from './JoinBlock.module.css';
 
@@ -15,34 +16,20 @@ const formatDate = (value) =>
 export default function JoinBlock({ user }) {
   const [code, setCode] = useState('');
   const [result, setResult] = useState(null); // the block found by the search
-  const [mine, setMine] = useState([]); // this student's own join requests
+  const requestsQuery = useApiQuery('/join-requests/mine', { enabled: !user.block_id });
+  const mine = requestsQuery.data?.data ?? [];
   const [searching, setSearching] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
 
-  const loadMine = useCallback(async () => {
-    try {
-      setMine((await api('/join-requests/mine')).data);
-    } catch {
-      // The list is optional; real errors show up on the actions below.
-    }
-  }, []);
 
   const lookup = useCallback(async (value) => {
     const response = await api('/blocks/lookup', { query: { code: value } });
     setResult(response.data);
   }, []);
 
-  useEffect(() => {
-    loadMine();
-  }, [loadMine]);
 
-  useEffect(() => {
-    // Check again when the student returns to this tab (the mayor may have answered).
-    window.addEventListener('focus', loadMine);
-    return () => window.removeEventListener('focus', loadMine);
-  }, [loadMine]);
 
   const handleSearch = async (event) => {
     event.preventDefault();
@@ -69,7 +56,7 @@ export default function JoinBlock({ user }) {
     try {
       await api(`/blocks/${result.id}/join-requests`, { method: 'POST' });
       setNotice('Request sent. You will be added once the mayor approves it.');
-      await Promise.all([loadMine(), lookup(result.code)]);
+      await lookup(result.code);
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -84,7 +71,7 @@ export default function JoinBlock({ user }) {
     try {
       await api(`/join-requests/${requestId}`, { method: 'DELETE' });
       setNotice('Request cancelled.');
-      await Promise.all([loadMine(), result ? lookup(result.code) : null]);
+      if (result) await lookup(result.code);
     } catch (e) {
       setError(errorMessage(e));
     } finally {
@@ -182,7 +169,8 @@ export default function JoinBlock({ user }) {
 
       <section className={styles.section}>
         <h2>My requests</h2>
-        {mine.length === 0 ? (
+        <button type="button" className="btn ghost" disabled={requestsQuery.isFetching} onClick={() => requestsQuery.refetch()}>Refresh</button>
+        {requestsQuery.isPending ? <p role="status">Loading requests…</p> : requestsQuery.error && !requestsQuery.data ? <div role="alert">Couldn’t load your requests. <button className="btn ghost" onClick={() => requestsQuery.refetch()}>Retry</button></div> : mine.length === 0 ? (
           <p className={styles.muted}>You have not requested to join a block yet.</p>
         ) : (
           <ul className={styles.list}>

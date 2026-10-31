@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useApiQuery } from '../../api/useApiQuery.js';
 import { api, errorMessage } from '../../api/client.js';
 import styles from './BlockManagement.module.css';
 
@@ -9,46 +10,17 @@ const formatDate = (value) =>
 export default function BlockManagement({ user }) {
   const blockId = user.block_id;
 
-  const [members, setMembers] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const memberQuery = useApiQuery(`/blocks/${blockId}/members`, { enabled: Boolean(blockId) });
+  const requestQuery = useApiQuery(`/blocks/${blockId}/join-requests`, { query: { status: 'pending', per_page: 100 }, enabled: Boolean(blockId) });
+  const subjectQuery = useApiQuery('/subjects', { query: { block_id: blockId }, enabled: Boolean(blockId) });
+  const members = memberQuery.data?.data ?? [];
+  const requests = requestQuery.data?.data ?? [];
+  const subjects = subjectQuery.data?.data ?? [];
+  const loading = memberQuery.isPending || requestQuery.isPending || subjectQuery.isPending;
+  const [actionError, setError] = useState('');
+  const queryError = memberQuery.error || requestQuery.error || subjectQuery.error;
+  const error = actionError || (queryError ? errorMessage(queryError) : '');
   const [busyId, setBusyId] = useState(null);
-
-  const load = useCallback(async () => {
-    if (!blockId) {
-      return;
-    }
-
-    try {
-      const [memberList, requestList, subjectList] = await Promise.all([
-        api(`/blocks/${blockId}/members`),
-        api(`/blocks/${blockId}/join-requests`, { query: { status: 'pending', per_page: 100 } }),
-        api('/subjects', { query: { block_id: blockId } }),
-      ]);
-      setMembers(memberList.data);
-      setRequests(requestList.data);
-      setSubjects(subjectList.data);
-      setError('');
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  }, [blockId]);
-
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- State updates follow the asynchronous API requests.
-    load();
-  }, [load]);
-
-  useEffect(() => {
-    // New join requests may arrive while the mayor is on another tab.
-    window.addEventListener('focus', load);
-    return () => window.removeEventListener('focus', load);
-  }, [load]);
-
   const review = async (request, action) => {
     setBusyId(`request-${request.id}`);
     setError('');
@@ -57,7 +29,7 @@ export default function BlockManagement({ user }) {
     } catch (e) {
       setError(errorMessage(e));
     } finally {
-      await load();
+
       setBusyId(null);
     }
   };
@@ -72,7 +44,7 @@ export default function BlockManagement({ user }) {
     } catch (e) {
       setError(errorMessage(e));
     } finally {
-      await load();
+
       setBusyId(null);
     }
   };
@@ -98,8 +70,9 @@ export default function BlockManagement({ user }) {
     <div className={styles.page}>
       <header className={styles.top}>
         <div>
-          <h1>Block Management ({user.block})</h1>
+          <h1>Block Management  </h1>
           <p>Manage your blockmates, join requests, and subjects.</p>
+          <button type="button" className="btn ghost" onClick={() => Promise.all([memberQuery.refetch(), requestQuery.refetch(), subjectQuery.refetch()])}>Refresh</button>
         </div>
       </header>
 

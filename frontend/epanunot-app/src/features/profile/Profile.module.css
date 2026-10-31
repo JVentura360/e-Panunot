@@ -158,18 +158,19 @@
 /* ---------- Role section ---------- */
 .stats {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
   gap: 14px;
 }
 
 .stat {
+  min-width: 0;
   padding: 18px;
   border-radius: 14px;
   background: var(--sand);
 }
 
 .stat:nth-child(1) { background: var(--forest); color: var(--sand); }
-.stat strong { display: block; font-family: 'Bricolage Grotesque'; font-size: 2.2rem; }
+.stat strong { display: block; font-family: 'Bricolage Grotesque'; font-size: clamp(1.2rem, 4vw, 2.2rem); overflow-wrap: anywhere; }
 
 .application {
   display: flex;
@@ -201,7 +202,8 @@
   .identity { padding: 18px; gap: 14px; }
   .avatar { width: 56px; height: 56px; font-size: 1.6rem; }
   .row { grid-template-columns: 1fr; gap: 4px; }
-  .stats { grid-template-columns: 1fr; }
+  .stats { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 10px; }
+  .stat { padding: 16px 12px; }
 }
 /* Shared typography and spacing */
 .page { max-width: 1200px; padding: 40px 32px; }

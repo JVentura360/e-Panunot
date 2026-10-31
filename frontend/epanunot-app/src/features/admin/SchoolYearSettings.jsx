@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useApiQuery } from '../../api/useApiQuery.js';
 import { api, errorMessage } from '../../api/client.js';
 import styles from './SchoolYearSettings.module.css';
 
@@ -10,32 +11,20 @@ const valuesFor = (term) => ({
 });
 
 export default function SchoolYearSettings({ onUpdated }) {
-  const [current, setCurrent] = useState(null);
-  const [values, setValues] = useState(() => valuesFor(null));
-  const [loading, setLoading] = useState(true);
-  const [ready, setReady] = useState(false);
+  const termQuery = useApiQuery('/admin/terms/current');
+  const current = termQuery.data?.data ?? null;
+  const [draft, setValues] = useState(null);
+  const values = draft ?? valuesFor(current);
+  const loading = termQuery.isPending;
+  const ready = Boolean(termQuery.data);
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const [error, setError] = useState('');
+  const [actionError, setError] = useState('');
+  const error = actionError || (termQuery.error ? errorMessage(termQuery.error) : '');
   const [notice, setNotice] = useState('');
-  const [attempt, setAttempt] = useState(0);
   const changesTerm = current && (values.school_year !== current.school_year || Number(values.semester) !== current.semester);
-
-  useEffect(() => {
-    let active = true;
-    api('/admin/terms/current').then(({ data }) => {
-      if (!active) return;
-      setCurrent(data);
-      setReady(true);
-      setValues(valuesFor(data));
-      setError('');
-    }).catch((error) => { if (active) setError(errorMessage(error)); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [attempt]);
-
   const change = (event) => {
-    setValues((previous) => ({ ...previous, [event.target.name]: event.target.value }));
+    setValues((previous) => ({ ...(previous ?? valuesFor(current)), [event.target.name]: event.target.value }));
     setConfirmed(false);
     setNotice('');
   };
@@ -48,7 +37,7 @@ export default function SchoolYearSettings({ onUpdated }) {
       const { data } = await api('/admin/terms/current', {
         method: 'PUT', body: { ...values, semester: Number(values.semester), previous_term_id: current?.id ?? null },
       });
-      setCurrent(data);
+
       setValues(valuesFor(data));
       setConfirmed(false);
       setNotice(changesTerm ? 'New term started. Students can now apply as mayor or join a new block.' : 'School term saved.');
@@ -66,7 +55,7 @@ export default function SchoolYearSettings({ onUpdated }) {
       <p className={styles.description}>Manage the term used for new mayor applications and block enrollment.</p>
       {loading ? <p role="status">Loading school term…</p> : <>
         <p className={styles.current}>Current: <strong>{!ready ? 'Could not load settings' : current ? `${current.school_year} · ${current.semester === 3 ? 'Summer' : `Semester ${current.semester}`}` : 'No active term'}</strong></p>
-        {error && <div className={styles.error} role="alert">{error} <button type="button" className="btn ghost" onClick={() => setAttempt((value) => value + 1)}>Reload settings</button></div>}
+        {error && <div className={styles.error} role="alert">{error} <button type="button" className="btn ghost" onClick={() => { setError(''); termQuery.refetch(); }}>Reload settings</button></div>}
         {notice && <p className={styles.success} role="status">{notice}</p>}
         <form onSubmit={save}>
           <fieldset disabled={busy || !ready} className={styles.fields}>

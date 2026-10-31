@@ -3,6 +3,8 @@
 // but the data now comes from the Laravel API instead of mock data.
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { api, errorMessage } from '../api/client.js';
+import { useApiQuery } from '../api/useApiQuery.js';
+import { useLocation } from 'react-router-dom';
 
 const BlockContext = createContext(null);
 
@@ -31,30 +33,24 @@ const toBlock = (row) => ({
   members: Number(row.member_count ?? 0),
 });
 
-export function BlockProvider({ children }) {
-  const [apps, setApps] = useState([]);
-  const [blocks, setBlocks] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // The admin dashboard calls this when it opens (and approve/reject call it again).
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const [applications, blockList] = await Promise.all([
-        api('/admin/mayor-applications', { query: { per_page: 100 } }),
-        api('/blocks', { query: { per_page: 100 } }),
-      ]);
-      setApps(applications.data.map(toApplication));
-      setBlocks(blockList.data.map(toBlock));
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+export function BlockProvider({ user, children }) {
+  const { pathname } = useLocation();
+  const applicationsEnabled = user.role === 'admin' && pathname === '/admin/applications';
+  const blocksEnabled = user.role === 'admin' && pathname === '/admin/mayors';
+  const applicationQuery = useApiQuery('/admin/mayor-applications', { query: { per_page: 100 }, enabled: applicationsEnabled });
+  const blockQuery = useApiQuery('/blocks', { query: { per_page: 100 }, enabled: blocksEnabled });
+  const apps = useMemo(() => (applicationQuery.data?.data ?? []).map(toApplication), [applicationQuery.data]);
+  const blocks = useMemo(() => (blockQuery.data?.data ?? []).map(toBlock), [blockQuery.data]);
+  const [actionError, setError] = useState('');
+  const queryError = applicationQuery.error || blockQuery.error;
+  const error = actionError || (queryError ? errorMessage(queryError) : '');
+  const loading = (applicationsEnabled && applicationQuery.isPending) || (blocksEnabled && blockQuery.isPending);
+  const load = useCallback(async (force = false) => {
+    await Promise.all([
+      applicationsEnabled && api('/admin/mayor-applications', { query: { per_page: 100 }, force }),
+      blocksEnabled && api('/blocks', { query: { per_page: 100 }, force }),
+    ]);
+  }, [applicationsEnabled, blocksEnabled]);
   // Every mayor is the mayor of one block, so the mayors list comes from the blocks.
   const mayors = useMemo(
     () =>

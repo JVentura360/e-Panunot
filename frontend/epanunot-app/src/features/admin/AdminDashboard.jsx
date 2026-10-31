@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useBlocks } from '../../context/BlockContext';
 import MayorApplications from './MayorApplications.jsx';
@@ -15,22 +15,15 @@ export default function AdminDashboard() {
         approve,
         reject,
         load,
+        loading,
+        error,
     } = useBlocks();
 
     const { pathname } = useLocation();
     const tab = pathname === '/admin/applications' ? 'apps' : pathname === '/admin/mayors' ? 'list' : 'term';
     const [notice, setNotice] = useState('');
 
-    useEffect(() => {
-        load();
-    }, [load]);
 
-    useEffect(() => {
-        // Member counts change while the admin is on another tab, so reload on return.
-        window.addEventListener('focus', load);
-
-        return () => window.removeEventListener('focus', load);
-    }, [load]);
 
     const handleApprove = async (app) => {
         const result = await approve(app);
@@ -48,6 +41,7 @@ export default function AdminDashboard() {
             <p className={styles.subtitle}>
                 {tab === 'term' ? 'Manage the current academic year and enrollment term.' : tab === 'list' ? 'View current mayors and their blocks.' : `${pendingCount} pending application${pendingCount === 1 ? '' : 's'}. Approving one creates the mayor and block.`}
             </p>
+            {tab !== 'term' && <button type="button" className="btn ghost" onClick={() => load(true).catch((error) => setNotice(error.message))}>Refresh</button>}
 
 
             {notice && (
@@ -55,8 +49,9 @@ export default function AdminDashboard() {
                     {notice}
                 </div>
             )}
+            {error && <div className={styles.notice} role="alert">{error} <button className="btn ghost" onClick={() => load(true).catch((error) => setNotice(error.message))}>Retry</button></div>}
 
-            {tab === 'term' ? <SchoolYearSettings onUpdated={load} /> : tab === 'apps' ? (
+            {tab === 'term' ? <SchoolYearSettings onUpdated={load} /> : loading ? <p role="status">Loading {tab === 'apps' ? 'applications' : 'mayors'}…</p> : tab === 'apps' ? (
                 <MayorApplications
                     apps={apps}
                     onApprove={handleApprove}

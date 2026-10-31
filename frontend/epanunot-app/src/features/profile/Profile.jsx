@@ -1,6 +1,6 @@
 
-import { useState, useEffect } from 'react';
-import { api } from '../../api/client.js';
+import { useState } from 'react';
+import { useApiQuery } from '../../api/useApiQuery.js';
 import { toApplication } from '../../context/BlockContext.jsx';
 import styles from './Profile.module.css';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
@@ -90,41 +90,31 @@ function NameEditor({ initial, onSave, onCancel }) {
 
 // Block details for mayors, application status for students.
 function RoleSection({ user }) {
-    const [mine, setMine] = useState([]);
-    const [memberCount, setMemberCount] = useState(null);
-
-    useEffect(() => {
-        if (user.role === 'student') {
-            api('/mayor-applications/mine')
-                .then((r) => {
-                    setMine(r.data.map(toApplication).reverse());
-                })
-                .catch(() => {});
-        }
-
-        if (user.role === 'mayor' && user.block_id) {
-            api(`/blocks/${user.block_id}`)
-                .then((r) => {
-                    setMemberCount(r.data.member_count);
-                })
-                .catch(() => {});
-        }
-    }, [user.role, user.block_id]);
-
+    const applications = useApiQuery('/mayor-applications/mine', { enabled: user.role === 'student' });
+    const block = useApiQuery(`/blocks/${user.block_id}`, { enabled: user.role === 'mayor' && Boolean(user.block_id) });
+    const mine = (applications.data?.data ?? []).map(toApplication).reverse();
+    const memberCount = block.data?.data?.member_count ?? null;
+    const details = user.role === 'student' ? applications : block;
+    if ((user.role === 'student' || (user.role === 'mayor' && user.block_id)) && details.isPending) {
+        return <section className={styles.section}><p role="status">Loading account details…</p></section>;
+    }
+    if (details.error && !details.data) {
+        return <section className={styles.section}><p role="alert">Couldn’t load account details.</p><button className="btn ghost" onClick={() => details.refetch()}>Retry</button></section>;
+    }
     if (user.role === 'mayor') {
         return (
             <section className={styles.section}>
-                <h3>Your block</h3>
+                <h3>Your Block</h3>
 
                 <div className={styles.stats}>
                     <div className={styles.stat}>
                         <strong>{user.block || '-'}</strong>
-                        block
+                        Block
                     </div>
 
                     <div className={styles.stat}>
                         <strong>{memberCount ?? '-'}</strong>
-                        members
+                        Members
                     </div>
                 </div>
             </section>
