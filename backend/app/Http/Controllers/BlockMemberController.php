@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\BlockMemberResource;
+use App\Http\Resources\BlockResource;
 use App\Jobs\SyncBlockCalendarAccess;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +14,7 @@ class BlockMemberController extends Controller
     /**
      * GET /api/blocks/{blockId}/members
      * Admins and the block's mayor can view the member list.
+     * Each member has `is_mayor`, and the mayor is listed first.
      */
     public function index(int $blockId)
     {
@@ -25,15 +28,14 @@ class BlockMemberController extends Controller
             ->orderBy('name')
             ->get();
 
-        return response()->json([
-            'data' => $members,
-            'count' => $members->count(),
-        ]);
+        return BlockMemberResource::forBlock($members, $block)
+            ->additional(['count' => $members->count()]);
     }
 
     /**
      * POST /api/blocks/{blockId}/join-requests
-     * A student requests to join a block.
+     * A student asks to join a block. This only creates a PENDING request;
+     * nobody becomes a member until the mayor approves it.
      */
     public function store(Request $request, int $blockId)
     {
@@ -42,40 +44,123 @@ class BlockMemberController extends Controller
 
         $block = $this->findBlock($blockId);
 
-        if ((int) $user->block_id === $blockId) {
-            throw ValidationException::withMessages([
-                'block_id' => 'You are already a member of this block.',
-            ]);
-        }
-
-        $pendingOrApproved = DB::table('block_join_requests')
-            ->where('user_id', $user->id)
-            ->where('block_id', $blockId)
-            ->whereIn('status', ['pending', 'approved'])
+        // Only blocks of the running semester can be joined.
+        $isOpen = DB::table('terms')
+            ->where('id', $block->term_id)
+            ->where('is_active', true)
             ->exists();
 
-        if ($pendingOrApproved) {
+        if (! $isOpen) {
             throw ValidationException::withMessages([
-                'request' => 'You already have a pending or approved request for this block.',
+                'block_id' => 'This block is not open for joining.',
             ]);
         }
 
-        $id = DB::table('block_join_requests')->insertGetId([
-            'user_id' => $user->id,
-            'block_id' => $blockId,
-            'status' => 'pending',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        $joinRequest = DB::transaction(function () use ($user, $blockId) {
+            // Lock the student's row so a double click cannot create two requests.
+            $student = DB::table('users')->where('id', $user->id)->lockForUpdate()->first();
+
+            if ($student->block_id) {
+                throw ValidationException::withMessages([
+                    'block_id' => (int) $student->block_id === $blockId
+                        ? 'You are already a member of this block.'
+                        : 'You already belong to a block.',
+                ]);
+            }
+
+            $pending = DB::table('block_join_requests')
+                ->where('user_id', $student->id)
+                ->where('status', 'pending')
+                ->first();
+
+            if ($pending) {
+                throw ValidationException::withMessages([
+                    'request' => (int) $pending->block_id === $blockId
+                        ? 'You already have a pending request for this block.'
+                        : 'You already have a pending request for another block. Cancel it first.',
+                ]);
+            }
+
+            $id = DB::table('block_join_requests')->insertGetId([
+                'user_id' => $student->id,
+                'block_id' => $blockId,
+                'status' => 'pending',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return DB::table('block_join_requests')->where('id', $id)->first();
+        });
 
         return response()->json([
             'message' => 'Join request submitted.',
-            'data' => DB::table('block_join_requests')->where('id', $id)->first(),
+            'data' => $joinRequest,
         ], 201);
     }
 
     /**
-     * GET /api/blocks/{blockId}/join-requests?status=pending
+     * GET /api/join-requests/mine
+     * The signed-in student's own join requests (newest first).
+     */
+    public function mine()
+    {
+        $user = $this->requireUser();
+
+        $rows = DB::table('block_join_requests as jr')
+            ->join('blocks as b', 'b.id', '=', 'jr.block_id')
+            ->join('terms as t', 't.id', '=', 'b.term_id')
+            ->leftJoin('users as mayor', 'mayor.id', '=', 'b.mayor_id')
+            ->where('jr.user_id', $user->id)
+            ->orderByDesc('jr.id')
+            ->limit(20)
+            ->get([
+                'jr.id', 'jr.status', 'jr.block_id', 'jr.created_at', 'jr.reviewed_at',
+                'b.program', 'b.year_level', 'b.block_number',
+                't.semester',
+                'mayor.name as mayor_name',
+            ]);
+
+        return response()->json([
+            'data' => $rows->map(fn ($row) => [
+                'id' => $row->id,
+                'status' => $row->status,
+                'block_id' => $row->block_id,
+                'block_code' => BlockResource::makeCode($row->year_level, $row->semester, $row->program, $row->block_number),
+                'mayor_name' => $row->mayor_name,
+                'created_at' => $row->created_at,
+                'reviewed_at' => $row->reviewed_at,
+            ])->values(),
+        ]);
+    }
+
+    /**
+     * DELETE /api/join-requests/{requestId}
+     * A student cancels their own PENDING request.
+     */
+    public function cancel(int $requestId)
+    {
+        $user = $this->requireUser();
+
+        $joinRequest = DB::table('block_join_requests')
+            ->where('id', $requestId)
+            ->where('user_id', $user->id)
+            ->first();
+
+        abort_if(! $joinRequest, 404, 'Join request not found.');
+
+        if ($joinRequest->status !== 'pending') {
+            throw ValidationException::withMessages([
+                'status' => 'Only pending requests can be cancelled.',
+            ]);
+        }
+
+        DB::table('block_join_requests')->where('id', $requestId)->delete();
+
+        return response()->json(['message' => 'Join request cancelled.']);
+    }
+
+    /**
+     * GET /api/blocks/{blockId}/join-requests?status=pending&per_page=100
      */
     public function requests(Request $request, int $blockId)
     {
@@ -95,7 +180,9 @@ class BlockMemberController extends Controller
             $query->where('jr.status', $request->input('status'));
         }
 
-        return response()->json($query->orderByDesc('jr.created_at')->paginate(20));
+        return response()->json(
+            $query->orderByDesc('jr.created_at')->paginate(min((int) $request->input('per_page', 20), 100))
+        );
     }
 
     /**
@@ -115,7 +202,7 @@ class BlockMemberController extends Controller
                 ->lockForUpdate()
                 ->first();
 
-            abort_if(!$joinRequest, 404, 'Join request not found.');
+            abort_if(! $joinRequest, 404, 'Join request not found.');
             if ($joinRequest->status !== 'pending') {
                 throw ValidationException::withMessages([
                     'status' => 'Only pending join requests can be approved.',
@@ -124,7 +211,7 @@ class BlockMemberController extends Controller
 
             $student = DB::table('users')->where('id', $joinRequest->user_id)
                 ->lockForUpdate()->first();
-            abort_if(!$student, 404, 'Student not found.');
+            abort_if(! $student, 404, 'Student not found.');
 
             if ($student->block_id && (int) $student->block_id !== $blockId) {
                 throw ValidationException::withMessages([
@@ -158,6 +245,7 @@ class BlockMemberController extends Controller
                 ]);
 
             SyncBlockCalendarAccess::dispatch($blockId, $student->email, true)->afterCommit();
+
             return [
                 'request' => DB::table('block_join_requests')->where('id', $requestId)->first(),
                 'member_count' => DB::table('users')->where('block_id', $blockId)->count(),
@@ -179,7 +267,7 @@ class BlockMemberController extends Controller
         $joinRequest = DB::table('block_join_requests')
             ->where('id', $requestId)->where('block_id', $blockId)->first();
 
-        abort_if(!$joinRequest, 404, 'Join request not found.');
+        abort_if(! $joinRequest, 404, 'Join request not found.');
         if ($joinRequest->status !== 'pending') {
             throw ValidationException::withMessages([
                 'status' => 'Only pending join requests can be rejected.',
@@ -199,6 +287,10 @@ class BlockMemberController extends Controller
         ]);
     }
 
+    /**
+     * DELETE /api/blocks/{blockId}/members/{memberId}
+     * The mayor (or an admin) removes a member. The mayor cannot be removed.
+     */
     public function destroyMember(int $blockId, int $memberId)
     {
         $actor = $this->requireUser();
@@ -208,20 +300,37 @@ class BlockMemberController extends Controller
         $member = DB::table('users')
             ->where('id', $memberId)->where('block_id', $blockId)->first();
 
-        abort_if(!$member, 404, 'Member not found in this block.');
+        abort_if(! $member, 404, 'Member not found in this block.');
 
-        DB::table('users')->where('id', $memberId)->update([
-            'block_id' => null,
-            'updated_at' => now(),
-        ]);
+        if ((int) $block->mayor_id === (int) $memberId) {
+            throw ValidationException::withMessages([
+                'member' => 'The block mayor cannot be removed.',
+            ]);
+        }
+
+        DB::transaction(function () use ($memberId, $blockId) {
+            DB::table('users')->where('id', $memberId)->update([
+                'block_id' => null,
+                'updated_at' => now(),
+            ]);
+
+            // Stop tracking this block's tasks for the removed member.
+            DB::table('task_assignments')
+                ->where('user_id', $memberId)
+                ->whereIn('task_id', DB::table('tasks')->where('block_id', $blockId)->select('id'))
+                ->delete();
+        });
+
         SyncBlockCalendarAccess::dispatch($blockId, $member->email, false);
+
         return response()->json(['message' => 'Member removed from block.']);
     }
 
     private function findBlock(int $blockId)
     {
         $block = DB::table('blocks')->where('id', $blockId)->first();
-        abort_if(!$block, 404, 'Block not found.');
+        abort_if(! $block, 404, 'Block not found.');
+
         return $block;
     }
 
@@ -238,6 +347,7 @@ class BlockMemberController extends Controller
     {
         $user = auth()->user();
         abort_unless($user, 401, 'Unauthenticated.');
+
         return $user;
     }
 }

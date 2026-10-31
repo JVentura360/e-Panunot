@@ -22,6 +22,13 @@ export default function AdminDashboard() {
         load();
     }, [load]);
 
+    useEffect(() => {
+        // Member counts change while the admin is on another tab, so reload on return.
+        window.addEventListener('focus', load);
+
+        return () => window.removeEventListener('focus', load);
+    }, [load]);
+
     const handleApprove = async (app) => {
         const result = await approve(app);
         setNotice(result.ok ? '' : result.message);

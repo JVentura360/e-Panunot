@@ -29,12 +29,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Blocks, joining, members, subjects
     Route::get('/blocks', [BlockController::class, 'index']);
+    Route::get('/blocks/lookup', [BlockController::class, 'lookup'])->middleware('throttle:30,1'); // must come before '{id}'
     Route::get('/blocks/{id}', [BlockController::class, 'show']);
     Route::get('/blocks/{blockId}/members', [BlockMemberController::class, 'index']);
     Route::post('/blocks/{blockId}/join-requests', [BlockMemberController::class, 'store']);
     Route::get('/blocks/{blockId}/join-requests', [BlockMemberController::class, 'requests']);
     Route::post('/blocks/{blockId}/join-requests/{requestId}/approve', [BlockMemberController::class, 'approve']);
     Route::post('/blocks/{blockId}/join-requests/{requestId}/reject', [BlockMemberController::class, 'reject']);
+    Route::get('/join-requests/mine', [BlockMemberController::class, 'mine']);
+    Route::delete('/join-requests/{requestId}', [BlockMemberController::class, 'cancel']);
     Route::delete('/blocks/{blockId}/members/{memberId}', [BlockMemberController::class, 'destroyMember']);
     Route::put('/blocks/{blockId}/subjects', [SubjectController::class, 'syncBlockSubjects']);
     Route::get('/subjects', [SubjectController::class, 'index']);

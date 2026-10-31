@@ -30,6 +30,12 @@ class User extends Authenticatable
         ];
     }
 
+    /** role is cast to the Role enum, so never compare it to a plain string. */
+    public function isAdmin(): bool
+    {
+        return $this->role === Role::Admin;
+    }
+
     public function block(): BelongsTo
     {
         return $this->belongsTo(Block::class, 'block_id');
