@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useBlocks } from '../../context/BlockContext';
 import MayorApplications from './MayorApplications.jsx';
 import MayorsAndBlocks from './MayorsAndBlocks.jsx';
@@ -16,7 +17,8 @@ export default function AdminDashboard() {
         load,
     } = useBlocks();
 
-    const [tab, setTab] = useState('apps');
+    const { pathname } = useLocation();
+    const tab = pathname === '/admin/applications' ? 'apps' : pathname === '/admin/mayors' ? 'list' : 'term';
     const [notice, setNotice] = useState('');
 
     useEffect(() => {
@@ -41,30 +43,12 @@ export default function AdminDashboard() {
 
     return (
         <div className={styles.page}>
-            <h1 className={styles.title}>Admin Dashboard</h1>
+            <h1 className={styles.title}>{tab === 'term' ? 'School Year' : tab === 'apps' ? 'Applications' : 'Mayors'}</h1>
 
             <p className={styles.subtitle}>
-                {pendingCount} pending application
-                {pendingCount === 1 ? '' : 's'}.
-                Approving one creates the mayor and block.
+                {tab === 'term' ? 'Manage the current academic year and enrollment term.' : tab === 'list' ? 'View current mayors and their blocks.' : `${pendingCount} pending application${pendingCount === 1 ? '' : 's'}. Approving one creates the mayor and block.`}
             </p>
 
-            <div className={styles.tabs}>
-                <button className={`${styles.tab} ${tab === 'term' ? styles.tabActive : ''}`} onClick={() => setTab('term')}>School Year</button>
-                <button
-                    className={`${styles.tab} ${tab === 'apps' ? styles.tabActive : ''}`}
-                    onClick={() => setTab('apps')}
-                >
-                    Mayor Applications
-                </button>
-
-                <button
-                    className={`${styles.tab} ${tab === 'list' ? styles.tabActive : ''}`}
-                    onClick={() => setTab('list')}
-                >
-                    Mayors &amp; Blocks
-                </button>
-            </div>
 
             {notice && (
                 <div className={styles.notice} role="alert">

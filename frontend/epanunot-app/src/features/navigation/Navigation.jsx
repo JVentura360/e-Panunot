@@ -67,7 +67,11 @@ const BASE_NAV = [
 ];
 const BLOCK_NAV = { label: 'Block Management', mobileLabel: 'Block', to: '/block', icon: <IconBlock /> };
 const JOIN_NAV = { label: 'Join Block', mobileLabel: 'Join', to: '/join-block', icon: <IconBlock /> };
-const ADMIN_NAV = [{ label: 'Admin', mobileLabel: 'Admin', to: '/admin', icon: <IconDashboard /> }];
+const ADMIN_NAV = [
+  { label: 'School Year', mobileLabel: 'School Year', to: '/admin', icon: <IconCalendar /> },
+  { label: 'Applications', mobileLabel: 'Applications', to: '/admin/applications', icon: <IconConcerns /> },
+  { label: 'Mayors', mobileLabel: 'Mayors', to: '/admin/mayors', icon: <IconBlock /> },
+];
 
 function getNavItems(user) {
   if (user.role === 'admin') return ADMIN_NAV; // admins only use /admin
@@ -157,7 +161,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
   const roleLabel = `${user.role}${user.block && user.block !== '-' ? ` · ${user.block}` : ''}`;
 
   // "/" must match exactly, otherwise Dashboard would be active on every page
-  const isEnd = (to) => to === '/';
+  const isEnd = (to) => to === '/' || to === '/admin';
 
   return (
     <>
