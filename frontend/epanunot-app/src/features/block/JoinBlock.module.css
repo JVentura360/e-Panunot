@@ -1,0 +1,125 @@
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 32px;
+}
+
+.top { margin-bottom: 24px; }
+.top h1 { font-size: clamp(1.8rem, 3vw, 2.4rem); }
+.top p { color: var(--muted); margin-top: 4px; }
+
+.search {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid var(--control-border);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-transform: uppercase;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.error,
+.notice {
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+}
+
+.error { background: var(--danger-soft); color: var(--danger); }
+.notice { background: var(--sage-soft); color: var(--ink); }
+
+.result {
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--forest);
+  margin-bottom: 28px;
+}
+
+.resultHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.code {
+  font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.meta { font-size: 0.85rem; color: var(--muted); }
+
+.actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.hint,
+.muted { color: var(--muted); font-size: 0.9rem; }
+
+.section { margin-bottom: 28px; }
+.section h2 { font-size: 1.15rem; margin-bottom: 12px; }
+
+.list {
+  display: grid;
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-left: 6px solid var(--sage);
+}
+
+.grow { flex: 1; min-width: 0; }
+.name { font-weight: 600; }
+
+.pill {
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.pending { background: var(--warning-soft); color: var(--warning); }
+.approved { background: var(--sage-soft); color: var(--aurora-green); }
+.rejected { background: var(--danger-soft); color: var(--danger); }
+
+@media (max-width: 760px) {
+  .page { padding: 24px 16px; }
+  .item { flex-wrap: wrap; }
+  .grow { flex-basis: 100%; }
+}

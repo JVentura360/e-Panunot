@@ -9,6 +9,7 @@ import Profile from './features/profile/Profile.jsx';
 import AdminDashboard from './features/admin/AdminDashboard.jsx';
 import MainLayout from './layouts/MainLayout.jsx';
 import BlockManagement from './features/block/BlockManagement.jsx';
+import JoinBlock from './features/block/JoinBlock.jsx';
 import Concerns from './features/concerns/Concerns.jsx';
 import useSyncedConcerns from './features/concerns/useSyncedConcerns.js';
 import Calendar from './features/calendar/Calendar.jsx';
@@ -115,7 +116,16 @@ export default function App() {
 
                 <Route
                     path="/block"
-                    element={<BlockManagement user={user} />}
+                    element={
+                        user.role === 'mayor'
+                            ? <BlockManagement user={user} />
+                            : <Navigate to="/" replace />
+                    }
+                />
+
+                <Route
+                    path="/join-block"
+                    element={member(<JoinBlock user={user} />)}
                 />
 
                 <Route

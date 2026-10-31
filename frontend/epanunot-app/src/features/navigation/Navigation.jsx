@@ -66,12 +66,14 @@ const BASE_NAV = [
   { label: 'Concerns',        mobileLabel: 'Concerns',  to: '/concerns', icon: <IconConcerns /> },
 ];
 const BLOCK_NAV = { label: 'Block Management', mobileLabel: 'Block', to: '/block', icon: <IconBlock /> };
+const JOIN_NAV = { label: 'Join Block', mobileLabel: 'Join', to: '/join-block', icon: <IconBlock /> };
 const ADMIN_NAV = [{ label: 'Admin', mobileLabel: 'Admin', to: '/admin', icon: <IconDashboard /> }];
 
-function getNavItems(role) {
-  if (role === 'admin') return ADMIN_NAV; // admins only use /admin
+function getNavItems(user) {
+  if (user.role === 'admin') return ADMIN_NAV; // admins only use /admin
   const items = [...BASE_NAV];
-  if (role === 'mayor') items.push(BLOCK_NAV);
+  if (user.role === 'mayor') items.push(BLOCK_NAV);
+  if (user.role === 'student' && !user.block_id) items.push(JOIN_NAV); // students without a block
   return items;
 }
 
@@ -150,7 +152,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
   };
   const navigate = useNavigate();
 
-  const navItems = getNavItems(user.role);
+  const navItems = getNavItems(user);
   const canApply = user.role === 'student';
   const roleLabel = `${user.role}${user.block && user.block !== '-' ? ` · ${user.block}` : ''}`;
 

@@ -150,3 +150,27 @@
   .item { flex-wrap: wrap; }
   .grow { flex-basis: 100%; min-width: 0; overflow-wrap: anywhere; }
 }
+
+/* Join-request feature additions */
+.badge {
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--sage-soft);
+  color: var(--ink);
+  vertical-align: middle;
+}
+
+.alert {
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.loading { color: var(--muted); }
+
+.acceptBtn:disabled, .rejectBtn:disabled { opacity: 0.55; cursor: not-allowed; }
