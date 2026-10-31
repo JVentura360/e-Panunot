@@ -185,7 +185,7 @@ export default function Profile({ user, onUpdateUser }) {
         <div className={styles.page}>
             <header className={styles.top}>
                 <div>
-                    <h1>Your profile</h1>
+                    <h1>Profile</h1>
                     <p>Your account details in e-Panunot.</p>
                 </div>
             </header>

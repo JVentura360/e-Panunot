@@ -297,6 +297,11 @@
   transition: transform 300ms cubic-bezier(0.22, 1, 0.36, 1), width 300ms cubic-bezier(0.22, 1, 0.36, 1), height 300ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 .mobileNav .navIndicator { background: var(--forest); }
+:global(:root[data-theme='light']) .header { border-color: var(--line); box-shadow: 0 6px 22px rgb(var(--shadow-rgb) / 6%); }
+:global(:root[data-theme='light']) .profileBtn { background: var(--surface); border-color: var(--mist); }
+:global(:root[data-theme='light']) .profileBtn:hover { background: var(--sage-soft); }
+:global(:root[data-theme='light']) .dropdown { border-color: var(--line); box-shadow: 0 12px 30px rgb(var(--shadow-rgb) / 12%); }
+:global(:root[data-theme='light']) .mobileNav { background: var(--surface); border-color: var(--line); box-shadow: 0 6px 24px rgb(var(--shadow-rgb) / 9%); }
 @media (min-width: 761px) and (max-width: 1100px) {
   .container { padding-inline: 24px; }
   .left { gap: 16px; }

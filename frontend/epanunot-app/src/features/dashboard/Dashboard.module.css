@@ -8,9 +8,9 @@
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-bottom: 36px; gap: 16px; }
 .stat { position: relative; overflow: hidden; isolation: isolate; background: var(--sand); padding: 20px 24px; border-radius: 16px; }
 .stat::after { content: ''; position: absolute; z-index: -1; width: 76px; height: 76px; right: -28px; bottom: -28px; border: 12px solid currentColor; border-radius: 50%; opacity: .07; pointer-events: none; }
-.stat:first-child { background: var(--surface); color: var(--ink); }
-.stat:nth-child(2) { background: var(--sand); color: var(--ink); }
-.stat:last-child { background: var(--sage-soft); }
+.stat:first-child { background: var(--stat-open, var(--surface)); color: var(--ink); }
+.stat:nth-child(2) { background: var(--stat-due, var(--sand)); color: var(--ink); }
+.stat:last-child { background: var(--stat-complete, var(--sage-soft)); }
 .stat > span { font-size: 0.85rem; font-weight: 600; }
 .stat strong { display: block; font-family: 'Bricolage Grotesque', sans-serif; font-size: 2.75rem; line-height: 1.25; margin: 8px 0; font-variant-numeric: tabular-nums; }
 .stat small { font-size: 0.75rem; }
