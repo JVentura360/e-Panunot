@@ -58,19 +58,30 @@ class ConcernController extends Controller
 
     public function updateStatus(Request $request, Concern $concern)
     {
-        Gate::authorize('manage', $concern);
+        Gate::authorize('view', $concern);   // the student who filed it, or the block's mayor
 
+        $user = $request->user();
         $data = $request->validate([
             'status' => ['required', Rule::enum(ConcernStatus::class)],
         ]);
         $status = ConcernStatus::from($data['status']);
+        $isMayor = Gate::allows('manage', $concern);
+
+        // mayor: any status. student: only close it or reopen it.
+        abort_unless(
+            $isMayor || in_array($status, [ConcernStatus::Closed, ConcernStatus::InProgress], true),
+            403,
+            'Students can only close or reopen a concern.'
+        );
 
         if ($concern->status !== $status) {
-            DB::transaction(function () use ($concern, $status, $request) {
-                $concern->update(['status' => $status, 'student_unread' => true]);
+            $flag = $isMayor ? 'student_unread' : 'mayor_unread';   // notify the other side
+
+            DB::transaction(function () use ($concern, $status, $user, $flag) {
+                $concern->update(['status' => $status, $flag => true]);
 
                 $concern->messages()->create([
-                    'sender_id' => $request->user()->id,
+                    'sender_id' => $user->id,
                     'type' => 'system',
                     'message_text' => 'Status changed to ' . str_replace('_', ' ', $status->value) . '.',
                 ]);
@@ -80,10 +91,14 @@ class ConcernController extends Controller
         return new ConcernResource($concern->load(['student', 'subject', 'attachments']));
     }
 
-    public function download(ConcernAttachment $attachment)
-    {
-        Gate::authorize('view', $attachment->concern);
+    public function download(Request $request, ConcernAttachment $attachment)
+{
+    Gate::authorize('view', $attachment->concern);
 
+    if ($request->boolean('download')) {
         return Storage::download($attachment->file_path, $attachment->original_name);
     }
+
+    return Storage::response($attachment->file_path, $attachment->original_name);
+}
 }

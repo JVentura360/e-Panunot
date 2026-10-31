@@ -75,6 +75,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/concerns/{concern}/messages', [ConcernMessageController::class, 'index']);
     Route::post('/concerns/{concern}/messages', [ConcernMessageController::class, 'store']);
     Route::get('/attachments/{attachment}', [ConcernController::class, 'download']);
+    Route::patch('/concerns/{concern}/status', [ConcernController::class, 'updateStatus']);
 
     // Mayor only
     Route::middleware('role:mayor')->group(function () {
@@ -85,8 +86,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/announcements', [AnnouncementController::class, 'store']);
         Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update']);
         Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy']);
-
-        Route::patch('/concerns/{concern}/status', [ConcernController::class, 'updateStatus']);
     });
 
 });

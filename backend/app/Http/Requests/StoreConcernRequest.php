@@ -37,4 +37,14 @@ class StoreConcernRequest extends FormRequest
             'attachments.*' => ['file', 'max:2048', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'attachments.max' => 'You can attach up to 5 files.',
+            'attachments.*.max' => 'Each file must be 2 MB or smaller.',
+            'attachments.*.mimes' => 'Only JPG, PNG, PDF, DOC and DOCX files are allowed.',
+            'attachments.*.uploaded' => 'A file failed to upload. It may be too large.',
+        ];
+    }
 }
