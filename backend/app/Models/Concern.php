@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Enums\ConcernCategory;
+use App\Enums\ConcernStatus;
 
 #[Fillable([
     'block_id',
@@ -26,6 +28,8 @@ class Concern extends Model
     protected function casts(): array
     {
         return [
+            'status' => ConcernStatus::class,
+            'category' => ConcernCategory::class,
             'student_unread' => 'boolean',
             'mayor_unread' => 'boolean',
         ];
