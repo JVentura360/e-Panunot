@@ -27,7 +27,7 @@
   margin-bottom: 28px;
 }
 
-.identity::before { content: ''; position: absolute; top: -6px; right: 28px; width: 40px; height: 13px; border-radius: 3px; background: var(--peach); transform: rotate(5deg); pointer-events: none; }
+.identity::before { content: ''; position: absolute; top: -6px; right: 28px; width: 40px; height: 13px; border-radius: 3px; background: #9ad0c1 ; transform: rotate(5deg); pointer-events: none; }
 .identity > div:last-child { min-width: 0; overflow-wrap: anywhere; }
 
 .identity h2 { font-size: 1.5rem; color: var(--header-ink); }
