@@ -182,12 +182,6 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
           </div>
 
           <div className={styles.right}>
-            {canApply && (
-              <button className={`btn ${styles.applyBtn} ${styles.desktopOnly}`} onClick={() => setApplyOpen(true)}>
-                <IconStar /><span>Apply as Mayor</span>
-              </button>
-            )}
-
             <button className={styles.iconBtn} disabled title="Notifications are coming soon" aria-label="Notifications (coming soon)">
               <IconBell />
               {notifCount > 0 && <span className={styles.notifBadge} aria-hidden="true">{notifCount}</span>}
@@ -223,6 +217,12 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
                       <IconProfile /> My profile
                     </button>
                   )}
+                  {canApply && (
+                    <button className={styles.dropdownItem} role="menuitem"
+                      onClick={() => { setProfileOpen(false); setApplyOpen(true); }}>
+                      <IconStar /> Apply as Mayor
+                    </button>
+                  )}
                   <button className={styles.dropdownItem} role="menuitemcheckbox" aria-label="Dark theme" aria-checked={theme === 'dark'} onClick={toggleTheme}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                       <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
@@ -243,7 +243,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
       </header>
 
       {/* ── Mobile bottom bar (only when there is more than one page) ── */}
-      {(navItems.length > 1 || canApply) && (
+      {navItems.length > 1 && (
         <SlidingNav className={styles.mobileNav} label="Mobile navigation">
           {navItems.map(({ to, mobileLabel, icon }) => (
             <NavLink
@@ -257,13 +257,6 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
             </NavLink>
           ))}
 
-          {/* "Apply" takes a slot on mobile for students */}
-          {canApply && (
-            <button className={styles.mobileItem} onClick={() => setApplyOpen(true)} aria-label="Apply as Mayor">
-              <IconStar />
-              <span>Apply</span>
-            </button>
-          )}
         </SlidingNav>
       )}
 

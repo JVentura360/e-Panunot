@@ -4,6 +4,15 @@
 const BASE = (import.meta.env?.VITE_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '');
 const SERVER = BASE.replace(/\/api$/, '');
 export const googleLoginUrl = `${SERVER}/auth/google/redirect`;
+const pendingReads = new Map();
+const requestListeners = new Set();
+let pendingCount = 0;
+export const getPendingRequestCount = () => pendingCount;
+export const subscribeRequests = (listener) => {
+  requestListeners.add(listener);
+  return () => requestListeners.delete(listener);
+};
+const notifyRequests = () => requestListeners.forEach((listener) => listener());
 
 export class ApiError extends Error {
   constructor(message, status, errors) {
@@ -44,11 +53,27 @@ async function request(address, { method = 'GET', body, query } = {}) {
     if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, value);
   }
 
+  const readKey = method.toUpperCase() === 'GET' ? url.href : null;
+  if (readKey && pendingReads.has(readKey)) return pendingReads.get(readKey);
+  pendingCount++;
+  notifyRequests();
+  const pending = send(url, { method, body }).finally(() => {
+    if (readKey) pendingReads.delete(readKey);
+    pendingCount--;
+    notifyRequests();
+  });
+  if (readKey) pendingReads.set(readKey, pending);
+  return pending;
+}
+
+async function send(url, { method, body }) {
+  const signal = AbortSignal.timeout(20000);
+
   let response;
   try {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
       const csrf = await fetch(`${SERVER}/sanctum/csrf-cookie`, {
-        credentials: 'include', headers: { Accept: 'application/json' },
+        credentials: 'include', headers: { Accept: 'application/json' }, signal,
       });
       if (!csrf.ok) throw new ApiError('Could not initialize your session. Please reload and try again.', csrf.status);
     }
@@ -57,6 +82,7 @@ async function request(address, { method = 'GET', body, query } = {}) {
     response = await fetch(url, {
       method,
       credentials: 'include',
+      signal,
       headers: {
         Accept: 'application/json',
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
@@ -66,6 +92,7 @@ async function request(address, { method = 'GET', body, query } = {}) {
     });
   } catch (error) {
     if (error instanceof ApiError) throw error;
+    if (signal.aborted) throw new ApiError('The server took too long to respond. Please try again.', 0);
     throw new ApiError('Cannot reach the server. Is the backend running?', 0);
   }
 
