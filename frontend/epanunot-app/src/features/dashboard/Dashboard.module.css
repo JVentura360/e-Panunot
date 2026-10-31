@@ -75,3 +75,7 @@
   .filters { width: 100%; }
   .filters button { flex: 1; padding-inline: 8px; }
 }
+
+.blockTitle { margin: 0 0 8px; color: var(--ink); font-size: 1rem; }
+.blockActions { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+.blockActions a { text-decoration: none; }

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from '../../components/Modal.jsx';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
+import ApplyMayorModal from '../navigation/ApplyMayorModal.jsx';
 import TaskItem from './TaskItem.jsx';
 import { daysLeft } from './dateUtils';
 import { announcements, PLATFORMS } from '../../data/mockData';
@@ -15,6 +16,7 @@ export default function Dashboard({ user }) {
   const [modal, setModal] = useState(null);
   const [filter, setFilter] = useState('open');
   const isMayor = user.role === 'mayor';
+  const needsBlock = user.role === 'student' && !user.block_id;
   const pending = tasks.filter((task) => !task.done);
   const completed = tasks.length - pending.length;
   const dueSoon = pending.filter((task) => daysLeft(task.due) <= 1).length;
@@ -39,6 +41,7 @@ export default function Dashboard({ user }) {
 
   return (
     <div className={styles.page}>
+      {modal === 'apply' && <ApplyMayorModal user={user} onClose={() => setModal(null)} />}
       <header className={styles.top}>
         <div>
           <p className={styles.eyebrow}>{user.block && user.block !== '-' ? user.block : 'Your workspace'} <span> / </span> Overview</p>
@@ -66,8 +69,17 @@ export default function Dashboard({ user }) {
             ))}
           </div>
           <section className={styles.section}>
-            <h3>{isMayor ? 'Assigned to your block' : 'From your mayor'} <span>{assigned.length}</span></h3>
-            {assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={isMayor ? null : toggle} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
+            <h3>{needsBlock ? 'Find your block' : isMayor ? 'Assigned to your block' : 'From your mayor'} {!needsBlock && <span>{assigned.length}</span>}</h3>
+            {needsBlock ? (
+              <PlannerEmpty>
+                <h4 className={styles.blockTitle}>You’re not in a block yet.</h4>
+                <p>Join your classmates or apply to become a block mayor.</p>
+                <div className={styles.blockActions}>
+                  <Link className="btn" to="/join-block">Join a Block</Link>
+                  <button type="button" className="btn alt" onClick={() => setModal('apply')}>Apply as Mayor</button>
+                </div>
+              </PlannerEmpty>
+            ) : assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={isMayor ? null : toggle} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
           </section>
           {!isMayor && <section className={styles.section}>
             <h3>Personal tasks <span>{personal.length}</span></h3>
