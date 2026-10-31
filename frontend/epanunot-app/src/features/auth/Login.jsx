@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, developmentAccounts, errorMessage, googleLoginUrl, loginAsDevelopmentAccount } from '../../api/client.js';
 import styles from './Login.module.css';
+import LoadingScreen from '../../components/LoadingScreen.jsx';
 
 const GoogleG = () => (
     <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
@@ -52,6 +53,8 @@ export default function Login({ error: sessionError = '', onLogin }) {
         setLoading(true);
         window.location.assign(googleLoginUrl);
     };
+
+    if (loading) return <LoadingScreen message="Signing you in…" />;
 
     return (
         <main className={styles.login}>

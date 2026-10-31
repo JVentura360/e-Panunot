@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 globalThis.window = { location: { origin: 'http://localhost:5173' }, dispatchEvent: () => {} };
 globalThis.document = { cookie: 'XSRF-TOKEN=encoded%3Dcsrf' };
 
-const { api, logout, googleLoginUrl, developmentAccounts, loginAsDevelopmentAccount } = await import('./client.js');
+const { api, logout, googleLoginUrl, developmentAccounts, loginAsDevelopmentAccount, getPendingRequestCount, subscribeRequests } = await import('./client.js');
 
 test('session requests include cookies without bearer credentials', async () => {
   let request;
@@ -56,4 +56,48 @@ test('development login uses the csrf protected session endpoint', async () => {
   assert.equal(requests.at(-1).url, 'http://localhost:8000/auth/development/login');
   assert.equal(requests.at(-1).options.body, JSON.stringify({ account: 'student-one' }));
   assert.equal(requests.at(-1).options.headers['X-XSRF-TOKEN'], 'encoded=csrf');
+});
+
+test('identical reads share one pending request but fresh reads still reach the server', async () => {
+  let calls = 0;
+  let finish;
+  globalThis.fetch = async () => {
+    calls++;
+    await new Promise((resolve) => { finish = resolve; });
+    return new Response(JSON.stringify({ data: [] }));
+  };
+  const first = api('/blocks');
+  const second = api('/blocks');
+  assert.equal(calls, 1);
+  finish();
+  assert.deepEqual(await first, await second);
+  const third = api('/blocks');
+  assert.equal(calls, 2);
+  finish();
+  await third;
+});
+
+test('request activity tracks parallel requests and clears after success or failure', async () => {
+  const states = [];
+  const unsubscribe = subscribeRequests(() => states.push(getPendingRequestCount()));
+  const finishes = [];
+  globalThis.fetch = async (url) => {
+    await new Promise((resolve) => finishes.push(resolve));
+    if (url.pathname.endsWith('/failure')) throw new Error('offline');
+    return new Response('{}');
+  };
+  const first = api('/success');
+  const second = api('/failure');
+  assert.equal(getPendingRequestCount(), 2);
+  finishes[0]();
+  await first;
+  assert.equal(getPendingRequestCount(), 1);
+  finishes[1]();
+  await assert.rejects(second, (error) => error.status === 0);
+  assert.equal(getPendingRequestCount(), 0);
+  assert.deepEqual(states, [1, 2, 1, 0]);
+  unsubscribe();
+  globalThis.fetch = async () => new Response('{}');
+  await api('/failure');
+  assert.equal(getPendingRequestCount(), 0);
 });

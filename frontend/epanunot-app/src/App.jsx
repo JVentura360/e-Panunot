@@ -1,5 +1,6 @@
 import { TaskProvider } from './context/TaskContext.jsx';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import LoadingScreen from './components/LoadingScreen.jsx';
 import { api, logout, errorMessage } from './api/client.js';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
@@ -18,10 +19,13 @@ export default function App() {
     const [user, setUser] = useState(null);
     const [booting, setBooting] = useState(true);
     const [authError, setAuthError] = useState('');
+    const lastIdentityRefresh = useRef(0);
     const navigate = useNavigate();
     const [concerns, setConcerns] = useSyncedConcerns();
 
     const refreshUser = useCallback(async () => {
+        if (document.visibilityState === 'hidden' || Date.now() - lastIdentityRefresh.current < 30000) return;
+        lastIdentityRefresh.current = Date.now();
         try {
             setUser((await api('/me')).data);
         } catch {
@@ -32,7 +36,10 @@ export default function App() {
     useEffect(() => {
         // Restore the session after a page refresh.
         api('/me')
-            .then((response) => setUser(response.data))
+            .then((response) => {
+                lastIdentityRefresh.current = Date.now();
+                setUser(response.data);
+            })
             .catch((error) => {
                 if (error.status !== 401) setAuthError(errorMessage(error));
             })
@@ -69,7 +76,7 @@ export default function App() {
     };
 
     if (booting) {
-        return <p style={{ padding: 24 }}>Loading...</p>;
+        return <LoadingScreen />;
     }
 
     if (!user) {

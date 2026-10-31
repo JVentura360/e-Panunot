@@ -1,0 +1,7 @@
+.progress { position: fixed; inset: 0 0 auto; height: 3px; z-index: 10000; overflow: hidden; pointer-events: none; opacity: 0; transition: opacity 160ms ease-out; }
+.progress[data-active='true'] { opacity: 1; transition-delay: 150ms; background: var(--sage-soft); }
+.bar { display: block; height: 100%; width: 32%; background: var(--forest); }
+.progress[data-active='true'] .bar { animation: slide 1400ms ease-in-out infinite; }
+.label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@keyframes slide { 0% { transform: translateX(-105%); } 100% { transform: translateX(420%); } }
+@media (prefers-reduced-motion: reduce) { .progress { transition: none; } .progress[data-active='true'] .bar { animation: none; width: 100%; } }

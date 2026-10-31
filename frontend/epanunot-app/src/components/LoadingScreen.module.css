@@ -1,0 +1,17 @@
+.screen { min-height: 100dvh; display: grid; place-items: center; padding: 32px 24px; background: var(--paper); color: var(--ink); }
+.content { display: grid; justify-items: center; text-align: center; width: min(100%, 320px); animation: arrive 280ms ease-out; }
+.notebook { position: relative; display: grid; gap: 12px; padding: 32px 18px 22px; width: 104px; margin-bottom: 30px; border: 1px solid var(--mist); border-radius: 12px; background: var(--surface); }
+.binding { position: absolute; width: 42px; height: 12px; top: -6px; left: 30px; border-radius: 4px; background: var(--forest); }
+.row { display: flex; align-items: center; gap: 10px; }
+.checkbox { width: 12px; height: 12px; border: 1px solid var(--forest); border-radius: 3px; animation: tick 1800ms ease-in-out infinite; animation-delay: calc(var(--row) * 240ms); }
+.line { height: 3px; flex: 1; border-radius: 2px; background: var(--mist); }
+.row:last-child .line { flex: 0 0 24px; }
+.brand { font-family: 'Bricolage Grotesque', sans-serif; font-size: clamp(2rem, 8vw, 2.6rem); font-weight: 800; letter-spacing: -0.04em; color: var(--clay); }
+.brand span { color: var(--forest); }
+.message { margin: 12px 0 24px; color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+.track { display: block; width: 112px; height: 3px; overflow: hidden; border-radius: 2px; background: var(--sage-soft); }
+.track > span { display: block; width: 45%; height: 100%; border-radius: inherit; background: var(--forest); animation: travel 1300ms ease-in-out infinite; }
+@keyframes tick { 0%, 75%, 100% { background: transparent; } 30%, 50% { background: var(--forest); } }
+@keyframes travel { from { transform: translateX(-110%); } to { transform: translateX(330%); } }
+@keyframes arrive { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .content, .checkbox, .track > span { animation: none; } .checkbox { background: var(--forest); } .track > span { width: 100%; } }
