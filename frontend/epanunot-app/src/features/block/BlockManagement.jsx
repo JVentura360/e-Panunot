@@ -2,79 +2,17 @@ import { useCallback, useEffect, useState } from 'react';
 import { api, errorMessage } from '../../api/client.js';
 import styles from './BlockManagement.module.css';
 
-// The API sends UTC timestamps like "2026-10-30 11:24:00".
-const formatDate = (value) =>
-  value ? new Date(`${String(value).replace(' ', 'T')}Z`).toLocaleDateString() : '';
+const BLOCKMATES = [];
+
+const SUBJECTS = [];
+
+const APPLICATIONS_INIT = [];
 
 export default function BlockManagement({ user }) {
-  const blockId = user.block_id;
+  const [applications, setApplications] = useState(APPLICATIONS_INIT);
 
-  const [members, setMembers] = useState([]);
-  const [requests, setRequests] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [busyId, setBusyId] = useState(null);
-
-  const load = useCallback(async () => {
-    if (!blockId) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const [memberList, requestList, subjectList] = await Promise.all([
-        api(`/blocks/${blockId}/members`),
-        api(`/blocks/${blockId}/join-requests`, { query: { status: 'pending', per_page: 100 } }),
-        api('/subjects', { query: { block_id: blockId } }),
-      ]);
-      setMembers(memberList.data);
-      setRequests(requestList.data);
-      setSubjects(subjectList.data);
-      setError('');
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      setLoading(false);
-    }
-  }, [blockId]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  useEffect(() => {
-    // New join requests may arrive while the mayor is on another tab.
-    window.addEventListener('focus', load);
-    return () => window.removeEventListener('focus', load);
-  }, [load]);
-
-  const review = async (request, action) => {
-    setBusyId(`request-${request.id}`);
-    setError('');
-    try {
-      await api(`/blocks/${blockId}/join-requests/${request.id}/${action}`, { method: 'POST' });
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      await load();
-      setBusyId(null);
-    }
-  };
-
-  const removeMember = async (member) => {
-    if (!window.confirm(`Remove ${member.name} from your block?`)) return;
-
-    setBusyId(`member-${member.id}`);
-    setError('');
-    try {
-      await api(`/blocks/${blockId}/members/${member.id}`, { method: 'DELETE' });
-    } catch (e) {
-      setError(errorMessage(e));
-    } finally {
-      await load();
-      setBusyId(null);
-    }
+  const removeApp = (id) => {
+    setApplications(applications.filter((a) => a.id !== id));
   };
 
   const scrollTo = (id) => {
@@ -98,8 +36,8 @@ export default function BlockManagement({ user }) {
     <div className={styles.page}>
       <header className={styles.top}>
         <div>
-          <h1>Block Management ({user.block})</h1>
-          <p>Manage your blockmates, join requests, and subjects.</p>
+          <h1>Block Management{user.block ? ` (${user.block})` : ''}</h1>
+          <p>Manage your blockmates, applications, and subjects.</p>
         </div>
       </header>
 
@@ -140,28 +78,13 @@ export default function BlockManagement({ user }) {
 
       <section className={styles.section} id="blockmates">
         <h3>Blockmates</h3>
-        {loading ? (
-          <p className={styles.loading}>Loading...</p>
-        ) : (
-          <div className={styles.list}>
-            {members.map((m) => (
-              <div className={styles.item} key={m.id}>
-                <div className={styles.grow}>
-                  <div className={styles.name}>
-                    {m.name}
-                    {m.is_mayor && <span className={styles.badge}>Mayor</span>}
-                  </div>
-                  <div className={styles.meta}>{m.email}</div>
-                </div>
-                {!m.is_mayor && (
-                  <button
-                    className={styles.rejectBtn}
-                    disabled={busyId === `member-${m.id}`}
-                    onClick={() => removeMember(m)}
-                  >
-                    Remove
-                  </button>
-                )}
+        {BLOCKMATES.length === 0 && <div className="empty">No blockmates loaded yet.</div>}
+        <div className={styles.list}>
+          {BLOCKMATES.map((m) => (
+            <div className={styles.item} key={m.id}>
+              <div className={styles.grow}>
+                <div className={styles.name}>{m.name}</div>
+                <div className={styles.meta}>{m.subjects.join(' · ')}</div>
               </div>
             ))}
           </div>
@@ -206,18 +129,13 @@ export default function BlockManagement({ user }) {
 
       <section className={styles.section} id="subjects">
         <h3>Subjects</h3>
-        {loading ? (
-          <p className={styles.loading}>Loading...</p>
-        ) : subjects.length === 0 ? (
-          <div className="empty">No subjects have been assigned to this block yet.</div>
-        ) : (
-          <div className={styles.list}>
-            {subjects.map((s) => (
-              <div className={styles.item} key={s.id}>
-                <div className={styles.grow}>
-                  <div className={styles.name}>{s.name}</div>
-                  <div className={styles.meta}>{s.code}</div>
-                </div>
+        {SUBJECTS.length === 0 && <div className="empty">No subjects loaded yet.</div>}
+        <div className={styles.list}>
+          {SUBJECTS.map((s) => (
+            <div className={styles.item} key={s.id}>
+              <div className={styles.grow}>
+                <div className={styles.name}>{s.name}</div>
+                <div className={styles.meta}>{s.code}</div>
               </div>
             ))}
           </div>

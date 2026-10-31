@@ -6,7 +6,11 @@ const KEY = 'concerns-v1';
 function load() {
     try {
         const raw = localStorage.getItem(KEY);
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+            const stored = JSON.parse(raw);
+            if (Array.isArray(stored)) return stored.filter((concern) =>
+                !(concern.studentId === 'demo-student' && /^c-\d+$/.test(concern.id)));
+        }
     } catch {
         /* ignore corrupt or unavailable storage */
     }
@@ -33,7 +37,7 @@ export default function useSyncedConcerns() {
     // Fires in OTHER tabs when this key changes.
     useEffect(() => {
         const onStorage = (e) => {
-        if (e.key === KEY && e.newValue) setState(JSON.parse(e.newValue));
+        if (e.key === KEY) setState(load());
         };
         window.addEventListener('storage', onStorage);
         return () => window.removeEventListener('storage', onStorage);

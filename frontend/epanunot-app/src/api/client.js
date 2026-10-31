@@ -1,15 +1,9 @@
 // src/api/client.js
 // One place that talks to the Laravel API. Every screen imports { api } from here.
 
-const BASE = (import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000/api').replace(/\/$/, '');
-const TOKEN_KEY = 'epanunot_token';
-
-export const getToken = () => localStorage.getItem(TOKEN_KEY);
-
-export const setToken = (token) => {
-  if (token) localStorage.setItem(TOKEN_KEY, token);
-  else localStorage.removeItem(TOKEN_KEY);
-};
+const BASE = (import.meta.env?.VITE_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '');
+const SERVER = BASE.replace(/\/api$/, '');
+export const googleLoginUrl = `${SERVER}/auth/google/redirect`;
 
 export class ApiError extends Error {
   constructor(message, status, errors) {
@@ -26,27 +20,52 @@ export class ApiError extends Error {
  * api('/calendar', { query: { from: '...', to: '...' } })
  *
  * Returns the parsed JSON (or null for 204). Throws ApiError on any failure.
- * A 401 clears the saved token and fires an "auth:expired" event so App can show Login.
+ * A 401 fires an "auth:expired" event so App can show Login.
  */
 export async function api(path, { method = 'GET', body, query } = {}) {
-  const url = new URL(BASE + path, window.location.origin);
+  return request(BASE + path, { method, body, query });
+}
+
+export async function logout() {
+  return request(`${SERVER}/logout`, { method: 'POST' });
+}
+
+export async function developmentAccounts() {
+  return request(`${SERVER}/auth/development/accounts`);
+}
+
+export async function loginAsDevelopmentAccount(account) {
+  return request(`${SERVER}/auth/development/login`, { method: 'POST', body: { account } });
+}
+
+async function request(address, { method = 'GET', body, query } = {}) {
+  const url = new URL(address, window.location.origin);
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, value);
   }
 
-  const token = getToken();
   let response;
   try {
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) {
+      const csrf = await fetch(`${SERVER}/sanctum/csrf-cookie`, {
+        credentials: 'include', headers: { Accept: 'application/json' },
+      });
+      if (!csrf.ok) throw new ApiError('Could not initialize your session. Please reload and try again.', csrf.status);
+    }
+    const csrfCookie = document.cookie.split('; ').find((cookie) => cookie.startsWith('XSRF-TOKEN='));
+    const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.slice('XSRF-TOKEN='.length)) : '';
     response = await fetch(url, {
       method,
+      credentials: 'include',
       headers: {
         Accept: 'application/json',
         ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
       },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
     throw new ApiError('Cannot reach the server. Is the backend running?', 0);
   }
 
@@ -55,7 +74,6 @@ export async function api(path, { method = 'GET', body, query } = {}) {
   const data = await response.json().catch(() => null);
 
   if (response.status === 401) {
-    setToken(null);
     window.dispatchEvent(new Event('auth:expired'));
   }
 

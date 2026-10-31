@@ -36,6 +36,14 @@ return [
     ],
 
     'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', 'http://localhost:8000/auth/google/callback'),
+        'frontend_url' => env('FRONTEND_URL', 'http://localhost:5173'),
+        'allowed_domains' => array_values(array_filter(array_map(
+            fn (string $domain): string => strtolower(trim($domain)),
+            explode(',', env('GOOGLE_ALLOWED_DOMAINS', 'udd.edu.ph,cdd.edu.ph')),
+        ))),
         'enabled'     => env('GOOGLE_CALENDAR_ENABLED', false),
         'credentials' => env('GOOGLE_CREDENTIALS_PATH', storage_path('app/private/google/service-account.json')),
         'timezone'    => env('GOOGLE_CALENDAR_TIMEZONE', 'Asia/Manila'),

@@ -212,7 +212,7 @@ class BlockController extends Controller
     private function requireAdmin()
     {
         $user = $this->requireUser();
-        abort_unless($user->isAdmin(), 403, 'Admin access required.');
+        abort_unless($user->role === \App\Enums\Role::Admin, 403, 'Admin access required.');
         return $user;
     }
 }

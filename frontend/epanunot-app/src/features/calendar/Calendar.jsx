@@ -30,27 +30,17 @@ const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 const TODAY = new Date();
 TODAY.setHours(0, 0, 0, 0);
 const TODAY_KEY = toKey(TODAY);
-const rel = (n) => toKey(addDays(TODAY, n));
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const SUBJECTS = ['CS 101', 'MATH 21', 'ENG 12', 'PE 2', 'NSTP 1'];
+const SUBJECTS = ['Other'];
 const VIEWS = [
 { id: 'month', label: 'Month' },
 { id: 'week', label: 'Week' },
 { id: 'agenda', label: 'Agenda' },
 ];
 
-/* ---------- mock data (dates are relative to today) ---------- */
-const SEED_EVENTS = [
-{ id: 'e1', title: 'CS 101 Lecture', date: rel(0), start: '09:00', end: '10:30', subject: 'CS 101', type: 'class' },
-{ id: 'e2', title: 'MATH 21 Recitation', date: rel(1), start: '13:00', end: '14:30', subject: 'MATH 21', type: 'class' },
-{ id: 'e3', title: 'Group study', date: rel(2), start: '18:00', end: '19:30', subject: '', type: 'personal' },
-{ id: 'e4', title: 'ENG 12 Workshop', date: rel(3), start: '10:00', end: '11:30', subject: 'ENG 12', type: 'class' },
-{ id: 'e5', title: 'PE 2 Fitness test', date: rel(5), start: '07:30', end: '09:00', subject: 'PE 2', type: 'class' },
-{ id: 'e6', title: 'CS 101 Lab', date: rel(-2), start: '14:00', end: '17:00', subject: 'CS 101', type: 'class' },
-{ id: 'e7', title: 'Org meeting', date: rel(9), start: '16:00', end: '17:00', subject: '', type: 'personal' },
-{ id: 'e8', title: 'MATH 21 Midterm review', date: rel(12), start: '15:00', end: '17:00', subject: 'MATH 21', type: 'class' },
-];
+/* ---------- initial calendar state ---------- */
+const SEED_EVENTS = [];
 
 const EMPTY_FORM = { title: '', date: TODAY_KEY, start: '09:00', end: '10:00', subject: SUBJECTS[0] };
 

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { api, setToken, errorMessage } from '../../api/client.js';
+import { useEffect, useState } from 'react';
+import { api, developmentAccounts, errorMessage, googleLoginUrl, loginAsDevelopmentAccount } from '../../api/client.js';
 import styles from './Login.module.css';
 
 const GoogleG = () => (
@@ -11,24 +11,46 @@ const GoogleG = () => (
     </svg>
 );
 
-export default function Login({ onLogin }) {
-    const [error, setError] = useState('');
+export default function Login({ error: sessionError = '', onLogin }) {
     const [loading, setLoading] = useState(false);
-    const [token, setTokenText] = useState('');
+    const [accounts, setAccounts] = useState([]);
+    const [developmentError, setDevelopmentError] = useState('');
+    useEffect(() => {
+        if (!import.meta.env.DEV) return;
+        let active = true;
+        developmentAccounts()
+            .then((response) => { if (active) setAccounts(response.data); })
+            .catch(() => { /* The picker is unavailable outside the local backend. */ });
+        return () => { active = false; };
+    }, []);
+    const errors = {
+        school_account_required: 'Please use your verified @udd.edu.ph or @cdd.edu.ph Google school account.',
+        cancelled: 'Google sign-in was cancelled. You can try again.',
+        login_failed: 'Google sign-in could not be completed. Please try again.',
+        not_configured: 'Google sign-in is not configured on the server yet.',
+        account_conflict: 'This email is linked to another account. Please contact your administrator.',
+    };
+    const code = new URLSearchParams(window.location.search).get('auth_error');
+    const error = developmentError || errors[code] || sessionError;
 
-    const signInWithToken = async () => {
-        setError('');
+    const signInAs = async (account) => {
+        setDevelopmentError('');
         setLoading(true);
-
         try {
-            setToken(token.trim());
-            onLogin((await api('/me')).data);
-        } catch (e) {
-            setToken(null);
-            setError(errorMessage(e));
+            await loginAsDevelopmentAccount(account);
+            const response = await api('/me');
+            window.history.replaceState(null, '', '/');
+            onLogin(response.data);
+        } catch (error) {
+            setDevelopmentError(errorMessage(error));
         } finally {
             setLoading(false);
         }
+    };
+
+    const signInWithGoogle = () => {
+        setLoading(true);
+        window.location.assign(googleLoginUrl);
     };
 
     return (
@@ -57,7 +79,7 @@ export default function Login({ onLogin }) {
                         className={styles.gbtn}
                         disabled={loading}
                         aria-busy={loading}
-                        onClick={() => setError('Google sign-in is not connected yet.')}
+                        onClick={signInWithGoogle}
                     >
                         <span className={styles.providerIcon}><GoogleG /></span>
                         <span>Continue with UdD/CdD account</span>
@@ -73,30 +95,24 @@ export default function Login({ onLogin }) {
                         </div>
                     )}
 
-                    <details className={styles.demo}>
-                        <summary>Prototype options</summary>
+                    {accounts.length > 0 && (
+                        <details className={styles.demo}>
+                            <summary>Local development accounts</summary>
+                            <p className={styles.demoHint}>
+                                Test different roles without another school account. Google sign-in stays available above.
+                            </p>
+                            <div className={styles.demoRow}>
+                                {accounts.map((account) => (
+                                    <button key={account.key} type="button" className={styles.chip}
+                                        disabled={loading} onClick={() => signInAs(account.key)}>
+                                        {account.name}
+                                    </button>
+                                ))}
+                            </div>
+                            <p className={styles.demoHint}>Mayor and classmates share a test block. New Student starts without a block.</p>
+                        </details>
+                    )}
 
-                        <p className={styles.demoHint}>
-                            Paste your API token to access your account.
-                        </p>
-
-                        <div className={styles.demoRow}>
-                            <input
-                                type="password"
-                                value={token}
-                                onChange={(e) => setTokenText(e.target.value)}
-                                placeholder="Paste API token"
-                            />
-
-                            <button
-                                className={styles.chip}
-                                disabled={loading || !token.trim()}
-                                onClick={signInWithToken}
-                            >
-                                {loading ? 'Signing in...' : 'Sign in with token'}
-                            </button>
-                        </div>
-                    </details>
                 </div>
             </section>
         </main>

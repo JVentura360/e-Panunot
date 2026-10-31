@@ -1,5 +1,59 @@
 # e-Panunot system review
 
+## Current feature list — October 31, 2026
+
+Checked against [GitHub main at e0e3455](https://github.com/JVentura360/e-Panunot/commit/e0e34555f021a7d076d545a81cd0abc5ac405609), which matches the local checkout. Status means present in source unless runtime verification is explicitly stated. This section supersedes the October 26 assessment preserved below.
+
+### New features and implementation status
+
+| Feature | Current implementation | Still needed |
+| --- | --- | --- |
+| Shared dashboard/calendar tasks | Both screens use `TaskContext`; class tasks are grouped by block, personal lists and completion by account; localStorage persistence and cross-tab updates | Connect to task APIs for sharing across users/devices; browser storage is not server persistence |
+| Task deadlines and ordering | Date validation rejects past/invalid dates, allows today; unfinished items precede completed items; new tasks lead the list; reusable date picker and task utilities | Verify full browser interaction and server/UI date agreement |
+| Themes and UI improvements | Aurora styling, persistent dark/light preference, revised layouts and dropdown behavior | Browser and accessibility review |
+| API client and identity restoration | `src/api/client.js` sends bearer tokens, handles validation/network errors and clears expired tokens; App restores `/api/me` and refreshes on window focus | Real Google sign-in and server logout/token revocation; current login accepts a manually supplied token |
+| Mayor application submission | ApplyMayorModal posts structured application data to the backend | Verify with real authenticated accounts/database |
+| Admin application review | BlockContext loads applications/blocks, posts approve/reject actions and refreshes; backend approval service exists | Runtime authorization, concurrency and complete workflow verification |
+| Profile/application details | Profile fetches own applications and block details; `/api/me` derives mayor display role from block ownership | Name editing remains local; add profile update API |
+| Block membership and subjects | Backend routes/controllers for block lists, members, join requests, approval/rejection, removal and subject synchronization | Connect BlockManagement UI, which still uses local/demo data |
+| Tasks and announcements backend | Controllers, requests, resources, task completion routes and authorization policies exist | Connect dashboard task/announcement operations and verify assignment isolation |
+| Concerns backend | Concern creation/listing, conversation routes, status changes and attachment download implementation exist, with policies/resources | Replace localStorage concern UI with API queries, uploads, read tracking and verified status rules |
+| Calendar events and personal to-dos backend | Models, migrations, resources and CRUD routes exist; combined calendar endpoint added | Connect Calendar UI; its events remain component state and tasks remain localStorage |
+| Google Calendar integration | Service, block calendar endpoint, sync/delete/access jobs and test command exist; task/event/member workflows dispatch jobs | Configure credentials/calendars, run queue workers and verify remote synchronization |
+| Notifications foundation | Task reminder, announcement and concern reply notification classes; policies added | Wire delivery and reminder scheduling; notification list/read APIs, UI and push flow remain unfinished; `routes/console.php` only contains inspire |
+| Database and test foundation | Domain migrations now cover core tables plus calendar events/personal to-dos; custom factories/seeders and task/deadline/concern/application/factory tests exist | Verify fresh migration/seeding and execute backend suite with a compatible PHP runtime |
+
+Source anchors: `frontend/epanunot-app/src/context/TaskContext.jsx`, `src/components/taskListUtils.js`, `src/theme.js`, `src/api/client.js`, `src/context/BlockContext.jsx`, `src/features/navigation/ApplyMayorModal.jsx`, `src/features/profile/Profile.jsx`; `backend/routes/api.php`, `app/Services/MayorApprovalService.php`, `app/Services/GoogleCalendarService.php`, `app/Jobs/`, `app/Notifications/`, `database/migrations/`, `tests/Feature/`.
+
+### Updated remaining-work list
+
+- [x] Add domain migrations, custom factories/seeders and backend workflow test files (execution still unverified).
+- [x] Add backend application, membership, task, announcement, concern, event and personal to-do APIs.
+- [x] Connect frontend application submission, admin review and profile/application reads to the API.
+- [x] Share dashboard/calendar task state locally, with account-specific completion and deadline validation.
+- [x] Add persistent dark/light themes and Google Calendar integration source.
+- [ ] Verify compatible PHP, fresh database setup, migrations, seeders, routes and backend tests.
+- [ ] Complete Google authentication, school-account validation and server logout/token revocation.
+- [ ] Connect membership/subjects, announcements, tasks, concerns and calendar UI to persisted APIs.
+- [ ] Persist profile edits and complete attachment/read-state flows.
+- [ ] Verify policies and role consistency: the Role enum includes mayor, while `/api/me` derives mayor status from block ownership; do not assume every authorization path agrees.
+- [ ] Configure and verify Google Calendar jobs and queue processing.
+- [ ] Complete notifications/reminders, scheduling, delivery, read state and push subscriptions.
+- [ ] Verify multi-user workflows, browser behavior, accessibility and deployment configuration.
+
+### Verification for this update
+
+- GitHub default-branch head and local commit match at `e0e3455`.
+- `node --test src/theme.test.js src/components/taskListUtils.test.js src/context/taskStorage.test.js` in the frontend: **10 passed, 0 failed** on October 31, 2026.
+- These tests cover utilities/storage/theme behavior; they do not verify React screens, backend APIs, database operations, OAuth, Google Calendar delivery or notifications.
+- Application source was not changed by this feature-list update. Historical build/lint/runtime results below are dated October 26 and are not current verification.
+
+---
+
+## Historical assessment — October 26, 2026
+
+The following assessment records the earlier checkout. Statements such as “no business controllers,” “no domain migrations,” and “only GET /api/user” are superseded by the current list above.
+
 Reviewed: October 26, 2026. This is an assessment of the checked-out source and local verification, not confirmation of a running database or deployed system. Suggested files and endpoints below do not exist unless explicitly marked as current.
 
 ## 1. Current architecture and application flow

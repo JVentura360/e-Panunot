@@ -19,7 +19,7 @@ class ConcernTest extends TestCase
     {
         $term    = Term::factory()->active()->create();
         $block   = Block::factory()->create(['term_id' => $term->id]);
-        $mayor   = User::factory()->student($block)->create();
+        $mayor   = User::factory()->student($block)->create(['role' => 'mayor']);
         $block->update(['mayor_id' => $mayor->id]);
         $student = User::factory()->student($block)->create();
 
@@ -39,7 +39,7 @@ class ConcernTest extends TestCase
         ];
 
         $response = $this->actingAs($student)
-            ->postJson("/api/blocks/{$block->id}/concerns", $payload);
+            ->postJson('/api/concerns', $payload);
 
         $response->assertStatus(201)
             ->assertJsonFragment([
@@ -62,7 +62,7 @@ class ConcernTest extends TestCase
         [$block, , $student] = $this->makeBlockWithMayorAndStudent();
 
         $response = $this->actingAs($student)
-            ->postJson("/api/blocks/{$block->id}/concerns", [
+            ->postJson('/api/concerns', [
                 'title'       => 'Test',
                 'category'    => 'invalid_category',
                 'description' => 'Some description.',
@@ -79,7 +79,7 @@ class ConcernTest extends TestCase
         [$block, , $student] = $this->makeBlockWithMayorAndStudent();
 
         $response = $this->actingAs($student)
-            ->postJson("/api/blocks/{$block->id}/concerns", [
+            ->postJson('/api/concerns', [
                 'title'    => 'Missing description',
                 'category' => 'academic',
             ]);
@@ -101,7 +101,7 @@ class ConcernTest extends TestCase
         ]);
 
         $response = $this->actingAs($mayor)
-            ->patchJson("/api/concerns/{$concern->id}", [
+            ->patchJson("/api/concerns/{$concern->id}/status", [
                 'status' => 'in_progress',
             ]);
 
@@ -126,7 +126,7 @@ class ConcernTest extends TestCase
         ]);
 
         $this->actingAs($student)
-            ->patchJson("/api/concerns/{$concern->id}", ['status' => 'resolved'])
+            ->patchJson("/api/concerns/{$concern->id}/status", ['status' => 'resolved'])
             ->assertStatus(403);
     }
 
@@ -145,15 +145,13 @@ class ConcernTest extends TestCase
         ]);
 
         $this->actingAs($student)
-            ->getJson("/api/concerns/{$concern->id}")
+            ->getJson("/api/concerns/{$concern->id}/messages")
             ->assertStatus(403);
     }
 
     // ── Valid status transitions ──────────────────────────────────────────────
 
-    /**
-     * @dataProvider validStatusProvider
-     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('validStatusProvider')]
     public function test_mayor_can_set_all_valid_statuses(string $status): void
     {
         [$block, $mayor, $student] = $this->makeBlockWithMayorAndStudent();
@@ -164,7 +162,7 @@ class ConcernTest extends TestCase
         ]);
 
         $this->actingAs($mayor)
-            ->patchJson("/api/concerns/{$concern->id}", ['status' => $status])
+            ->patchJson("/api/concerns/{$concern->id}/status", ['status' => $status])
             ->assertStatus(200)
             ->assertJsonFragment(['status' => $status]);
     }
