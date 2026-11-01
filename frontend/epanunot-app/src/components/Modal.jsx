@@ -3,11 +3,17 @@ import styles from './Modal.module.css';
 import DatePicker from './DatePicker';
 import { dateKey } from './datePickerUtils.js';
 import { validDeadline } from './taskListUtils.js';
+import { errorMessage } from '../api/client.js';
 
-export default function Modal({ title, description, fields, onSave, onClose, submitLabel = 'Save' }) {
+export default function Modal({ title, description, fields, onSave, onClose, submitLabel = 'Save', initialValues = {} }) {
   const id = useId();
   const dialogRef = useRef(null);
-  const [vals, setVals] = useState(() => Object.fromEntries(fields.map((field) => [field.key, field.type === 'select' ? field.options[0] : ''])));
+  const [vals, setVals] = useState(() => Object.fromEntries(fields.map((field) => [
+    field.key,
+    initialValues[field.key] ?? (field.type === 'select' ? field.options[0] : ''),
+  ])));
+  const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
   useEffect(() => {
     const dialog = dialogRef.current;
     const previousFocus = document.activeElement;
@@ -21,24 +27,33 @@ export default function Modal({ title, description, fields, onSave, onClose, sub
     };
   }, []);
 
-  const submit = (event) => {
+  const submit = async (event) => {
     event.preventDefault();
-    const values = Object.fromEntries([...new FormData(event.currentTarget)].map(([key, value]) => [key, value.trim()]));
+    const form = event.currentTarget;
+    const values = Object.fromEntries([...new FormData(form)].map(([key, value]) => [key, value.trim()]));
     const missing = fields.find((field) => field.required && !values[field.key]);
     if (missing) {
-      const input = event.currentTarget.elements.namedItem(missing.key);
+      const input = form.elements.namedItem(missing.key);
       input.setCustomValidity('Please complete this field.');
       input.reportValidity();
       return;
     }
     const invalidDeadline = fields.find((field) => field.disallowPast && !validDeadline(values[field.key], dateKey(new Date())));
     if (invalidDeadline) {
-      const input = event.currentTarget.elements.namedItem(invalidDeadline.key);
+      const input = form.elements.namedItem(invalidDeadline.key);
       input.setCustomValidity('Choose today or a future date for the deadline.');
       input.reportValidity();
       return;
     }
-    onSave(values);
+    setError('');
+    setSending(true);
+    try {
+      await onSave(values);
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setSending(false);
+    }
   };
   return (
     <dialog ref={dialogRef} className={styles.modal} aria-labelledby={id + '-title'} aria-describedby={description ? id + '-description' : undefined} onCancel={(event) => { event.preventDefault(); onClose(); }} onClick={(event) => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose(); } }}>
@@ -65,9 +80,10 @@ export default function Modal({ title, description, fields, onSave, onClose, sub
             </div>;
           })}
         </div>
+        {error && <p role="alert" className={styles.error}>{error}</p>}
         <footer className={styles.actions}>
-          <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>
-          <button type="submit" className="btn">{submitLabel}</button>
+          <button type="button" className="btn ghost" onClick={onClose} disabled={sending}>Cancel</button>
+          <button type="submit" className="btn" disabled={sending}>{sending ? 'Saving...' : submitLabel}</button>
         </footer>
       </form>
     </dialog>
