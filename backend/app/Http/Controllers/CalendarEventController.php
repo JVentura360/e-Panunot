@@ -176,16 +176,11 @@ class CalendarEventController extends Controller
      */
     private function taskItems(User $user, CarbonImmutable $from, CarbonImmutable $to)
     {
-        if (! $user->block_id) {
-            return collect();
-        }
-
-        return DB::table('tasks as t')
+        return \App\Services\SubjectAccess::scope(DB::table('tasks as t'), $user, 't')
             ->leftJoin('subjects as s', 's.id', '=', 't.subject_id')
             ->leftJoin('task_assignments as ta', function ($join) use ($user) {
                 $join->on('ta.task_id', '=', 't.id')->where('ta.user_id', '=', $user->id);
             })
-            ->where('t.block_id', $user->block_id)
             ->whereBetween('t.due_date', [$from, $to])
             ->orderBy('t.due_date')
             ->get([

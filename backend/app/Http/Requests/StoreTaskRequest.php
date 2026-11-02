@@ -28,10 +28,13 @@ class StoreTaskRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'subject_id' => [
-                'nullable',
+                'required_unless:all_subjects,true',
+                'prohibited_if:all_subjects,true',
+                'integer',
                 Rule::exists('block_subjects', 'subject_id')
                     ->where('block_id', $this->user()->block_id),
             ],
+            'all_subjects' => ['sometimes', 'boolean'],
             'platform' => ['nullable', Rule::enum(TaskPlatform::class)],
             'due_date' => ['required', 'date', 'after_or_equal:today'],
             'reminder_interval_minutes' => ['nullable', 'integer', 'min:1']

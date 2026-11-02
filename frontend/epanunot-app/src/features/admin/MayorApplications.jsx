@@ -24,7 +24,7 @@ export default function MayorApplications({ apps, onApprove, onReject }) {
             {app.status === 'pending' ? (
                 <div className={styles.actions}>
                 <button className={`${styles.btn} ${styles.accept}`} onClick={() => onApprove(app)}>
-                    Accept
+                    Review & approve
                 </button>
                 <button className={`${styles.btn} ${styles.reject}`} onClick={() => onReject(app.id)}>
                     Reject

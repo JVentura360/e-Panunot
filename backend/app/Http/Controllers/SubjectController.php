@@ -6,6 +6,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
+
+
+
 class SubjectController extends Controller
 {
     /**
@@ -27,7 +30,8 @@ class SubjectController extends Controller
             abort_unless(
                 $user->role === \App\Enums\Role::Admin ||
                 (int) $block->mayor_id === (int) $user->id ||
-                (int) $user->block_id === $blockId,
+                (int) $user->block_id === $blockId ||
+                DB::table('terms')->where('id', $block->term_id)->where('is_active', true)->exists(),
                 403,
                 'You cannot view subjects for this block.'
             );
@@ -105,51 +109,6 @@ class SubjectController extends Controller
         DB::table('subjects')->where('id', $id)->delete();
 
         return response()->json(['message' => 'Subject deleted.']);
-    }
-
-    /**
-     * PUT /api/blocks/{blockId}/subjects
-     * Body: {"subject_ids":[1,2,3]}
-     * Admins and the block's mayor may replace the block's subject list.
-     */
-    public function syncBlockSubjects(Request $request, int $blockId)
-    {
-        $user = $this->requireUser();
-        $block = DB::table('blocks')->where('id', $blockId)->first();
-        abort_if(!$block, 404, 'Block not found.');
-        abort_unless(
-            $user->role === \App\Enums\Role::Admin || (int) $block->mayor_id === (int) $user->id,
-            403,
-            'Only an admin or this block’s mayor can assign subjects.'
-        );
-
-        $validated = $request->validate([
-            'subject_ids' => 'required|array',
-            'subject_ids.*' => 'integer|distinct|exists:subjects,id',
-        ]);
-
-        DB::transaction(function () use ($blockId, $validated) {
-            DB::table('block_subjects')->where('block_id', $blockId)->delete();
-
-            $rows = [];
-            foreach ($validated['subject_ids'] as $subjectId) {
-                $rows[] = ['block_id' => $blockId, 'subject_id' => $subjectId];
-            }
-
-            if ($rows) {
-                DB::table('block_subjects')->insert($rows);
-            }
-        });
-
-        return response()->json([
-            'message' => 'Block subjects updated.',
-            'data' => DB::table('subjects as s')
-                ->join('block_subjects as bs', 'bs.subject_id', '=', 's.id')
-                ->where('bs.block_id', $blockId)
-                ->select('s.*')
-                ->orderBy('s.code')
-                ->get(),
-        ]);
     }
 
     private function requireUser()

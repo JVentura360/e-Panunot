@@ -18,6 +18,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'status',
     'reviewed_by',
     'reviewed_at',
+    'proposed_subjects',
+    'subject_load_revision',
+    'is_regular_student',
 ])]
 class MayorApplication extends Model
 {
@@ -29,6 +32,9 @@ class MayorApplication extends Model
             'year_level' => 'integer',
             'block_number' => 'integer',
             'reviewed_at' => 'datetime',
+            'proposed_subjects' => 'array',
+            'subject_load_revision' => 'integer',
+            'is_regular_student' => 'boolean',
         ];
     }
 

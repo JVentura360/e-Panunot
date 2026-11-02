@@ -42,7 +42,7 @@ class MayorApplicationController extends Controller
         return response()->json($query->orderByDesc('ma.created_at')->paginate(min((int) $request->input('per_page', 15), 100)));
     }
 
-    public function show(int $id)
+    public function show(int $id, \App\Services\SubjectLoadService $loads)
     {
         $this->requireAdmin();
 
@@ -56,6 +56,10 @@ class MayorApplicationController extends Controller
             ->first();
 
         abort_if(!$application, 404, 'Mayor application not found.');
+        $application->proposed_subjects = $application->proposed_subjects ? json_decode($application->proposed_subjects, true, flags: JSON_THROW_ON_ERROR) : null;
+        $application->subject_load = $loads->find($application->term_id, $application->program, $application->year_level);
+        $eligibility = app(\App\Services\StudentEnrollmentService::class)->snapshot($application->user_id);
+        $application->eligibility = ['allowed' => $eligibility['can_apply_as_mayor'], 'reason' => $eligibility['mayor_application_disabled_reason']];
 
         return response()->json(['data' => $application]);
     }
@@ -63,9 +67,11 @@ class MayorApplicationController extends Controller
     /**
      * POST /api/admin/mayor-applications/{id}/approve
      */
-    public function approve(MayorApprovalService $service, int $id)
+    public function approve(Request $request, MayorApprovalService $service, int $id)
     {
-        $application = $service->approve($id, $this->requireAdmin());
+        $admin = $this->requireAdmin();
+        $data = $request->validate(['expected_revision' => ['required', 'integer', 'min:0'], 'subjects' => ['sometimes', 'array', 'min:1', 'max:60'], 'confirm_regular_student' => ['sometimes', 'boolean']]);
+        $application = $service->approve($id, $admin, $data['expected_revision'], $data['subjects'] ?? null, $data['confirm_regular_student'] ?? false);
 
         return response()->json([
             'message' => 'Mayor application approved.',

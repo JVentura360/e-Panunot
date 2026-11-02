@@ -26,6 +26,8 @@ class MayorApplicationFactory extends Factory
             'status' => 'pending',
             'reviewed_by' => null,
             'reviewed_at' => null,
+            'proposed_subjects' => [['code' => 'TEST301', 'name' => 'Test Subject']],
+            'is_regular_student' => true,
         ];
     }
 

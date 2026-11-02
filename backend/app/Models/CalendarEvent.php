@@ -52,9 +52,7 @@ class CalendarEvent extends Model
                 $personal->whereNull('block_id')->where('created_by', $user->id);
             });
 
-            if ($user->block_id) {
-                $q->orWhere('block_id', $user->block_id);
-            }
+            $q->orWhere(fn (Builder $class) => \App\Services\SubjectAccess::scope($class, $user, 'calendar_events'));
         });
     }
 

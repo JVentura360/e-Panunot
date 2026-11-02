@@ -16,9 +16,7 @@ class AnnouncementController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        abort_unless($user->block_id, 403, 'You are not in a block yet.');
-
-        $announcements = Announcement::where('block_id', $user->block_id)
+        $announcements = Announcement::whereIn('block_id', \App\Services\SubjectAccess::blockIds($user))
             ->with('creator')
             ->latest()
             ->get();

@@ -34,7 +34,7 @@ class BlockController extends Controller
                 't.is_active as term_is_active',
                 'mayor.name as mayor_name',
                 'mayor.email as mayor_email',
-                DB::raw('(SELECT COUNT(*) FROM users u WHERE u.block_id = b.id) as member_count')
+                DB::raw(\App\Services\SubjectAccess::memberCountSql())
             );
 
         foreach (['term_id', 'program', 'year_level'] as $filter) {
@@ -86,7 +86,7 @@ class BlockController extends Controller
                 'b.id', 'b.program', 'b.year_level', 'b.block_number',
                 't.school_year', 't.semester',
                 'mayor.name as mayor_name',
-                DB::raw('(SELECT COUNT(*) FROM users u WHERE u.block_id = b.id) as member_count')
+                DB::raw(\App\Services\SubjectAccess::memberCountSql())
             )
             ->first();
 
@@ -121,7 +121,7 @@ class BlockController extends Controller
             ->leftJoin('users as mayor', 'mayor.id', '=', 'b.mayor_id')
             ->where('b.id', $id)
             ->select('b.*', 't.school_year', 't.semester', 'mayor.name as mayor_name',
-                DB::raw('(SELECT COUNT(*) FROM users u WHERE u.block_id = b.id) as member_count'))
+                DB::raw(\App\Services\SubjectAccess::memberCountSql()))
             ->first();
 
         abort_if(!$block, 404, 'Block not found.');

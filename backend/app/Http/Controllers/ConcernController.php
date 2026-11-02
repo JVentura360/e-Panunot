@@ -19,10 +19,12 @@ class ConcernController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        abort_unless($user->block_id, 403, 'You are not in a block yet.');
-
-        $concerns = Concern::where('block_id', $user->block_id)
-            ->when($user->role !== Role::Mayor, fn ($q) => $q->where('student_id', $user->id))
+        $concerns = Concern::where(function ($query) use ($user): void {
+            $query->where('student_id', $user->id);
+            if ($user->role === Role::Mayor && $user->block_id) {
+                $query->orWhere('block_id', $user->block_id);
+            }
+        })
             ->when($request->query('status'), fn ($q, $status) => $q->where('status', $status))
             ->with(['student', 'subject', 'attachments'])
             ->latest()
@@ -34,11 +36,12 @@ class ConcernController extends Controller
     public function store(StoreConcernRequest $request)
     {
         $user = $request->user();
-        abort_unless($user->block_id, 403, 'You are not in a block yet.');
+        $blockId = (int) $request->input('block_id', $user->block_id);
+        abort_unless(\App\Services\SubjectAccess::canAccess($user, $blockId, $request->integer('subject_id') ?: null), 403, 'You are not enrolled in this block.');
 
         $concern = Concern::create([
             ...$request->safe()->except('attachments'),
-            'block_id' => $user->block_id,
+            'block_id' => $blockId,
             'student_id' => $user->id,
         ]);
 

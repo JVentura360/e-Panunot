@@ -21,9 +21,7 @@ class TaskController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        abort_unless($user->block_id, 403, 'You are not in a block yet.');
-
-        $tasks = Task::where('block_id', $user->block_id)
+        $tasks = \App\Services\SubjectAccess::scope(Task::query(), $user, 'tasks')
             ->with([
                 'subject',
                 'assignments' => fn ($q) => $q->where('user_id', $user->id),
@@ -39,35 +37,12 @@ class TaskController extends Controller
      */
     public function store(StoreTaskRequest $request)
     {
-        $user = $request->user();
-        abort_unless($user->block_id, 403, 'You are not in a block yet.');
-
-        $task = DB::transaction(function () use ($request, $user) {
-            $task = Task::create([
-                ...$request->validated(),
-                'block_id' => $user->block_id,
-                'created_by' => $user->id,
-            ]);
-
-            // one "to-do" row per member of the block
-            $rows = User::where('block_id', $user->block_id)
-                ->pluck('id')
-                ->map(fn ($id) => [
-                    'task_id' => $task->id,
-                    'user_id' => $id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ])
-                ->all();
-
-            TaskAssignment::insert($rows);
-
-            return $task;
-        });
-        SyncTaskToGoogle::dispatch($task->id);
-        return new TaskResource($task->load('subject'));
+        $tasks = app(\App\Services\SubjectTaskService::class)->create($request->user(), $request->validated());
+        if ($request->boolean('all_subjects')) {
+            return TaskResource::collection($tasks)->response()->setStatusCode(201);
+        }
+        return (new TaskResource($tasks->first()))->response()->setStatusCode(201);
     }
-
     /**
      * Display the specified resource.
      */

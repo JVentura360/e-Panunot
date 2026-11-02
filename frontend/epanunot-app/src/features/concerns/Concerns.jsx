@@ -2,8 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import styles from './Concerns.module.css';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
+import { useSubjectChoices } from '../block/useSubjectChoices.js';
+import { errorMessage } from '../../api/client.js';
+import { useApiQuery } from '../../api/useApiQuery.js';
+import { canViewConcern } from './concernVisibility.js';
 import {
-SUBJECTS,
 CATEGORIES,
 STATUS_LABEL,
 STATUS_KEYS,
@@ -36,6 +39,7 @@ return (
 
 // ======================= ConcernList =======================
 function ConcernList({ concerns, selectedId, viewerRole }) {
+const subjects = [...new Set(concerns.map((concern) => concern.subject).filter(Boolean))];
 const [status, setStatus] = useState('all');
 const [subject, setSubject] = useState('all');
 const [sort, setSort] = useState('activity');
@@ -62,7 +66,7 @@ return (
         </select>
         <select className={`${styles.input} ${styles.filterSelect}`} aria-label="Filter by subject" value={subject} onChange={(e) => setSubject(e.target.value)}>
         <option value="all">All subjects</option>
-        {SUBJECTS.map((s) => (
+        {subjects.map((s) => (
             <option key={s} value={s}>{s}</option>
         ))}
         </select>
@@ -283,7 +287,7 @@ return (
 }
 
 // ======================= NewConcernModal =======================
-function NewConcernModal({ onClose, onCreate }) {
+function NewConcernModal({ onClose, onCreate, choices, user, ledger }) {
 const [title, setTitle] = useState('');
 const [subject, setSubject] = useState('');
 const [category, setCategory] = useState('');
@@ -315,7 +319,9 @@ const submit = (e) => {
     e.preventDefault();
     onCreate({
     title: title.trim(),
-    subject,
+    subject: choices.find((choice) => choice.value === subject)?.name ?? 'Other',
+    subjectId: choices.find((choice) => choice.value === subject)?.subjectId ?? null,
+    blockId: choices.find((choice) => choice.value === subject)?.blockId ?? user.block_id,
     category,
     description: description.trim(),
     attachments: files,
@@ -348,8 +354,12 @@ return (
             <label htmlFor="nc-subject">Subject</label>
             <select id="nc-subject" className={styles.input} value={subject} required onChange={(e) => setSubject(e.target.value)}>
             <option value="" disabled>Select a subject</option>
-            {SUBJECTS.map((s) => <option key={s} value={s}>{s}</option>)}
+            {user.block_id && <option value="general">Other / block-wide concern</option>}
+            {choices.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
             </select>
+            {ledger.isPending && <p role="status">Loading enrolled subjects…</p>}
+            {ledger.error && <p role="alert">{errorMessage(ledger.error)} <button type="button" className="btn ghost" onClick={() => ledger.refetch()}>Retry</button></p>}
+            {!ledger.isPending && !ledger.error && !choices.length && !user.block_id && <p>Enroll in a subject through My ledger before raising a concern.</p>}
         </div>
         <div className={styles.field}>
             <label htmlFor="nc-category">Category</label>
@@ -398,19 +408,22 @@ return (
 // Mounted at path="/concerns/*": the splat holds the concern id, if any.
 // Desktop shows list + thread side by side; mobile shows one at a time (see CSS).
 export default function Concerns({ user, concerns, setConcerns }) {
+const { choices, ledger } = useSubjectChoices(user);
 const navigate = useNavigate();
 const { '*': splat } = useParams();
 const selectedId = splat ? splat.replace(/\/$/, '') : null;
 
 const isMayor = user.role === 'mayor';
+const members = useApiQuery(`/blocks/${user.block_id}/members`, { enabled: isMayor && Boolean(user.block_id) });
+const memberIds = useMemo(() => new Set((members.data?.data ?? []).map((member) => member.id)), [members.data]);
 const viewerRole = isMayor ? 'mayor' : 'student';
 const uid = user.id;
 const displayName = user.name ?? (isMayor ? 'Block mayor' : 'Student');
 
 // Students only see their own concerns; the mayor sees the whole block's.
 const visible = useMemo(
-    () => (isMayor ? concerns : concerns.filter((c) => c.studentId === uid)),
-    [concerns, isMayor, uid]
+    () => concerns.filter((concern) => canViewConcern(concern, user, memberIds)),
+    [concerns, user, memberIds]
 );
 const selected = visible.find((c) => c.id === selectedId) ?? null;
 
@@ -528,7 +541,7 @@ return (
         </section>
     </div>
 
-    {creating && <NewConcernModal onClose={() => setCreating(false)} onCreate={createConcern} />}
+    {creating && <NewConcernModal onClose={() => setCreating(false)} onCreate={createConcern} choices={choices} user={user} ledger={ledger} />}
     </div>
     );
 }

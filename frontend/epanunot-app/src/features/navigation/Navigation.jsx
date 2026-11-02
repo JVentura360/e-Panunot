@@ -3,6 +3,7 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ApplyMayorModal from './ApplyMayorModal.jsx';
 import styles from './Navigation.module.css';
 import { applyTheme } from '../../theme.js';
+import { applicationEligibility, blockNavigation } from '../block/enrollmentRules.js';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -32,6 +33,11 @@ const IconBlock = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" />
     <path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+const IconLedger = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M4 3h14a2 2 0 0 1 2 2v16H6a2 2 0 0 1-2-2V3Z" /><path d="M4 17h16M8 3v14M11 7h6M11 11h6" />
   </svg>
 );
 const IconBell = () => (
@@ -65,8 +71,7 @@ const BASE_NAV = [
   { label: 'Calendar',        mobileLabel: 'Calendar',  to: '/calendar', icon: <IconCalendar /> },
   { label: 'Concerns',        mobileLabel: 'Concerns',  to: '/concerns', icon: <IconConcerns /> },
 ];
-const BLOCK_NAV = { label: 'Block Management', mobileLabel: 'Block', to: '/block', icon: <IconBlock /> };
-const JOIN_NAV = { label: 'Join Block', mobileLabel: 'Join', to: '/join-block', icon: <IconBlock /> };
+const JOIN_NAV = { label: 'My ledger', mobileLabel: 'Ledger', to: '/join-block', icon: <IconLedger /> };
 const ADMIN_NAV = [
   { label: 'School Year', mobileLabel: 'School Year', to: '/admin', icon: <IconCalendar /> },
   { label: 'Applications', mobileLabel: 'Applications', to: '/admin/applications', icon: <IconConcerns /> },
@@ -76,8 +81,8 @@ const ADMIN_NAV = [
 function getNavItems(user) {
   if (user.role === 'admin') return ADMIN_NAV; // admins only use /admin
   const items = [...BASE_NAV];
-  if (user.role === 'mayor') items.push(BLOCK_NAV);
-  if (user.role === 'student' && !user.block_id) items.push(JOIN_NAV); // students without a block
+  const membership = blockNavigation(user);
+  items.push({ ...JOIN_NAV, ...membership, icon: membership.joined ? <IconLedger /> : <IconBlock /> });
   return items;
 }
 
@@ -157,7 +162,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
   const navigate = useNavigate();
 
   const navItems = getNavItems(user);
-  const canApply = user.role === 'student';
+  const eligibility = applicationEligibility(user);
   const roleLabel = `${user.role}${user.block && user.block !== '-' ? ` · ${user.block}` : ''}`;
 
   // "/" must match exactly, otherwise Dashboard would be active on every page
@@ -221,9 +226,12 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
                       <IconProfile /> My profile
                     </button>
                   )}
-                  {canApply && (
+                  {user.role === 'mayor' && <button className={styles.dropdownItem} role="menuitem"
+                    onClick={() => { setProfileOpen(false); navigate('/block'); }}><IconBlock /> Block Management</button>}
+                  {user.role === 'student' && (
                     <button className={styles.dropdownItem} role="menuitem"
-                      onClick={() => { setProfileOpen(false); setApplyOpen(true); }}>
+                      disabled={!eligibility.allowed} title={eligibility.reason || undefined}
+                      onClick={() => { if (eligibility.allowed) { setProfileOpen(false); setApplyOpen(true); } }}>
                       <IconStar /> Apply as Mayor
                     </button>
                   )}

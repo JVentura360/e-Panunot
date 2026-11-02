@@ -5,6 +5,7 @@ import PlannerEmpty from '../../components/PlannerEmpty.jsx';
 import AnimatedList from '../../components/AnimatedList.jsx';
 import { unfinishedFirst, validDeadline } from '../../components/taskListUtils.js';
 import { useTasks } from '../../context/TaskContext.jsx';
+import { useSubjectChoices } from '../block/useSubjectChoices.js';
 
 /* ---------- helpers ---------- */
 const pad = (n) => String(n).padStart(2, '0');
@@ -32,7 +33,7 @@ TODAY.setHours(0, 0, 0, 0);
 const TODAY_KEY = toKey(TODAY);
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-const SUBJECTS = ['Other'];
+const GENERAL_SUBJECT = 'All block subjects';
 const VIEWS = [
 { id: 'month', label: 'Month' },
 { id: 'week', label: 'Week' },
@@ -42,7 +43,7 @@ const VIEWS = [
 /* ---------- initial calendar state ---------- */
 const SEED_EVENTS = [];
 
-const EMPTY_FORM = { title: '', date: TODAY_KEY, start: '09:00', end: '10:00', subject: SUBJECTS[0] };
+const EMPTY_FORM = { title: '', date: TODAY_KEY, start: '09:00', end: '10:00', subject: GENERAL_SUBJECT };
 
 function chipClass(item) {
 if (item.kind === 'task') return styles.chipTask;
@@ -50,6 +51,9 @@ return item.type === 'personal' ? styles.chipPersonal : styles.chipClass;
 }
 
 export default function Calendar({ user }) {
+const { choices } = useSubjectChoices(user);
+const offered = choices.filter((choice) => choice.blockId === user.block_id);
+const subjectOptions = [GENERAL_SUBJECT, ...offered.map((choice) => choice.label)];
 const isMayor = user?.role === 'mayor';
 
 const [view, setView] = useState('month');
@@ -164,7 +168,11 @@ const submitTask = (e) => {
     e.preventDefault();
     if (!form.title.trim()) return setError('Please add a title.');
     if (!validDeadline(form.date, toKey(new Date()))) return setError('Choose today or a future date for the deadline.');
-    addTask({ title: form.title, subject: form.subject, date: form.date, by: user?.name, personal: false });
+    try { addTask({ title: form.title, subject: form.subject === GENERAL_SUBJECT ? '' : form.subject,
+      subjectId: offered.find((choice) => choice.label === form.subject)?.subjectId,
+      allSubjects: form.subject === GENERAL_SUBJECT,
+      date: form.date, by: user?.name, personal: false }); }
+    catch (error) { setError(error.message); return; }
     finishForm();
 };
 
@@ -428,7 +436,7 @@ return (
                 <label className={styles.field}>
                 Subject
                 <select value={form.subject} onChange={setField('subject')}>
-                    {SUBJECTS.map((s) => (
+                    {subjectOptions.map((s) => (
                     <option key={s}>{s}</option>
                     ))}
                 </select>

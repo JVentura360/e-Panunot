@@ -21,6 +21,11 @@ Route::middleware('auth:sanctum')->group(function () {
         return $request->user();
     });
     Route::get('/me', [MeController::class, 'show']);
+    Route::get('/enrollment-profile', [\App\Http\Controllers\EnrollmentProfileController::class, 'show']);
+    Route::put('/enrollment-profile', [\App\Http\Controllers\EnrollmentProfileController::class, 'update']);
+    Route::post('/enrollment-profile/reconcile-mayor', [\App\Http\Controllers\EnrollmentProfileController::class, 'reconcile']);
+    Route::post('/blocks/{blockId}/enrollment', [\App\Http\Controllers\EnrollmentProfileController::class, 'enroll']);
+    Route::post('/blocks/{blockId}/join', [\App\Http\Controllers\EnrollmentProfileController::class, 'join']);
     
     // Mayor applications (student side). 'mine' must come before '{id}'.
     Route::get('/mayor-applications/mine', [MayorApplicationController::class, 'mine']);
@@ -32,20 +37,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/blocks/lookup', [BlockController::class, 'lookup'])->middleware('throttle:30,1'); // must come before '{id}'
     Route::get('/blocks/{id}', [BlockController::class, 'show']);
     Route::get('/blocks/{blockId}/members', [BlockMemberController::class, 'index']);
-    Route::post('/blocks/{blockId}/join-requests', [BlockMemberController::class, 'store']);
+    Route::post('/blocks/{blockId}/join-requests', [\App\Http\Controllers\EnrollmentProfileController::class, 'legacyJoin']);
     Route::get('/blocks/{blockId}/join-requests', [BlockMemberController::class, 'requests']);
-    Route::post('/blocks/{blockId}/join-requests/{requestId}/approve', [BlockMemberController::class, 'approve']);
+    Route::post('/blocks/{blockId}/join-requests/{requestId}/approve', [\App\Http\Controllers\EnrollmentProfileController::class, 'legacyJoin']);
     Route::post('/blocks/{blockId}/join-requests/{requestId}/reject', [BlockMemberController::class, 'reject']);
     Route::get('/join-requests/mine', [BlockMemberController::class, 'mine']);
     Route::delete('/join-requests/{requestId}', [BlockMemberController::class, 'cancel']);
     Route::delete('/blocks/{blockId}/members/{memberId}', [BlockMemberController::class, 'destroyMember']);
-    Route::put('/blocks/{blockId}/subjects', [SubjectController::class, 'syncBlockSubjects']);
+    Route::put('/blocks/{blockId}/subjects', [\App\Http\Controllers\SubjectLoadController::class, 'rejectBlockMutation']);
+    Route::post('/blocks/{blockId}/subjects', [\App\Http\Controllers\SubjectLoadController::class, 'rejectBlockMutation']);
+    Route::get('/subject-loads/current', [\App\Http\Controllers\SubjectLoadController::class, 'show']);
+    Route::get('/subject-enrollments/mine', [\App\Http\Controllers\SubjectEnrollmentController::class, 'mine']);
+    Route::post('/subject-enrollments', [\App\Http\Controllers\SubjectEnrollmentController::class, 'store']);
+    Route::delete('/subject-enrollments/{id}', [\App\Http\Controllers\SubjectEnrollmentController::class, 'destroy']);
     Route::get('/subjects', [SubjectController::class, 'index']);
     Route::get('/subjects/{id}', [SubjectController::class, 'show']);
     Route::get('/blocks/{blockId}/google-calendar', [BlockGoogleCalendarController::class, 'show']);
 
     // Admin only
     Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::put('/subject-loads/current', [\App\Http\Controllers\SubjectLoadController::class, 'update']);
         Route::get('/terms/current', [\App\Http\Controllers\Admin\TermController::class, 'show']);
         Route::put('/terms/current', [\App\Http\Controllers\Admin\TermController::class, 'update']);
         Route::get('/mayor-applications', [AdminMayorApplicationController::class, 'index']);

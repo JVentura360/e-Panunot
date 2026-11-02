@@ -20,12 +20,18 @@ class TaskDeadlineTest extends TestCase
         $this->travelTo(now()->setDate(2026, 10, 30)->setTime(12, 0));
         Queue::fake();
         $block = Block::factory()->create();
+        $block->term()->update(['is_active' => true]);
         $mayor = User::factory()->student($block)->create(['role' => 'mayor']);
+        $block->update(['mayor_id' => $mayor->id]);
+        $subject = \App\Models\Subject::create(['code' => 'TASK301', 'name' => 'Task Subject']);
+        \Illuminate\Support\Facades\DB::table('block_subjects')->insert(['block_id' => $block->id, 'subject_id' => $subject->id]);
+        app(\App\Services\StudentEnrollmentService::class)->enrollBlock($mayor->id, $block->id, 'regular');
         $this->actingAs($mayor);
         $task = $method === 'PUT' ? Task::factory()->forBlock($block, $mayor)->create(['due_date' => '2026-11-05']) : null;
 
         $response = $this->json($method, $task ? "/api/tasks/{$task->id}" : '/api/tasks', [
             'title' => 'Deadline test',
+            'subject_id' => $subject->id,
             'due_date' => $deadline,
         ]);
 

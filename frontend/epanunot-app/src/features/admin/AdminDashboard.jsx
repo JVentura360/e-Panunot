@@ -5,6 +5,8 @@ import { useBlocks } from '../../context/BlockContext';
 import MayorApplications from './MayorApplications.jsx';
 import MayorsAndBlocks from './MayorsAndBlocks.jsx';
 import SchoolYearSettings from './SchoolYearSettings.jsx';
+import SubjectLoadSettings from './SubjectLoadSettings.jsx';
+import ApplicationSubjectReview from './ApplicationSubjectReview.jsx';
 import styles from './AdminDashboard.module.css';
 
 export default function AdminDashboard() {
@@ -22,13 +24,10 @@ export default function AdminDashboard() {
     const { pathname } = useLocation();
     const tab = pathname === '/admin/applications' ? 'apps' : pathname === '/admin/mayors' ? 'list' : 'term';
     const [notice, setNotice] = useState('');
+    const [reviewing, setReviewing] = useState(null);
 
 
 
-    const handleApprove = async (app) => {
-        const result = await approve(app);
-        setNotice(result.ok ? '' : result.message);
-    };
 
     const pendingCount = apps.filter(
         (a) => a.status === 'pending'
@@ -36,6 +35,7 @@ export default function AdminDashboard() {
 
     return (
         <div className={styles.page}>
+            {reviewing && <ApplicationSubjectReview application={reviewing} onApprove={approve} onClose={() => setReviewing(null)} />}
             <h1 className={styles.title}>{tab === 'term' ? 'School Year' : tab === 'apps' ? 'Applications' : 'Mayors'}</h1>
 
             <p className={styles.subtitle}>
@@ -51,10 +51,10 @@ export default function AdminDashboard() {
             )}
             {error && <div className={styles.notice} role="alert">{error} <button className="btn ghost" onClick={() => load(true).catch((error) => setNotice(error.message))}>Retry</button></div>}
 
-            {tab === 'term' ? <SchoolYearSettings onUpdated={load} /> : loading ? <p role="status">Loading {tab === 'apps' ? 'applications' : 'mayors'}…</p> : tab === 'apps' ? (
+            {tab === 'term' ? <><SchoolYearSettings onUpdated={load} /><SubjectLoadSettings /></> : loading ? <p role="status">Loading {tab === 'apps' ? 'applications' : 'mayors'}…</p> : tab === 'apps' ? (
                 <MayorApplications
                     apps={apps}
-                    onApprove={handleApprove}
+                    onApprove={setReviewing}
                     onReject={reject}
                 />
             ) : (

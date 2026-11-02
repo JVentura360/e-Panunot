@@ -36,7 +36,7 @@ class TaskCompletionController extends Controller
         $user = $request->user();
 
         // you can only complete tasks that belong to your own block
-        abort_unless($task->block_id && $task->block_id === $user->block_id, 403);
+        abort_unless($task->block_id && \App\Services\SubjectAccess::canAccess($user, $task->block_id, $task->subject_id), 403);
 
         return TaskAssignment::firstOrCreate([
             'task_id' => $task->id,

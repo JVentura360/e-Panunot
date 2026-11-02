@@ -7,6 +7,7 @@ import { validDeadline } from './taskListUtils.js';
 export default function Modal({ title, description, fields, onSave, onClose, submitLabel = 'Save' }) {
   const id = useId();
   const dialogRef = useRef(null);
+  const [saveError, setSaveError] = useState('');
   const [vals, setVals] = useState(() => Object.fromEntries(fields.map((field) => [field.key, field.type === 'select' ? field.options[0] : ''])));
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -38,7 +39,8 @@ export default function Modal({ title, description, fields, onSave, onClose, sub
       input.reportValidity();
       return;
     }
-    onSave(values);
+    try { onSave(values); }
+    catch (error) { setSaveError(error.message); }
   };
   return (
     <dialog ref={dialogRef} className={styles.modal} aria-labelledby={id + '-title'} aria-describedby={description ? id + '-description' : undefined} onCancel={(event) => { event.preventDefault(); onClose(); }} onClick={(event) => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose(); } }}>
@@ -65,6 +67,7 @@ export default function Modal({ title, description, fields, onSave, onClose, sub
             </div>;
           })}
         </div>
+        {saveError && <p role="alert">{saveError}</p>}
         <footer className={styles.actions}>
           <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>
           <button type="submit" className="btn">{submitLabel}</button>

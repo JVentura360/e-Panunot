@@ -23,7 +23,7 @@ class MayorApplicationTest extends TestCase
     private function makeStudentWithBlock(Term $term): array
     {
         $block   = Block::factory()->create(['term_id' => $term->id]);
-        $student = User::factory()->student($block)->create();
+        $student = User::factory()->create();
 
         return [$block, $student];
     }
@@ -37,6 +37,8 @@ class MayorApplicationTest extends TestCase
 
         $payload = [
             'term_id'      => $term->id,
+            'is_regular_student' => true,
+            'proposed_subjects' => [['code' => 'TEST301', 'name' => 'Test Subject']],
             'program'      => $block->program,
             'year_level'   => $block->year_level,
             'block_number' => $block->block_number,
@@ -65,6 +67,8 @@ class MayorApplicationTest extends TestCase
 
         $payload = [
             'term_id'      => $term->id,
+            'is_regular_student' => true,
+            'proposed_subjects' => [['code' => 'TEST301', 'name' => 'Test Subject']],
             'program'      => $block->program,
             'year_level'   => $block->year_level,
             'block_number' => $block->block_number,
@@ -92,6 +96,8 @@ class MayorApplicationTest extends TestCase
         $application = MayorApplication::factory()->create([
             'term_id'      => $term->id,
             'user_id'      => $student->id,
+            'is_regular_student' => true,
+            'proposed_subjects' => [['code' => 'TEST301', 'name' => 'Test Subject']],
             'program'      => $block->program,
             'year_level'   => $block->year_level,
             'block_number' => $block->block_number,
@@ -100,6 +106,7 @@ class MayorApplicationTest extends TestCase
 
         $response = $this->actingAs($admin)
             ->postJson("/api/admin/mayor-applications/{$application->id}/approve", [
+                'expected_revision' => 0,
                 'status' => 'approved',
             ]);
 
@@ -124,6 +131,8 @@ class MayorApplicationTest extends TestCase
         $application = MayorApplication::factory()->create([
             'term_id'      => $term->id,
             'user_id'      => $student->id,
+            'is_regular_student' => true,
+            'proposed_subjects' => [['code' => 'TEST301', 'name' => 'Test Subject']],
             'program'      => $block->program,
             'year_level'   => $block->year_level,
             'block_number' => $block->block_number,
@@ -149,6 +158,8 @@ class MayorApplicationTest extends TestCase
         $application = MayorApplication::factory()->create([
             'term_id'      => $term->id,
             'user_id'      => $student->id,
+            'is_regular_student' => true,
+            'proposed_subjects' => [['code' => 'TEST301', 'name' => 'Test Subject']],
             'program'      => $block->program,
             'year_level'   => $block->year_level,
             'block_number' => $block->block_number,
@@ -157,6 +168,7 @@ class MayorApplicationTest extends TestCase
 
         $this->actingAs($student)
             ->postJson("/api/admin/mayor-applications/{$application->id}/approve", [
+                'expected_revision' => 0,
                 'status' => 'approved',
             ])
             ->assertStatus(403);
@@ -172,7 +184,9 @@ class MayorApplicationTest extends TestCase
         $response = $this->actingAs($student)
             ->postJson('/api/mayor-applications', [
                 'term_id'      => $term->id,
-                'program'      => $block->program,
+                'is_regular_student' => true,
+            'proposed_subjects' => [['code' => 'TEST301', 'name' => 'Test Subject']],
+            'program'      => $block->program,
                 'year_level'   => $block->year_level,
                 'block_number' => $block->block_number,
             ]);
@@ -188,6 +202,8 @@ class MayorApplicationTest extends TestCase
 
         $this->postJson('/api/mayor-applications', [
             'term_id'      => $term->id,
+            'is_regular_student' => true,
+            'proposed_subjects' => [['code' => 'TEST301', 'name' => 'Test Subject']],
             'program'      => 'BSIT',
             'year_level'   => 2,
             'block_number' => 1,

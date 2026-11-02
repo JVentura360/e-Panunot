@@ -23,7 +23,10 @@ class BlockMemberController extends Controller
         $this->authorizeBlockManager($user, $block);
 
         $members = DB::table('users')
-            ->where('block_id', $blockId)
+            ->where(function ($query) use ($blockId, $block): void {
+                $query->where('block_id', $blockId)->orWhere('id', $block->mayor_id)
+                    ->orWhereIn('id', DB::table('subject_enrollments')->where('block_id', $blockId)->select('user_id'));
+            })
             ->select('id', 'name', 'email', 'picture_url', 'block_id', 'created_at')
             ->orderBy('name')
             ->get();
@@ -298,7 +301,10 @@ class BlockMemberController extends Controller
         $this->authorizeBlockManager($actor, $block);
 
         $member = DB::table('users')
-            ->where('id', $memberId)->where('block_id', $blockId)->first();
+            ->where('id', $memberId)->where(function ($query) use ($blockId): void {
+                $query->where('block_id', $blockId)
+                    ->orWhereIn('id', DB::table('subject_enrollments')->where('block_id', $blockId)->select('user_id'));
+            })->first();
 
         abort_if(! $member, 404, 'Member not found in this block.');
 
@@ -309,7 +315,13 @@ class BlockMemberController extends Controller
         }
 
         DB::transaction(function () use ($memberId, $blockId) {
-            DB::table('users')->where('id', $memberId)->update([
+            $block = DB::table('blocks')->where('id', $blockId)->first();
+            $term = DB::table('terms')->where('id', $block->term_id)->lockForUpdate()->first();
+            abort_unless($term->is_active, 422, 'Archived block memberships cannot be changed.');
+            DB::table('users')->where('id', $memberId)->lockForUpdate()->first();
+            DB::table('subject_enrollments')->where('user_id', $memberId)->where('block_id', $blockId)->delete();
+            DB::table('student_term_profiles')->where('user_id', $memberId)->where('term_id', $block->term_id)->where('regular_block_id', $blockId)->delete();
+            DB::table('users')->where('id', $memberId)->where('block_id', $blockId)->update([
                 'block_id' => null,
                 'updated_at' => now(),
             ]);

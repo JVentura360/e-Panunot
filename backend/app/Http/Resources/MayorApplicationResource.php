@@ -23,6 +23,8 @@ class MayorApplicationResource extends JsonResource
             'id' => $this->id,
             'status' => $this->attr('status'),
             'motivation' => $this->attr('motivation'),
+            'subject_load_revision' => $this->attr('subject_load_revision'),
+            'is_regular_student' => $this->attr('is_regular_student'),
             // The block the applicant is asking for (the row only exists after approval).
             'block' => [
                 'code' => BlockResource::makeCode(

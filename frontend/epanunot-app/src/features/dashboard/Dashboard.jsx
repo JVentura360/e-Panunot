@@ -9,6 +9,8 @@ import { daysLeft } from './dateUtils';
 import { announcements, PLATFORMS } from '../../data/mockData';
 import { useTasks } from '../../context/TaskContext.jsx';
 import styles from './Dashboard.module.css';
+import { useSubjectChoices } from '../block/useSubjectChoices.js';
+import { applicationEligibility } from '../block/enrollmentRules.js';
 
 export default function Dashboard({ user }) {
   const { tasks, addTask: saveTask, toggleTask: toggle } = useTasks(); // shared with Calendar
@@ -16,6 +18,9 @@ export default function Dashboard({ user }) {
   const [modal, setModal] = useState(null);
   const [filter, setFilter] = useState('open');
   const isMayor = user.role === 'mayor';
+  const eligibility = applicationEligibility(user);
+  const { choices } = useSubjectChoices(user);
+  const offered = choices.filter((choice) => choice.blockId === user.block_id);
   const needsBlock = user.role === 'student' && !user.block_id;
   const pending = tasks.filter((task) => !task.done);
   const completed = tasks.length - pending.length;
@@ -29,6 +34,9 @@ export default function Dashboard({ user }) {
     saveTask({
       title: values.title, date: values.due, platform: values.platform,
       by: user.name, personal: personalTask,
+      subject: values.subject === 'All block subjects' ? '' : values.subject,
+      subjectId: offered.find((choice) => choice.label === values.subject)?.subjectId,
+      allSubjects: !personalTask && values.subject === 'All block subjects',
     });
     setFilter('open');
     setModal(null);
@@ -37,6 +45,7 @@ export default function Dashboard({ user }) {
     { key: 'title', label: 'Task title', placeholder: 'e.g. Submit your laboratory report', required: true },
     { key: 'due', label: 'Deadline', type: 'date', required: true, disallowPast: true },
     { key: 'platform', label: 'Platform or location', type: 'select', options: PLATFORMS },
+    ...(isMayor ? [{ key: 'subject', label: 'Subject', type: 'select', options: ['All block subjects', ...offered.map((choice) => choice.label)] }] : []),
   ];
 
   return (
@@ -72,14 +81,15 @@ export default function Dashboard({ user }) {
             <h3>{needsBlock ? 'Find your block' : isMayor ? 'Assigned to your block' : 'From your mayor'} {!needsBlock && <span>{assigned.length}</span>}</h3>
             {needsBlock ? (
               <PlannerEmpty>
-                <h4 className={styles.blockTitle}>You’re not in a block yet.</h4>
-                <p>Join your classmates or apply to become a block mayor.</p>
+                <h4 className={styles.blockTitle}>Join your class block.</h4>
+                <p>Enter your block code and confirm your student status, or apply as mayor to create a block.</p>
                 <div className={styles.blockActions}>
                   <Link className="btn" to="/join-block">Join a Block</Link>
-                  <button type="button" className="btn alt" onClick={() => setModal('apply')}>Apply as Mayor</button>
+                  <button type="button" className="btn alt" disabled={!eligibility.allowed} title={eligibility.reason || undefined} onClick={() => setModal('apply')}>Apply as Mayor</button>
                 </div>
+                {!eligibility.allowed && <p>{eligibility.reason}</p>}
               </PlannerEmpty>
-            ) : assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={isMayor ? null : toggle} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
+            ) : assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
           </section>
           {!isMayor && <section className={styles.section}>
             <h3>Personal tasks <span>{personal.length}</span></h3>

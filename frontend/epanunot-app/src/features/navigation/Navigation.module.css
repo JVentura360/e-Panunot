@@ -188,6 +188,7 @@
 }
 
 .dropdownItem {
+  text-align: left;
   width: 100%;
   padding: 10px 16px;
   border: 0;
@@ -200,6 +201,8 @@
   color: var(--ink);
   text-align: left;
 }
+.dropdownItem:disabled { opacity: .55; cursor: not-allowed; }
+.disabledReason { padding: 4px 14px 10px; color: var(--muted); font-size: .8rem; line-height: 1.4; }
 
 .dropdownItem:hover { background: var(--paper); }
 .themeChoice { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .75rem; }

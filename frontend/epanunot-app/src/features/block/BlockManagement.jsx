@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApiQuery } from '../../api/useApiQuery.js';
 import { api, errorMessage } from '../../api/client.js';
 import styles from './BlockManagement.module.css';
+import EnrollmentStatus from './EnrollmentStatus.jsx';
 
 // The API sends UTC timestamps like "2026-10-30 11:24:00".
 const formatDate = (value) =>
@@ -77,6 +78,7 @@ export default function BlockManagement({ user }) {
       </header>
 
       {error && <div className={styles.alert} role="alert">{error}</div>}
+      <EnrollmentStatus user={user} />
 
       <section className={styles.cards}>
         <button className={styles.card} onClick={() => scrollTo('blockmates')}>
@@ -143,6 +145,7 @@ export default function BlockManagement({ user }) {
 
       <section className={styles.section} id="applications">
         <h3>Join requests</h3>
+        <p className={styles.meta}>Students now join immediately through My ledger after choosing Regular or Irregular. Older requests can be dismissed below.</p>
         {loading ? (
           <p className={styles.loading}>Loading...</p>
         ) : requests.length === 0 ? (
@@ -164,13 +167,6 @@ export default function BlockManagement({ user }) {
                 >
                   Reject
                 </button>
-                <button
-                  className={styles.acceptBtn}
-                  disabled={busyId === `request-${r.id}`}
-                  onClick={() => review(r, 'approve')}
-                >
-                  Accept
-                </button>
               </div>
             ))}
           </div>
@@ -179,6 +175,7 @@ export default function BlockManagement({ user }) {
 
       <section className={styles.section} id="subjects">
         <h3>Subjects</h3>
+        <p className={styles.meta}>Subject loads are managed by the admin and shared by matching program, year level, and term. Students enroll through My ledger.</p>
         {loading ? (
           <p className={styles.loading}>Loading...</p>
         ) : subjects.length === 0 ? (

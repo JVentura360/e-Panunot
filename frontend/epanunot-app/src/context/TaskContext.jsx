@@ -2,6 +2,9 @@ import { TASK_STORAGE_KEY as KEY, readTasks, saveTasks } from './taskStorage.js'
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { initialTasks } from '../data/mockData';
 import { validDeadline, unfinishedFirst } from '../components/taskListUtils.js';
+import { useApiQuery } from '../api/useApiQuery.js';
+import { visibleClassTasks } from './taskVisibility.js';
+import { createSubjectTasks } from './subjectTaskCreation.js';
 
 
 const TaskContext = createContext(null);
@@ -22,7 +25,9 @@ export function TaskProvider({ user, children }) {
   const personalKey = `personal:${account}`;
   const completionKey = `completed:${account}`;
   const seeds = (personal) => initialTasks.filter((t) => t.personal === personal);
-  const classTasks = store[classKey] || seeds(false);
+  const enrollmentQuery = useApiQuery('/subject-enrollments/mine', { enabled: user.role !== 'admin' });
+  const subjectsQuery = useApiQuery('/subjects', { query: { block_id: user.block_id }, enabled: user.role === 'mayor' && Boolean(user.block_id) });
+  const classTasks = visibleClassTasks(store, user, enrollmentQuery.data?.data ?? []);
   const personalTasks = store[personalKey] || seeds(true);
   const completions = store[completionKey] || {};
 
@@ -50,10 +55,11 @@ export function TaskProvider({ user, children }) {
 
   const addTask = (values) => {
     if (!values.title.trim() || !validDeadline(values.date, today())) return;
-    if (!values.personal && user.role !== 'mayor') return;
+    if (!values.personal && user.role !== 'mayor') throw new Error('Only your appointed mayor can assign class tasks.');
+    if (!values.personal && user.mayor_needs_reconciliation) throw new Error('Confirm your regular enrollment in Block Management before assigning tasks.');
     const key = values.personal ? personalKey : classKey;
-    const task = { ...values, id: crypto.randomUUID(), title: values.title.trim(), personal: Boolean(values.personal), done: false };
-    update((prev) => ({ ...prev, [key]: [task, ...(prev[key] || seeds(task.personal))] }));
+    const created = createSubjectTasks(values, subjectsQuery.data?.data ?? []);
+    update((prev) => ({ ...prev, [key]: [...created, ...(prev[key] || seeds(Boolean(values.personal)))] }));
   };
   const toggleTask = (id) => {
     const task = tasks.find((t) => t.id === id);
@@ -62,7 +68,7 @@ export function TaskProvider({ user, children }) {
   };
   const deleteTask = (id) => {
     const task = tasks.find((t) => t.id === id);
-    if (!task || (!task.personal && user.role !== 'mayor')) return;
+    if (!task || (!task.personal && (user.role !== 'mayor' || String(task.assignedBlockId) !== String(user.block_id)))) return;
     const key = task.personal ? personalKey : classKey;
     update((prev) => ({ ...prev, [key]: (prev[key] || seeds(task.personal)).filter((t) => t.id !== id) }));
   };

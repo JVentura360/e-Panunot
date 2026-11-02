@@ -22,6 +22,9 @@ class TaskTest extends TestCase
         $block = Block::factory()->create(['term_id' => $term->id]);
         $mayor = User::factory()->student($block)->create(['role' => 'mayor']);
         $block->update(['mayor_id' => $mayor->id]);
+        $subject = \App\Models\Subject::create(['code' => 'TASK301', 'name' => 'Task Subject']);
+        \Illuminate\Support\Facades\DB::table('block_subjects')->insert(['block_id' => $block->id, 'subject_id' => $subject->id]);
+        app(\App\Services\StudentEnrollmentService::class)->enrollBlock($mayor->id, $block->id, 'regular');
 
         return [$block, $mayor];
     }
@@ -34,6 +37,7 @@ class TaskTest extends TestCase
 
         $payload = [
             'title'    => 'Submit Lab Report 3',
+            'subject_id' => $block->subjects()->first()->id,
             'due_date' => now()->addDays(7)->toDateTimeString(),
             'platform' => 'GradeVision',
         ];

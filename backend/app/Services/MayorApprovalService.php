@@ -28,16 +28,40 @@ class MayorApprovalService
      *
      * @return object the application row, joined with its term (school_year, semester)
      */
-    public function approve(int $applicationId, object $admin): object
+    public function approve(int $applicationId, object $admin, int $expectedRevision, ?array $subjects = null, bool $confirmRegular = false): object
     {
+        $candidate = DB::table('mayor_applications')->where('id', $applicationId)->first();
+        abort_unless($candidate, 404, 'Mayor application not found.');
         try {
-            return DB::transaction(function () use ($applicationId, $admin) {
-                $application = $this->lockPendingApplication($applicationId);
+            return DB::transaction(function () use ($applicationId, $admin, $expectedRevision, $subjects, $candidate, $confirmRegular) {
 
                 // The semester must still be running.
-                $term = DB::table('terms')->where('id', $application->term_id)->first();
+                $term = DB::table('terms')->where('id', $candidate->term_id)->lockForUpdate()->first();
                 if (! $term || ! $term->is_active) {
                     $this->fail('term', 'This application belongs to a semester that is no longer active.');
+                }
+                $loads = app(SubjectLoadService::class);
+                $load = $loads->find($candidate->term_id, $candidate->program, $candidate->year_level);
+                abort_if(($load?->revision ?? 0) !== $expectedRevision, 409, 'The shared subject load changed. Reload the application review before approving.');
+                $application = $this->lockPendingApplication($applicationId);
+                $enrollment = app(StudentEnrollmentService::class);
+                if ($enrollment->hasMembership($application->user_id, $term->id)
+                    || $enrollment->profile($application->user_id, $term->id)?->student_type === 'irregular') {
+                    $this->fail('application', 'The applicant already belongs to a block or is classified irregular and is no longer eligible.');
+                }
+                if (($application->is_regular_student !== null && ! $application->is_regular_student)
+                    || ($application->is_regular_student === null && ! $confirmRegular)) {
+                    $this->fail('is_regular_student', 'Confirm that this applicant is a regular student before approval.');
+                }
+                if ($load && $subjects !== null) {
+                    $this->fail('subjects', 'An approved load already exists. Change it through admin subject-load settings.');
+                }
+                if (! $load) {
+                    $proposal = $application->proposed_subjects ? json_decode($application->proposed_subjects, true, flags: JSON_THROW_ON_ERROR) : null;
+                    if (! $proposal) {
+                        $this->fail('subjects', 'This older application has no subject proposal. Establish its shared load in School Year before approving.');
+                    }
+                    $load = $loads->publish($term->id, $application->program, $application->year_level, 0, $subjects ?? $proposal, $admin->id);
                 }
 
                 // Lock the applicant so two approvals cannot change them at the same time.
@@ -99,6 +123,9 @@ class MayorApprovalService
                     ]);
                 }
 
+                $loads->assignToBlock($load->id, $blockId);
+                $enrollment->enrollBlock((int) $applicant->id, $blockId, 'regular');
+
                 // 2) assign the role and put the mayor inside their own block
                 DB::table('users')->where('id', $applicant->id)->update([
                     'role' => Role::Mayor->value,
@@ -112,6 +139,8 @@ class MayorApprovalService
                     'block_id' => $blockId,
                     'reviewed_by' => $admin->id,
                     'reviewed_at' => now(),
+                    'subject_load_revision' => $load->revision,
+                    'is_regular_student' => true,
                     'updated_at' => now(),
                 ]);
 
@@ -140,7 +169,7 @@ class MayorApprovalService
                 SyncBlockCalendarAccess::dispatch($blockId, $applicant->email, true)->afterCommit();
 
                 return $this->findWithTerm($application->id);
-            });
+            }, 3);
         } catch (UniqueConstraintViolationException) {
             // Safety net if two admins approve at the same moment.
             $this->fail('block', 'A block with those details already exists this semester.');

@@ -99,6 +99,54 @@ test('cached lists are invalidated after writes, while unrelated data stays fres
   assert.deepEqual(reads, ['/api/blocks', '/api/subjects', '/api/blocks']);
 });
 
+test('enrollment changes refresh ledger, identity, and subject access while preserving unrelated cache', async () => {
+  const reads = [];
+  globalThis.fetch = async (url, options) => {
+    if (options.method === 'GET') reads.push(url.pathname);
+    return new Response(JSON.stringify({ data: [] }));
+  };
+  const paths = ['/subject-enrollments/mine', '/me', '/blocks/1/members', '/tasks', '/announcements', '/calendar', '/personal-todos'];
+  for (const path of paths) await api(path);
+  for (const method of ['POST', 'DELETE']) {
+    reads.length = 0;
+    await api(method === 'POST' ? '/subject-enrollments' : '/subject-enrollments/1', { method });
+    for (const path of paths) await api(path);
+    assert.deepEqual(reads, paths.slice(0, -1).map((path) => '/api' + path));
+  }
+});
+
+test('shared-load publication and mayor approval refresh dependent caches without clearing unrelated data', async () => {
+  const reads = [];
+  globalThis.fetch = async (url, options) => {
+    if (options.method === 'GET') reads.push(url.pathname);
+    return new Response(JSON.stringify({ data: [] }));
+  };
+  const related = ['/subject-loads/current', '/subjects', '/blocks', '/admin/mayor-applications', '/mayor-applications/mine', '/me', '/subject-enrollments/mine', '/tasks', '/calendar'];
+  for (const path of [...related, '/personal-todos']) await api(path);
+  for (const path of ['/admin/subject-loads/current', '/admin/mayor-applications/1/approve']) {
+    reads.length = 0;
+    await api(path, { method: path.endsWith('/approve') ? 'POST' : 'PUT', body: {} });
+    for (const read of [...related, '/personal-todos']) await api(read);
+    assert.deepEqual(reads, related.map((read) => '/api' + read));
+  }
+});
+
+test('classification and regular enrollment refresh eligibility and ledger without clearing unrelated reads', async () => {
+  const reads = [];
+  globalThis.fetch = async (url, options) => {
+    if (options.method === 'GET') reads.push(url.pathname);
+    return new Response(JSON.stringify({ data: [] }));
+  };
+  const paths = ['/enrollment-profile', '/me', '/subject-enrollments/mine', '/blocks/4/members', '/tasks', '/calendar', '/mayor-applications/mine'];
+  for (const path of [...paths, '/personal-todos']) await api(path);
+  for (const path of ['/enrollment-profile', '/enrollment-profile/reconcile-mayor', '/blocks/4/enrollment', '/blocks/4/join']) {
+    reads.length = 0;
+    await api(path, { method: path === '/enrollment-profile' ? 'PUT' : 'POST', body: {} });
+    for (const read of [...paths, '/personal-todos']) await api(read);
+    assert.deepEqual(reads, paths.map((read) => '/api' + read));
+  }
+});
+
 test('expired data refetches, with conservative focus settings', async () => {
   let calls = 0;
   globalThis.fetch = async () => { calls++; return new Response('{}'); };

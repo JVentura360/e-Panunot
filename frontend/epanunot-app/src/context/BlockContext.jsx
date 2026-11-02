@@ -62,9 +62,9 @@ export function BlockProvider({ user, children }) {
 
   // Returns { ok: true } or { ok: false, message } like before, but it is async now.
   const approve = useCallback(
-    async (app) => {
+    async (app, review) => {
       try {
-        await api(`/admin/mayor-applications/${app.id}/approve`, { method: 'POST' });
+        await api(`/admin/mayor-applications/${app.id}/approve`, { method: 'POST', body: review });
         await load();
         return { ok: true };
       } catch (e) {
