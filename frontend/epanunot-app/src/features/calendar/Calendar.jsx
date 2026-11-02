@@ -10,6 +10,8 @@ import { errorMessage } from '../../api/client.js';
 import Modal from '../../components/Modal.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import { PLATFORMS } from '../../data/mockData';
+import { useCalendarEvents } from './useCalendarEvents.js';
+import { gridRange } from './calendarMapper.js';
 
 /* ---------- helpers ---------- */
 const pad = (n) => String(n).padStart(2, '0');
@@ -30,7 +32,6 @@ return `${h % 12 || 12}:${pad(m)} ${h >= 12 ? 'PM' : 'AM'}`;
 };
 const fmtShort = (key) =>
 fromKey(key).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
 
 const TODAY = new Date();
 TODAY.setHours(0, 0, 0, 0);
@@ -44,10 +45,7 @@ const VIEWS = [
 { id: 'agenda', label: 'Agenda' },
 ];
 
-/* ---------- initial calendar state ---------- */
-const SEED_EVENTS = [];
-
-const EMPTY_FORM = { title: '', date: TODAY_KEY, start: '09:00', end: '10:00', subject: GENERAL_SUBJECT, platform: PLATFORMS[0] };
+const EMPTY_FORM = { title: '', date: TODAY_KEY, start: '09:00', end: '10:00', subject: GENERAL_SUBJECT, platform: PLATFORMS[0], shareWithBlock: false, editingId: null };
 
 function chipClass(item) {
 if (item.kind === 'task') return styles.chipTask;
@@ -64,13 +62,13 @@ const [view, setView] = useState('month');
 const [cursor, setCursor] = useState(TODAY);
 const [selected, setSelected] = useState(TODAY_KEY);
 
-const [events, setEvents] = useState(SEED_EVENTS);
 // Tasks and to-dos come from the store shared with the Dashboard.
 // Mayor-assigned tasks (personal: false) are the class tasks + calendar entries;
 // the student's own tasks (personal: true) are the "My to-dos".
 const { tasks: allTasks, error: taskError, addTask, toggleTask, deleteTask, updateTask, removeTask } = useTasks();
 const [editingTask, setEditingTask] = useState(null);
 const [deletingTask, setDeletingTask] = useState(null);
+const [deletingEvent, setDeletingEvent] = useState(null);
 const [todoError, setTodoError] = useState('');
 const tasks = useMemo(
     () => allTasks.filter((t) => !t.personal),
@@ -84,6 +82,20 @@ const [form, setForm] = useState(EMPTY_FORM);
 const [error, setError] = useState('');
 
 /* ---------- derived data ---------- */
+const monthDays = useMemo(() => {
+    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+    const start = startOfWeek(first);
+    return Array.from({ length: 42 }, (_, i) => addDays(start, i));
+}, [cursor]);
+
+// Events come from the database (and are what Google Calendar is synced from).
+const range = useMemo(() => gridRange(monthDays), [monthDays]);
+const { events, loading: eventsLoading, error: eventsError, createEvent, updateEvent, removeEvent } = useCalendarEvents({
+    from: range.from,
+    to: range.to,
+    enabled: user.role !== 'admin',
+});
+
 const itemsByDay = useMemo(() => {
     const map = {};
     const push = (key, item) => {
@@ -96,12 +108,6 @@ const itemsByDay = useMemo(() => {
     );
     return map;
 }, [events, tasks]);
-
-const monthDays = useMemo(() => {
-    const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
-    const start = startOfWeek(first);
-    return Array.from({ length: 42 }, (_, i) => addDays(start, i));
-}, [cursor]);
 
 const weekDays = useMemo(() => {
     const start = startOfWeek(cursor);
@@ -143,13 +149,29 @@ const goToday = () => {
 };
 
 const openPanel = (type) => {
-    if (panel === type) {
+    if (panel === type && !form.editingId) {
     setPanel(null);
     return;
     }
     setForm({ ...EMPTY_FORM, date: type === 'task' && selected < today ? today : selected });
     setError('');
     setPanel(type);
+};
+
+const startEditEvent = (item) => {
+    const choice = offered.find((c) => c.subjectId === item.subjectId);
+    setForm({
+    ...EMPTY_FORM,
+    title: item.title,
+    date: item.date,
+    start: item.start,
+    end: item.end,
+    editingId: item.rawId,
+    shareWithBlock: item.type === 'class',
+    subject: choice ? choice.label : GENERAL_SUBJECT,
+    });
+    setError('');
+    setPanel('event');
 };
 
 const setField = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
@@ -160,14 +182,25 @@ const finishForm = () => {
     setPanel(null);
 };
 
-const submitEvent = (e) => {
+const submitEvent = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) return setError('Please add a title.');
     if (form.end <= form.start) return setError('End time must be after the start time.');
-    setEvents((prev) => [
-    ...prev,
-    { id: uid(), title: form.title.trim(), date: form.date, start: form.start, end: form.end, subject: '', type: 'personal' },
-    ]);
+    const values = {
+        title: form.title,
+        date: form.date,
+        start: form.start,
+        end: form.end,
+        shareWithBlock: isMayor && form.shareWithBlock,
+        subjectId: offered.find((choice) => choice.label === form.subject)?.subjectId ?? null,
+    };
+    try {
+        if (form.editingId) await updateEvent(form.editingId, values);
+        else await createEvent(values);
+    } catch (err) {
+        setError(errorMessage(err));
+        return;
+    }
     finishForm();
 };
 
@@ -191,11 +224,11 @@ const submitTask = async (e) => {
 };
 
 const deleteItem = (item) => {
-    if (item.kind === 'event') setEvents((p) => p.filter((x) => x.id !== item.id));
+    if (item.kind === 'event') setDeletingEvent(item);
     else setDeletingTask(item);
 };
 
-const canDelete = (item) => (item.kind === 'event' ? item.type === 'personal' : isMayor);
+const canDelete = (item) => (item.kind === 'event' ? item.canEdit : isMayor);
 
 const addTodo = async (e) => {
     e.preventDefault();
@@ -251,6 +284,9 @@ const renderRow = (item) => (
     )}
     {item.kind === 'task' && isMayor && (
         <button type="button" className={styles.iconBtn} onClick={() => setEditingTask(item)} aria-label={`Edit ${item.title}`}>✎</button>
+    )}
+    {item.kind === 'event' && item.canEdit && (
+        <button type="button" className={styles.iconBtn} onClick={() => startEditEvent(item)} aria-label={`Edit ${item.title}`}>✎</button>
     )}
     </li>
 );
@@ -420,6 +456,8 @@ return (
                 </button>
             )}
             </div>
+            {eventsError && <p className={styles.error} role="alert">Could not load events. {errorMessage(eventsError)}</p>}
+            {eventsLoading && <p className={styles.rowMeta}>Loading events…</p>}
 
             {panel === 'event' && (
             <form className={styles.form} onSubmit={submitEvent}>
@@ -441,9 +479,29 @@ return (
                     <input type="time" value={form.end} onChange={setField('end')} />
                 </label>
                 </div>
+                {isMayor && !form.editingId && (
+                <label className={styles.check}>
+                    <input
+                    type="checkbox"
+                    checked={form.shareWithBlock}
+                    onChange={(e) => setForm((f) => ({ ...f, shareWithBlock: e.target.checked }))}
+                    />
+                    Class event (share with the whole block and Google Calendar)
+                </label>
+                )}
+                {isMayor && form.shareWithBlock && (
+                <label className={styles.field}>
+                    Subject
+                    <select value={form.subject} onChange={setField('subject')}>
+                    {subjectOptions.map((s) => (
+                        <option key={s}>{s}</option>
+                    ))}
+                    </select>
+                </label>
+                )}
                 {error && <p className={styles.error}>{error}</p>}
                 <div className={styles.formBtns}>
-                <button type="submit" className="btn alt">Save event</button>
+                <button type="submit" className="btn alt">{form.editingId ? 'Save changes' : 'Save event'}</button>
                 <button type="button" className="btn ghost" onClick={() => setPanel(null)}>Cancel</button>
                 </div>
             </form>
@@ -591,6 +649,21 @@ return (
                 setEditingTask(null);
                 }}
                 onClose={() => setEditingTask(null)}
+            />
+        )}
+
+        {deletingEvent && (
+            <ConfirmDialog
+                title="Delete this event?"
+                message={deletingEvent.type === 'class'
+                    ? `"${deletingEvent.title}" will be removed for everyone in your block and from the block's Google Calendar.`
+                    : `"${deletingEvent.title}" will be deleted.`}
+                confirmLabel="Delete"
+                onCancel={() => setDeletingEvent(null)}
+                onConfirm={async () => {
+                await removeEvent(deletingEvent.rawId);
+                setDeletingEvent(null);
+                }}
             />
         )}
 
