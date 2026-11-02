@@ -24,5 +24,11 @@ class BlockSeeder extends Seeder
                 'mayor_id' => null, // assigned in UserSeeder after mayors exist
             ]);
         }
+
+        $subjectIds = \App\Models\Subject::pluck('id');
+
+        \App\Models\Block::all()->each(
+            fn ($block) => $block->subjects()->syncWithoutDetaching($subjectIds)
+        );
     }
 }

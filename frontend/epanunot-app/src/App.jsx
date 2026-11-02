@@ -14,7 +14,6 @@ import MainLayout from './layouts/MainLayout.jsx';
 import BlockManagement from './features/block/BlockManagement.jsx';
 import JoinBlock from './features/block/JoinBlock.jsx';
 import Concerns from './features/concerns/Concerns.jsx';
-import useSyncedConcerns from './features/concerns/useSyncedConcerns.js';
 import Calendar from './features/calendar/Calendar.jsx';
 
 export default function App() {
@@ -23,7 +22,6 @@ export default function App() {
     const identity = useApiQuery('/me', { enabled: !loggedOut });
     const user = loggedOut ? null : identity.data?.data;
     const navigate = useNavigate();
-    const [concerns, setConcerns] = useSyncedConcerns();
 
     useEffect(() => {
         const expired = () => setLoggedOut(true);
@@ -87,11 +85,7 @@ export default function App() {
                 <Route
                     path="/concerns/*"
                     element={member(
-                        <Concerns
-                            user={user}
-                            concerns={concerns}
-                            setConcerns={setConcerns}
-                        />
+                            <Concerns user={user} />
                     )}
                 />
 

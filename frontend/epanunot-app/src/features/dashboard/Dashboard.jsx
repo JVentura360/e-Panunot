@@ -6,17 +6,23 @@ import PlannerEmpty from '../../components/PlannerEmpty.jsx';
 import ApplyMayorModal from '../navigation/ApplyMayorModal.jsx';
 import TaskItem from './TaskItem.jsx';
 import { daysLeft } from './dateUtils';
-import { announcements, PLATFORMS } from '../../data/mockData';
+import { PLATFORMS } from '../../data/mockData';
+import { useApiQuery } from '../../api/useApiQuery.js';
+import { api } from '../../api/client.js';
 import { useTasks } from '../../context/TaskContext.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import styles from './Dashboard.module.css';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { applicationEligibility } from '../block/enrollmentRules.js';
 
 export default function Dashboard({ user }) {
   const { tasks, addTask: saveTask, toggleTask: toggle } = useTasks(); // shared with Calendar
-  const [anns, setAnns] = useState(announcements);
+  const annQuery = useApiQuery('/announcements', { enabled: Boolean(user.block_id) });
+  const anns = annQuery.data?.data ?? [];
   const [modal, setModal] = useState(null);
   const [filter, setFilter] = useState('open');
+  const [editingAnn, setEditingAnn] = useState(null);
+  const [deletingAnn, setDeletingAnn] = useState(null);
   const isMayor = user.role === 'mayor';
   const eligibility = applicationEligibility(user);
   const { choices } = useSubjectChoices(user);
@@ -99,13 +105,63 @@ export default function Dashboard({ user }) {
 
         <aside className={styles.noticePanel}>
           <div className={styles.sectionHead}><div><p className={styles.eyebrow}>The block board</p><h2>Announcements</h2></div><span className={styles.count}>{anns.length}</span></div>
-          {anns.length ? anns.map((announcement, index) => <article className={styles.ann} key={announcement.id}><span className={styles.annIndex}>{String(index + 1).padStart(2, '0')}</span><h3>{announcement.title}</h3><p>{announcement.body}</p></article>) : <div className="empty">No announcements yet.</div>}
+          {anns.length ? anns.map((announcement, index) => <article className={styles.ann} key={announcement.id}><span className={styles.annIndex}>{String(index + 1).padStart(2, '0')}</span><h3>{announcement.title}</h3><p>{announcement.description}</p>{isMayor && (
+            <div className={styles.annActions}>
+              <button type="button" className={styles.inlineAction} onClick={() => setEditingAnn(announcement)}>Edit</button>
+              <button type="button" className={styles.inlineAction} onClick={() => setDeletingAnn(announcement)}>Delete</button>
+            </div>
+          )}</article>) : <div className="empty">No announcements yet.</div>}
           <div className={styles.note}><strong>Stay in the loop.</strong><p>Check your block board for updates before planning your day.</p><Link className={styles.textLink} to="/concerns">{isMayor ? 'Review student concerns' : 'Have a concern? Let’s talk'}</Link></div>
         </aside>
       </div>
 
       {(modal === 'task' || modal === 'mine') && <Modal title={modal === 'task' ? 'Assign a Task' : 'Add a personal task'} description={modal === 'task' ? 'Give your block a clear task and deadline.' : 'Keep your own deadlines alongside your class tasks.'} submitLabel={modal === 'task' ? 'Assign task' : 'Add task'} fields={taskFields} onSave={(values) => addTask(values, modal === 'mine')} onClose={() => setModal(null)} />}
-      {modal === 'ann' && <Modal title="New Announcement" description="Share an update with your block." submitLabel="Post announcement" fields={[{ key: 'title', label: 'Title', required: true }, { key: 'body', label: 'Message', type: 'textarea', required: true }]} onSave={(values) => { setAnns((previous) => [{ id: Date.now(), ...values }, ...previous]); setModal(null); }} onClose={() => setModal(null)} />}
+      {modal === 'ann' && (
+        <Modal
+          title="New Announcement"
+          description="Share an update with your block."
+          submitLabel="Post announcement"
+          fields={[
+            { key: 'title', label: 'Title', required: true },
+            { key: 'description', label: 'Message', type: 'textarea', required: true },
+          ]}
+          onSave={async (values) => {
+            await api('/announcements', { method: 'POST', body: values });
+            setModal(null);
+          }}
+          onClose={() => setModal(null)}
+        />
+      )}
+      {editingAnn && (
+      <Modal
+        title="Edit Announcement"
+        description="Update what your block sees."
+        submitLabel="Save changes"
+        fields={[
+          { key: 'title', label: 'Title', required: true },
+          { key: 'description', label: 'Message', type: 'textarea', required: true },
+        ]}
+        initialValues={{ title: editingAnn.title, description: editingAnn.description }}
+        onSave={async (values) => {
+          await api(`/announcements/${editingAnn.id}`, { method: 'PUT', body: values });
+          setEditingAnn(null);
+        }}
+        onClose={() => setEditingAnn(null)}
+      />
+    )}
+
+    {deletingAnn && (
+      <ConfirmDialog
+        title="Delete this announcement?"
+        message={`"${deletingAnn.title}" will be removed for everyone in your block.`}
+        confirmLabel="Delete"
+        onCancel={() => setDeletingAnn(null)}
+        onConfirm={async () => {
+          await api(`/announcements/${deletingAnn.id}`, { method: 'DELETE' });
+          setDeletingAnn(null);
+        }}
+      />
+    )}
     </div>
   );
 }

@@ -37,6 +37,21 @@ test('mutations initialize csrf and send decoded token', async () => {
   assert.equal(requests.at(-1).url, 'http://localhost:8000/logout');
 });
 
+test('multipart uploads preserve files and let the browser set the content boundary', async () => {
+  let sent;
+  globalThis.fetch = async (url, options) => {
+    if (String(url).includes('/api/concerns')) sent = options;
+    return new Response('{}');
+  };
+  const body = new FormData();
+  body.append('title', 'Subject concern');
+  body.append('attachments[]', new Blob(['attachment'], { type: 'text/plain' }), 'note.txt');
+  await api('/concerns', { method: 'POST', body });
+  assert.equal(sent.body, body);
+  assert.equal(sent.headers['Content-Type'], undefined);
+  assert.equal(sent.headers['X-XSRF-TOKEN'], 'encoded=csrf');
+});
+
 test('expired sessions dispatch expiry and validation errors are preserved', async () => {
   let expired = false;
   window.dispatchEvent = (event) => { expired = event.type === 'auth:expired'; };

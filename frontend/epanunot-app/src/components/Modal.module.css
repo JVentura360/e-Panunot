@@ -14,4 +14,5 @@
 .field textarea { resize: vertical; }
 .field input:hover, .field select:hover, .field textarea:hover { border-color: var(--forest); }
 .actions { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line); padding-top: 20px; }
+.error { color: #b00020; font-size: 0.9rem; margin: 0 0 0.5rem; }
 @media (max-width: 480px) { .modal { padding: 24px 20px; } .actions button { flex: 1; } }

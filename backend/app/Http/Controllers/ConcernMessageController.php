@@ -7,6 +7,7 @@ use App\Http\Resources\ConcernMessageResource;
 use App\Models\Concern;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 
 class ConcernMessageController extends Controller
 {
@@ -24,7 +25,7 @@ class ConcernMessageController extends Controller
         }
 
         return ConcernMessageResource::collection(
-            $concern->messages()->with('sender')->oldest()->get()
+            $concern->messages()->with('sender')->oldest()->orderBy('id')->get()
         );
     }
 
@@ -38,15 +39,34 @@ class ConcernMessageController extends Controller
             'message_text' => ['required', 'string', 'max:5000'],
         ]);
 
-        $message = $concern->messages()->create([
-            'sender_id' => $request->user()->id,
-            'type' => 'message',
-            'message_text' => $data['message_text'],
-        ]);
+        $user = $request->user();
+        $isMayor = Gate::allows('manage', $concern);
 
-        // the *other* side now has something unread
-        $isStudent = $request->user()->id === $concern->student_id;
-        $concern->update($isStudent ? ['mayor_unread' => true] : ['student_unread' => true]);
+        $message = DB::transaction(function () use ($concern, $user, $data, $isMayor) {
+            $message = $concern->messages()->create([
+                'sender_id' => $user->id,
+                'type' => 'message',
+                'message_text' => $data['message_text'],
+            ]);
+
+            // the other side now has something unread
+            $updates = $isMayor ? ['student_unread' => true] : ['mayor_unread' => true];
+
+            // first mayor reply on an open concern = work has started
+            if ($isMayor && $concern->status === ConcernStatus::Open) {
+                $updates['status'] = ConcernStatus::InProgress;
+
+                $concern->messages()->create([
+                    'sender_id' => $user->id,
+                    'type' => 'system',
+                    'message_text' => 'Status changed to in progress.',
+                ]);
+            }
+
+            $concern->update($updates);
+
+            return $message;
+        });
 
         return new ConcernMessageResource($message->load('sender'));
     }

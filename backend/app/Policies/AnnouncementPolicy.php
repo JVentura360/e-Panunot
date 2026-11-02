@@ -2,23 +2,25 @@
 
 namespace App\Policies;
 
+use App\Enums\Role;
 use App\Models\User;
 use App\Models\Announcement;
 
 class AnnouncementPolicy
 {
-    public function view(User $user, Announcement $announcement)
+    public function view(User $user, Announcement $announcement): bool
     {
         return $user->block_id === $announcement->block_id;
     }
 
-    public function create(User $user)
+    public function create(User $user): bool
     {
-        return in_array($user->role, ['Mayor', 'Admin']);
+        return $user->role === Role::Mayor;
     }
 
-    public function delete(User $user, Announcement $announcement)
+    public function delete(User $user, Announcement $announcement): bool
     {
-        return $user->role === 'Admin' || ($user->role === 'Mayor' && $user->id === $announcement->created_by);
+        return $user->role === Role::Mayor
+            && $user->block_id === $announcement->block_id;
     }
 }

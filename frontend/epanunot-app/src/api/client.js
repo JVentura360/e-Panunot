@@ -14,6 +14,7 @@ export function clearApiCache() {
 }
 
 const BASE = (import.meta.env?.VITE_API_URL ?? 'http://localhost:8000/api').replace(/\/$/, '');
+export const API_BASE = BASE;
 const SERVER = BASE.replace(/\/api$/, '');
 export const googleLoginUrl = `${SERVER}/auth/google/redirect`;
 const requestControllers = new Set();
@@ -127,16 +128,17 @@ async function send(url, { method, body, signal: parentSignal }) {
     }
     const csrfCookie = document.cookie.split('; ').find((cookie) => cookie.startsWith('XSRF-TOKEN='));
     const csrfToken = csrfCookie ? decodeURIComponent(csrfCookie.slice('XSRF-TOKEN='.length)) : '';
+    const isForm = body instanceof FormData;
     response = await fetch(url, {
       method,
       credentials: 'include',
       signal,
       headers: {
         Accept: 'application/json',
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+        ...(body !== undefined && !isForm ? { 'Content-Type': 'application/json' } : {}),
         ...(csrfToken ? { 'X-XSRF-TOKEN': csrfToken } : {}),
       },
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: body === undefined ? undefined : isForm ? body : JSON.stringify(body),
     });
   } catch (error) {
     if (error instanceof ApiError) throw error;

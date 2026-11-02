@@ -2,15 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import styles from './Concerns.module.css';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
-import { useSubjectChoices } from '../block/useSubjectChoices.js';
-import { errorMessage } from '../../api/client.js';
+import { CATEGORIES, STATUS_LABEL, STATUS_KEYS } from './concernsData.js';
+import { api, errorMessage, queryClient, API_BASE } from '../../api/client.js';
 import { useApiQuery } from '../../api/useApiQuery.js';
-import { canViewConcern } from './concernVisibility.js';
-import {
-CATEGORIES,
-STATUS_LABEL,
-STATUS_KEYS,
-} from './concernsData.js';
+import { toConcern, toMessage } from './concernMapper.js';
+import { useSubjectChoices } from '../block/useSubjectChoices.js';
 
 // Single-file Concerns feature (prototype). Sections, in order:
 // helpers, StatusTag, ConcernList, ConcernThread, NewConcernModal, Concerns (page).
@@ -127,15 +123,82 @@ return (
 );
 }
 
+
+// ==================== Attachment Preview ========================
+function AttachmentPreview({ attachment, onClose }) {
+const ref = useRef(null);
+useEffect(() => {
+    const dialog = ref.current;
+    dialog.showModal();
+    return () => dialog.close();
+}, []);
+
+const url = `${API_BASE}/attachments/${attachment.id}`;
+const mime = attachment.mime_type ?? '';
+
+return (
+    <dialog
+    ref={ref}
+    className={styles.dialog}
+    aria-label={attachment.name}
+    onCancel={(e) => { e.preventDefault(); onClose(); }}
+    onClick={(e) => {
+        if (e.target !== e.currentTarget) return;
+        const b = e.currentTarget.getBoundingClientRect();
+        if (e.clientX < b.left || e.clientX > b.right || e.clientY < b.top || e.clientY > b.bottom) onClose();
+    }}
+    >
+    <div className={`${styles.modal} ${styles.preview}`}>
+        <h2>{attachment.name}</h2>
+        {mime.startsWith('image/') ? (
+        <img src={url} alt={attachment.name} />
+        ) : mime === 'application/pdf' ? (
+        <iframe src={url} title={attachment.name} />
+        ) : (
+        <p>No preview is available for this file type. Use Download instead.</p>
+        )}
+        <div className={styles.modalActions}>
+        <a className="btn ghost" href={`${url}?download=1`}>Download</a>
+        <button type="button" className="btn" onClick={onClose}>Close</button>
+        </div>
+    </div>
+    </dialog>
+);
+}
+
+// ======================= ConfirmDialog =======================
+function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel }) {
+const ref = useRef(null);
+useEffect(() => {
+    const dialog = ref.current;
+    dialog.showModal();
+    return () => dialog.close();
+}, []);
+
+return (
+    <dialog
+    ref={ref}
+    className={styles.dialog}
+    aria-labelledby="confirm-title"
+    onCancel={(e) => { e.preventDefault(); onCancel(); }}
+    >
+    <div className={styles.modal}>
+        <h2 id="confirm-title">{title}</h2>
+        <p>{message}</p>
+        <div className={styles.modalActions}>
+        <button type="button" className="btn ghost" onClick={onCancel}>Cancel</button>
+        <button type="button" className="btn" onClick={onConfirm}>{confirmLabel}</button>
+        </div>
+    </div>
+    </dialog>
+);
+}
+
 // ======================= ConcernThread =======================
-function Actions({ concern, viewerRole, onStatus }) {
+function Actions({ concern, viewerRole, onStatus, onAskClose }) {
 const { status } = concern;
 
-const close = (note) => {
-    if (window.confirm("Close this concern? You won't be able to reply afterward.")) {
-    onStatus('closed', note);
-    }
-};
+const close = () => onAskClose();
 
 if (status === 'closed') {
     return <span className={styles.actionNote}>This concern is closed. Replies are turned off.</span>;
@@ -164,7 +227,7 @@ if (status === 'resolved') {
     return (
     <>
         <span className={styles.actionNote}>The mayor marked this as resolved. Is it fixed?</span>
-        <button type="button" className="btn alt" onClick={() => close('Student confirmed the fix and closed this concern.')}>
+        <button type="button" className="btn alt" onClick={close}>
         Yes, close it
         </button>
         <button type="button" className="btn ghost" onClick={() => onStatus('in_progress', "Student reopened this concern: it isn't fixed yet.")}>
@@ -177,7 +240,7 @@ if (status === 'resolved') {
 return (
     <>
     <span className={styles.actionNote}>Reply below, or close this if you no longer need help.</span>
-    <button type="button" className="btn ghost" onClick={() => close('Student closed this concern.')}>
+    <button type="button" className="btn ghost" onClick={close}>
         Close concern
     </button>
     </>
@@ -185,6 +248,8 @@ return (
 }
 
 function ConcernThread({ concern, viewerRole, onReply, onStatus }) {
+const [preview, setPreview] = useState(null);
+const [confirmingClose, setConfirmingClose] = useState(false);
 const isMayor = viewerRole === 'mayor';
 const closed = concern.status === 'closed';
 const [text, setText] = useState('');
@@ -229,15 +294,18 @@ return (
         <p className={styles.desc}>{concern.description}</p>
         {concern.attachments.length > 0 && (
         <ul className={styles.files} aria-label="Attachments">
-            {concern.attachments.map((name) => (
-            <li key={name} className={styles.file}>{name}</li>
+            {concern.attachments.map((a) => (
+            <li key={a.id} className={styles.file}>
+                <button type="button" className={styles.fileLink} onClick={() => setPreview(a)}>{a.name}</button>
+            </li>
             ))}
         </ul>
         )}
     </header>
 
     <div className={styles.actions}>
-        <Actions concern={concern} viewerRole={viewerRole} onStatus={onStatus} />
+        <Actions concern={concern} viewerRole={viewerRole} onStatus={onStatus}
+            onAskClose={() => setConfirmingClose(true)} />
     </div>
 
     <div className={styles.messages} role="log" aria-label="Replies">
@@ -282,17 +350,33 @@ return (
         </div>
         </form>
     )}
+
+    {preview && <AttachmentPreview attachment={preview} onClose={() => setPreview(null)} />}
+    {confirmingClose && (
+        <ConfirmDialog
+        title="Close this concern?"
+        message="You won't be able to reply afterward."
+        confirmLabel="Close concern"
+        onCancel={() => setConfirmingClose(false)}
+        onConfirm={() => { setConfirmingClose(false); onStatus('closed'); }}
+        />
+    )}
     </>
 );
 }
 
 // ======================= NewConcernModal =======================
 function NewConcernModal({ onClose, onCreate, choices, user, ledger }) {
+    const MAX_FILES = 5;
+const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'];
 const [title, setTitle] = useState('');
 const [subject, setSubject] = useState('');
 const [category, setCategory] = useState('');
 const [description, setDescription] = useState('');
-const [files, setFiles] = useState([]); // file names only: no real upload in the prototype
+const [files, setFiles] = useState([]);
+const [error, setError] = useState('');
+const [sending, setSending] = useState(false);
 const fileInput = useRef(null);
 const dialogRef = useRef(null);
 
@@ -310,22 +394,47 @@ useEffect(() => {
 }, []);
 
 const addFiles = (e) => {
-    const names = Array.from(e.target.files).map((f) => f.name);
-    setFiles((prev) => [...prev, ...names.filter((n) => !prev.includes(n))]);
+    const picked = Array.from(e.target.files);
     e.target.value = '';
+
+    const problems = [];
+    const accepted = [];
+    for (const f of picked) {
+        const ext = f.name.split('.').pop().toLowerCase();
+        if (!ALLOWED_EXT.includes(ext)) {
+            problems.push(`${f.name}: only JPG, PNG, PDF, DOC and DOCX files are allowed.`);
+        } else if (f.size > MAX_BYTES) {
+            problems.push(`${f.name}: larger than 2 MB.`);
+        } else if (!files.some((p) => p.name === f.name)) {
+            accepted.push(f);
+        }
+    }
+    if (files.length + accepted.length > MAX_FILES) {
+        accepted.splice(MAX_FILES - files.length);
+        problems.push(`You can attach up to ${MAX_FILES} files.`);
+    }
+
+    setFiles((prev) => [...prev, ...accepted]);
+    setError(problems.join(' '));
 };
 
-const submit = (e) => {
+const submit = async (e) => {
     e.preventDefault();
-    onCreate({
-    title: title.trim(),
-    subject: choices.find((choice) => choice.value === subject)?.name ?? 'Other',
-    subjectId: choices.find((choice) => choice.value === subject)?.subjectId ?? null,
-    blockId: choices.find((choice) => choice.value === subject)?.blockId ?? user.block_id,
-    category,
-    description: description.trim(),
-    attachments: files,
-    });
+    setError('');
+    setSending(true);
+    try {
+        await onCreate({
+            title: title.trim(),
+            subjectId: choices.find((choice) => choice.value === subject)?.subjectId ?? null,
+            blockId: choices.find((choice) => choice.value === subject)?.blockId ?? user.block_id,
+            category,
+            description: description.trim(),
+            files,
+        });
+    } catch (err) {
+        setError(errorMessage(err));
+        setSending(false);
+    }
 };
 
 return (
@@ -359,7 +468,7 @@ return (
             </select>
             {ledger.isPending && <p role="status">Loading enrolled subjects…</p>}
             {ledger.error && <p role="alert">{errorMessage(ledger.error)} <button type="button" className="btn ghost" onClick={() => ledger.refetch()}>Retry</button></p>}
-            {!ledger.isPending && !ledger.error && !choices.length && !user.block_id && <p>Enroll in a subject through My ledger before raising a concern.</p>}
+            {!ledger.isPending && !ledger.error && !choices.length && !user.block_id && <p>Join a block and enroll in subjects through My Ledger before raising a concern.</p>}
         </div>
         <div className={styles.field}>
             <label htmlFor="nc-category">Category</label>
@@ -380,11 +489,11 @@ return (
         <span className={styles.fieldLabel}>Attachments (optional)</span>
         {files.length > 0 && (
             <ul className={styles.files}>
-            {files.map((name) => (
-                <li key={name} className={styles.file}>
-                {name}
-                <button type="button" className={styles.chipRemove} aria-label={`Remove ${name}`}
-                    onClick={() => setFiles((prev) => prev.filter((n) => n !== name))}>×</button>
+            {files.map((f) => (
+                <li key={f.name} className={styles.file}>
+                {f.name}
+                <button type="button" className={styles.chipRemove} aria-label={`Remove ${f.name}`}
+                    onClick={() => setFiles((prev) => prev.filter((p) => p !== f))}>×</button>
                 </li>
             ))}
             </ul>
@@ -395,9 +504,13 @@ return (
         </div>
         </div>
 
+        {error && <p role="alert" className={styles.error}>{error}</p>}
+
         <div className={styles.modalActions}>
-        <button type="button" className="btn ghost" onClick={onClose}>Cancel</button>
-        <button type="submit" className="btn">Send concern</button>
+        <button type="button" className="btn ghost" onClick={onClose} disabled={sending}>Cancel</button>
+        <button type="submit" className="btn" disabled={sending}>
+            {sending ? 'Sending...' : 'Send concern'}
+        </button>
         </div>
     </form>
     </dialog>
@@ -407,91 +520,71 @@ return (
 // ======================= Page =======================
 // Mounted at path="/concerns/*": the splat holds the concern id, if any.
 // Desktop shows list + thread side by side; mobile shows one at a time (see CSS).
-export default function Concerns({ user, concerns, setConcerns }) {
+export default function Concerns({ user }) {
 const { choices, ledger } = useSubjectChoices(user);
 const navigate = useNavigate();
 const { '*': splat } = useParams();
 const selectedId = splat ? splat.replace(/\/$/, '') : null;
 
 const isMayor = user.role === 'mayor';
-const members = useApiQuery(`/blocks/${user.block_id}/members`, { enabled: isMayor && Boolean(user.block_id) });
-const memberIds = useMemo(() => new Set((members.data?.data ?? []).map((member) => member.id)), [members.data]);
 const viewerRole = isMayor ? 'mayor' : 'student';
-const uid = user.id;
-const displayName = user.name ?? (isMayor ? 'Block mayor' : 'Student');
-
-// Students only see their own concerns; the mayor sees the whole block's.
-const visible = useMemo(
-    () => concerns.filter((concern) => canViewConcern(concern, user, memberIds)),
-    [concerns, user, memberIds]
-);
-const selected = visible.find((c) => c.id === selectedId) ?? null;
 
 const [creating, setCreating] = useState(false);
+const [error, setError] = useState('');
 
-// Opening a concern marks it as read for the current viewer.
+// 1. Ask the backend for the concerns and subjects
+const concernsQuery = useApiQuery('/concerns');
+
+// 2. Convert them to the shape this page uses
+const concerns = useMemo(
+    () => (concernsQuery.data?.data ?? []).map((row) => toConcern(row, viewerRole)),
+    [concernsQuery.data, viewerRole]
+);
+const selected = concerns.find((c) => c.id === selectedId) ?? null;
+
+// 3. When a concern is open, load its messages (the server also marks it read)
+const messagesQuery = useApiQuery(`/concerns/${selectedId}/messages`, {
+    enabled: !!selected, staleTime: 0, refetchOnMount: 'always',
+});
+const messages = useMemo(
+    () => (messagesQuery.data?.data ?? []).map((m) => toMessage(m, selected?.studentId)),
+    [messagesQuery.data, selected?.studentId]
+);
+
+// 4. Refresh the list once so the unread dot disappears
+const unreadNow = selected?.unread[viewerRole];
 useEffect(() => {
-    if (selected && selected.unread[viewerRole]) {
-    setConcerns((prev) =>
-        prev.map((c) => (c.id === selected.id ? { ...c, unread: { ...c.unread, [viewerRole]: false } } : c))
-    );
+    if (messagesQuery.isSuccess && unreadNow) {
+    queryClient.invalidateQueries({
+        predicate: (q) => q.queryKey[0] === 'api' && q.queryKey[2] === '/concerns',
+    });
     }
-}, [selected, viewerRole, setConcerns]);
+}, [messagesQuery.isSuccess, unreadNow]);
 
-const sendReply = (id, text) => {
-    const now = new Date().toISOString();
-    const other = isMayor ? 'student' : 'mayor';
-    setConcerns((prev) =>
-    prev.map((c) =>
-        c.id !== id || c.status === 'closed'
-        ? c
-        : {
-            ...c,
-            updatedAt: now,
-            messages: [...c.messages, { id: `m-${Date.now()}`, role: viewerRole, authorName: displayName, text, at: now }],
-            unread: { ...c.unread, [other]: true },
-            }
-    )
-    );
+// Runs an action and shows any error from the server
+const run = async (fn) => {
+    setError('');
+    try { return await fn(); } catch (e) { setError(errorMessage(e)); }
 };
 
-const changeStatus = (id, status, note) => {
-    const now = new Date().toISOString();
-    const other = isMayor ? 'student' : 'mayor';
-    setConcerns((prev) =>
-    prev.map((c) =>
-        c.id !== id
-        ? c
-        : {
-            ...c,
-            status,
-            updatedAt: now,
-            messages: [...c.messages, { id: `m-${Date.now()}`, role: 'system', text: note, at: now }],
-            unread: { ...c.unread, [other]: true },
-            }
-    )
-    );
-};
+const sendReply = (id, text) =>
+    run(() => api(`/concerns/${id}/messages`, { method: 'POST', body: { message_text: text } }));
 
-const createConcern = (form) => {
-    const now = new Date().toISOString();
-    const id = `c-${Date.now()}`;
-    setConcerns((prev) => [
-    {
-        id,
-        ...form,
-        status: 'open',
-        studentId: uid,
-        studentName: displayName,
-        createdAt: now,
-        updatedAt: now,
-        messages: [],
-        unread: { student: false, mayor: true },
-    },
-    ...prev,
-    ]);
-    setCreating(false);
-    navigate(`/concerns/${id}`);
+const changeStatus = (id, status) =>
+    run(() => api(`/concerns/${id}/status`, { method: 'PATCH', body: { status } }));
+
+const createConcern = async (form) => {
+    const body = new FormData();
+    body.append('title', form.title);
+    body.append('category', form.category.toLowerCase());
+    body.append('description', form.description);
+    body.append('block_id', form.blockId);
+    if (form.subjectId) body.append('subject_id', form.subjectId);
+    form.files.forEach((f) => body.append('attachments[]', f));
+
+    const res = await api('/concerns', { method: 'POST', body });
+    setCreating(false);                 // closes the pop-up
+    navigate(`/concerns/${res.data.id}`);
 };
 
 return (
@@ -510,19 +603,25 @@ return (
         )}
     </div>
 
+    {error && <p role="alert">{error}</p>}
+
     <div className={`${styles.shell} ${selectedId ? styles.hasSelection : ''}`}>
         <section className={styles.listPane} aria-label="Concerns list">
-        <ConcernList concerns={visible} selectedId={selectedId} viewerRole={viewerRole} />
+        {concernsQuery.isPending ? (
+            <p>Loading...</p>
+        ) : (
+            <ConcernList concerns={concerns} selectedId={selectedId} viewerRole={viewerRole} />
+        )}
         </section>
 
         <section className={styles.threadPane} aria-label="Concern details">
         {selected ? (
             <ConcernThread
             key={selected.id}
-            concern={selected}
+            concern={{ ...selected, messages }}
             viewerRole={viewerRole}
             onReply={(text) => sendReply(selected.id, text)}
-            onStatus={(status, note) => changeStatus(selected.id, status, note)}
+            onStatus={(status) => changeStatus(selected.id, status)}
             />
         ) : (
             <div className={styles.paneEmpty}>
@@ -541,7 +640,7 @@ return (
         </section>
     </div>
 
-    {creating && <NewConcernModal onClose={() => setCreating(false)} onCreate={createConcern} choices={choices} user={user} ledger={ledger} />}
+    {creating && <NewConcernModal choices={choices} user={user} ledger={ledger} onClose={() => setCreating(false)} onCreate={createConcern} />}
     </div>
-    );
+);
 }
