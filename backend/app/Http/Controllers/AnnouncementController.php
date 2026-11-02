@@ -19,7 +19,7 @@ class AnnouncementController extends Controller
         $user = $request->user();
 
         $announcements = SubjectAccess::scope(Announcement::query(), $user, 'announcements')
-            ->with(['creator', 'subject'])
+            ->with(['creator', 'subject', 'block.term'])
             ->latest()
             ->get();
 
@@ -40,7 +40,7 @@ class AnnouncementController extends Controller
             'created_by' => $user->id,
         ]);
 
-        return new AnnouncementResource($announcement->load(['creator', 'subject']));
+        return new AnnouncementResource($announcement->load(['creator', 'subject', 'block.term']));
     }
 
     /**
@@ -60,7 +60,7 @@ class AnnouncementController extends Controller
 
         $announcement->update($request->validated());
 
-        return new AnnouncementResource($announcement->load(['creator', 'subject']));
+        return new AnnouncementResource($announcement->load(['creator', 'subject', 'block.term']));
     }
 
     /**

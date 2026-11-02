@@ -23,6 +23,15 @@ class AnnouncementResource extends JsonResource
                 'code' => $this->subject->code,
                 'name' => $this->subject->name,
             ] : null),
+            'block' => $this->whenLoaded('block', fn () => $this->block ? [
+                'id' => $this->block->id,
+                'code' => BlockResource::makeCode(
+                    $this->block->year_level,
+                    $this->block->term?->semester,
+                    $this->block->program,
+                    $this->block->block_number
+                ),
+            ] : null),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

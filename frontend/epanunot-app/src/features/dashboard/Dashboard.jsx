@@ -14,6 +14,8 @@ import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import styles from './Dashboard.module.css';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { applicationEligibility } from '../block/enrollmentRules.js';
+import AnnouncementDialog from './AnnouncementDialog.jsx';
+import { blockLabel, shortDate } from './announcementUtils.js';
 
 export default function Dashboard({ user }) {
   const { tasks, error: taskError, addTask: saveTask, toggleTask: toggle, updateTask, removeTask } = useTasks();
@@ -23,6 +25,7 @@ export default function Dashboard({ user }) {
   const [filter, setFilter] = useState('open');
   const [editingAnn, setEditingAnn] = useState(null);
   const [deletingAnn, setDeletingAnn] = useState(null);
+  const [viewingAnn, setViewingAnn] = useState(null);
   const [editingTask, setEditingTask] = useState(null);
   const [deletingTask, setDeletingTask] = useState(null);
   const isMayor = user.role === 'mayor';
@@ -108,12 +111,28 @@ export default function Dashboard({ user }) {
 
         <aside className={styles.noticePanel}>
           <div className={styles.sectionHead}><div><p className={styles.eyebrow}>The block board</p><h2>Announcements</h2></div><span className={styles.count}>{anns.length}</span></div>
-          {anns.length ? anns.map((announcement, index) => <article className={styles.ann} key={announcement.id}><span className={styles.annIndex}>{String(index + 1).padStart(2, '0')}</span><h3>{announcement.title}</h3>{announcement.subject && <span className={styles.tag}>{announcement.subject.code}</span>}<p>{announcement.description}</p>{isMayor && (
-            <div className={styles.annActions}>
-              <button type="button" className={styles.inlineAction} onClick={() => setEditingAnn(announcement)}>Edit</button>
-              <button type="button" className={styles.inlineAction} onClick={() => setDeletingAnn(announcement)}>Delete</button>
-            </div>
-          )}</article>) : <div className="empty">No announcements yet.</div>}
+          {anns.length ? anns.map((announcement, index) => (
+            <article className={styles.ann} key={announcement.id} onClick={() => setViewingAnn(announcement)}>
+              <span className={styles.annIndex}>{String(index + 1).padStart(2, '0')}</span>
+              <div className={styles.annMeta}>
+                <span className={announcement.subject ? styles.annTag : `${styles.annTag} ${styles.annTagBlock}`}>
+                  {announcement.subject ? announcement.subject.code : 'Whole block'}
+                </span>
+                {announcement.block && <span className={styles.annBlock}>{blockLabel(announcement.block)}</span>}
+              </div>
+              <h3><button type="button" className={styles.annTitle}>{announcement.title}</button></h3>
+              <p className={styles.annText}>{announcement.description}</p>
+              <small className={styles.annBy}>
+                {announcement.created_by?.name && `${announcement.created_by.name} · `}{shortDate(announcement.created_at)}
+              </small>
+              {isMayor && (
+                <div className={styles.annActions}>
+                  <button type="button" className={styles.inlineAction} onClick={(e) => { e.stopPropagation(); setEditingAnn(announcement); }}>Edit</button>
+                  <button type="button" className={styles.inlineAction} onClick={(e) => { e.stopPropagation(); setDeletingAnn(announcement); }}>Delete</button>
+                </div>
+              )}
+            </article>
+          )) : <div className="empty">No announcements yet.</div>}
           <div className={styles.note}><strong>Stay in the loop.</strong><p>Check your block board for updates before planning your day.</p><Link className={styles.textLink} to="/concerns">{isMayor ? 'Review student concerns' : 'Have a concern? Let’s talk'}</Link></div>
         </aside>
       </div>
@@ -144,6 +163,7 @@ export default function Dashboard({ user }) {
         onClose={() => setModal(null)}
       />
     )}
+    {viewingAnn && <AnnouncementDialog announcement={viewingAnn} onClose={() => setViewingAnn(null)} />}
       {editingAnn && (
         <Modal
           title="Edit Announcement"

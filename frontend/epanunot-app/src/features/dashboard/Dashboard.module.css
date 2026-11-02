@@ -71,8 +71,7 @@
   .noticePanel { border-top: 1px solid var(--line); padding-top: 24px; }
   .item { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 12px; }
   .item:not(:has(input)) { grid-template-columns: minmax(0, 1fr) auto; }
-  .tag { grid-column: 2; justify-self: start; font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; background: rgba(0, 0, 0, 0.08);
-}
+  .tag { grid-column: 2; justify-self: start; }
   .item:not(:has(input)) .tag { grid-column: 1; }
   .due { grid-column: 3; grid-row: 1; }
   .item:not(:has(input)) .due { grid-column: 2; }
@@ -83,3 +82,17 @@
 .blockTitle { margin: 0 0 8px; color: var(--ink); font-size: 1rem; }
 .blockActions { display: flex; justify-content: center; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
 .blockActions a { text-decoration: none; }
+
+.ann { cursor: pointer; transition: background-color 180ms ease; }
+.ann:hover { background: color-mix(in srgb, var(--sand) 40%, transparent); }
+.annMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-bottom: 8px; }
+.annTag { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.04em; padding: 3px 8px; border-radius: 5px; background: var(--forest); color: var(--on-primary); }
+.annTagBlock { background: var(--sand); color: var(--ink); }
+.annBlock { font-size: 0.7rem; font-weight: 600; color: var(--muted); }
+.annTitle { all: unset; cursor: pointer; font: inherit; overflow-wrap: anywhere; }
+.annTitle:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
+.annText { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.annBy { display: block; margin-top: 8px; font-size: 0.7rem; color: var(--muted); }
+.annDialogMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.annDialogBody { margin: 20px 0 24px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.annDialogFacts { display: grid; gap: 4px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 0.8rem; color: var(--muted); }
