@@ -6,6 +6,7 @@ use App\Http\Requests\StoreAnnouncementRequest;
 use App\Http\Requests\UpdateAnnouncementRequest;
 use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
+use App\Services\SubjectAccess;
 use Illuminate\Http\Request;
 
 class AnnouncementController extends Controller
@@ -16,8 +17,9 @@ class AnnouncementController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $announcements = Announcement::whereIn('block_id', \App\Services\SubjectAccess::blockIds($user))
-            ->with('creator')
+
+        $announcements = SubjectAccess::scope(Announcement::query(), $user, 'announcements')
+            ->with(['creator', 'subject'])
             ->latest()
             ->get();
 
@@ -38,7 +40,7 @@ class AnnouncementController extends Controller
             'created_by' => $user->id,
         ]);
 
-        return new AnnouncementResource($announcement->load('creator'));
+        return new AnnouncementResource($announcement->load(['creator', 'subject']));
     }
 
     /**
@@ -58,7 +60,7 @@ class AnnouncementController extends Controller
 
         $announcement->update($request->validated());
 
-        return new AnnouncementResource($announcement->load('creator'));
+        return new AnnouncementResource($announcement->load(['creator', 'subject']));
     }
 
     /**

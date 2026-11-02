@@ -33,6 +33,11 @@ class ConcernResource extends JsonResource
                 'code' => $this->subject?->code,
                 'name' => $this->subject?->name,
             ]),
+            'task' => $this->whenLoaded('task', fn () => $this->task ? [
+                'id' => $this->task->id,
+                'title' => $this->task->title,
+                'due_date' => $this->task->due_date,
+            ] : null),
             'attachments' => $this->whenLoaded('attachments', fn () =>
                 $this->attachments->map(fn ($a) => [
                     'id' => $a->id,

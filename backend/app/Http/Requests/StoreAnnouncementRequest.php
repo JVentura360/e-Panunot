@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreAnnouncementRequest extends FormRequest
 {
@@ -25,6 +26,11 @@ class StoreAnnouncementRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
+            'subject_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('block_subjects', 'subject_id')->where('block_id', $this->user()->block_id),
+            ],
         ];
     }
 }

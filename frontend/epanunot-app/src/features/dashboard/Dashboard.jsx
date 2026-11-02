@@ -108,7 +108,7 @@ export default function Dashboard({ user }) {
 
         <aside className={styles.noticePanel}>
           <div className={styles.sectionHead}><div><p className={styles.eyebrow}>The block board</p><h2>Announcements</h2></div><span className={styles.count}>{anns.length}</span></div>
-          {anns.length ? anns.map((announcement, index) => <article className={styles.ann} key={announcement.id}><span className={styles.annIndex}>{String(index + 1).padStart(2, '0')}</span><h3>{announcement.title}</h3><p>{announcement.description}</p>{isMayor && (
+          {anns.length ? anns.map((announcement, index) => <article className={styles.ann} key={announcement.id}><span className={styles.annIndex}>{String(index + 1).padStart(2, '0')}</span><h3>{announcement.title}</h3>{announcement.subject && <span className={styles.tag}>{announcement.subject.code}</span>}<p>{announcement.description}</p>{isMayor && (
             <div className={styles.annActions}>
               <button type="button" className={styles.inlineAction} onClick={() => setEditingAnn(announcement)}>Edit</button>
               <button type="button" className={styles.inlineAction} onClick={() => setDeletingAnn(announcement)}>Delete</button>
@@ -120,21 +120,30 @@ export default function Dashboard({ user }) {
 
       {(modal === 'task' || modal === 'mine') && <Modal title={modal === 'task' ? 'Assign a Task' : 'Add a personal task'} description={modal === 'task' ? 'Give your block a clear task and deadline.' : 'Keep your own deadlines alongside your class tasks.'} submitLabel={modal === 'task' ? 'Assign task' : 'Add task'} fields={taskFields} onSave={(values) => addTask(values, modal === 'mine')} onClose={() => setModal(null)} />}
       {modal === 'ann' && (
-        <Modal
-          title="New Announcement"
-          description="Share an update with your block."
-          submitLabel="Post announcement"
-          fields={[
-            { key: 'title', label: 'Title', required: true },
-            { key: 'description', label: 'Message', type: 'textarea', required: true },
-          ]}
-          onSave={async (values) => {
-            await api('/announcements', { method: 'POST', body: values });
-            setModal(null);
-          }}
-          onClose={() => setModal(null)}
-        />
-      )}
+      <Modal
+        title="New Announcement"
+        description="Share an update with your block."
+        submitLabel="Post announcement"
+        fields={[
+          { key: 'title', label: 'Title', required: true },
+          { key: 'description', label: 'Message', type: 'textarea', required: true },
+          { key: 'audience', label: 'Audience', type: 'select', options: ['Whole block', ...offered.map((c) => c.label)] },
+        ]}
+        onSave={async (values) => {
+          const subjectId = offered.find((c) => c.label === values.audience)?.subjectId;
+          await api('/announcements', {
+            method: 'POST',
+            body: {
+              title: values.title,
+              description: values.description,
+              ...(subjectId ? { subject_id: subjectId } : {}),
+            },
+          });
+          setModal(null);
+        }}
+        onClose={() => setModal(null)}
+      />
+    )}
       {editingAnn && (
         <Modal
           title="Edit Announcement"

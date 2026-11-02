@@ -40,6 +40,21 @@ class StoreConcernRequest extends FormRequest
                     }
                 },
             ],
+            'task_id' => [
+                'nullable',
+                'integer',
+                'prohibited_unless:category,academic',
+                function (string $attribute, mixed $value, \Closure $fail): void {
+                    $task = \App\Models\Task::find($value);
+                    if (! $task || ! \App\Services\SubjectAccess::canAccess($this->user(), (int) $task->block_id, (int) $task->subject_id)) {
+                        $fail('Choose a task from one of your subjects.');
+                        return;
+                    }
+                    if ($this->filled('subject_id') && (int) $this->input('subject_id') !== (int) $task->subject_id) {
+                        $fail('That task does not belong to the chosen subject.');
+                    }
+                },
+            ],
             'attachments' => ['nullable', 'array', 'max:5'],
             'attachments.*' => ['file', 'max:2048', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
         ];

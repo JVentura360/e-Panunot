@@ -71,7 +71,8 @@
   .noticePanel { border-top: 1px solid var(--line); padding-top: 24px; }
   .item { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 12px; }
   .item:not(:has(input)) { grid-template-columns: minmax(0, 1fr) auto; }
-  .tag { grid-column: 2; justify-self: start; }
+  .tag { grid-column: 2; justify-self: start; font-size: 0.75rem; padding: 2px 8px; border-radius: 999px; background: rgba(0, 0, 0, 0.08);
+}
   .item:not(:has(input)) .tag { grid-column: 1; }
   .due { grid-column: 3; grid-row: 1; }
   .item:not(:has(input)) .due { grid-column: 2; }

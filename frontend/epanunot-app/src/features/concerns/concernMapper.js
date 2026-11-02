@@ -4,6 +4,7 @@ export const toConcern = (row, viewerRole) => ({
     id: String(row.id),                       
     title: row.title,
     subject: row.subject?.name ?? 'Other',
+    task: row.task ?? null,
     category: cap(row.category),
     description: row.description,
     status: row.status,
