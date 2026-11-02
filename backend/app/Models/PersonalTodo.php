@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PersonalTodo extends Model
 {
-    protected $fillable = ['user_id', 'title', 'is_done', 'google_task_id'];
+    protected $fillable = ['user_id', 'title', 'is_done', 'due_date', 'google_task_id'];
 
     protected function casts(): array
     {

@@ -21,6 +21,7 @@ class UpdatePersonalTodoRequest extends FormRequest
     {
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'due_date' => ['sometimes', 'nullable', 'date'],
             'is_done' => ['sometimes', 'boolean'],
         ];
     }

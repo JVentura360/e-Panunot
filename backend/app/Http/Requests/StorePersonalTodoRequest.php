@@ -19,6 +19,7 @@ class StorePersonalTodoRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'due_date' => ['nullable', 'date'],
         ];
     }
 }

@@ -6,6 +6,10 @@ import AnimatedList from '../../components/AnimatedList.jsx';
 import { unfinishedFirst, validDeadline } from '../../components/taskListUtils.js';
 import { useTasks } from '../../context/TaskContext.jsx';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
+import { errorMessage } from '../../api/client.js';
+import Modal from '../../components/Modal.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import { PLATFORMS } from '../../data/mockData';
 
 /* ---------- helpers ---------- */
 const pad = (n) => String(n).padStart(2, '0');
@@ -43,7 +47,7 @@ const VIEWS = [
 /* ---------- initial calendar state ---------- */
 const SEED_EVENTS = [];
 
-const EMPTY_FORM = { title: '', date: TODAY_KEY, start: '09:00', end: '10:00', subject: GENERAL_SUBJECT };
+const EMPTY_FORM = { title: '', date: TODAY_KEY, start: '09:00', end: '10:00', subject: GENERAL_SUBJECT, platform: PLATFORMS[0] };
 
 function chipClass(item) {
 if (item.kind === 'task') return styles.chipTask;
@@ -64,7 +68,10 @@ const [events, setEvents] = useState(SEED_EVENTS);
 // Tasks and to-dos come from the store shared with the Dashboard.
 // Mayor-assigned tasks (personal: false) are the class tasks + calendar entries;
 // the student's own tasks (personal: true) are the "My to-dos".
-const { tasks: allTasks, addTask, toggleTask, deleteTask } = useTasks();
+const { tasks: allTasks, error: taskError, addTask, toggleTask, deleteTask, updateTask, removeTask } = useTasks();
+const [editingTask, setEditingTask] = useState(null);
+const [deletingTask, setDeletingTask] = useState(null);
+const [todoError, setTodoError] = useState('');
 const tasks = useMemo(
     () => allTasks.filter((t) => !t.personal),
     [allTasks]
@@ -164,31 +171,43 @@ const submitEvent = (e) => {
     finishForm();
 };
 
-const submitTask = (e) => {
+const submitTask = async (e) => {
     e.preventDefault();
     if (!form.title.trim()) return setError('Please add a title.');
-    if (!validDeadline(form.date, toKey(new Date()))) return setError('Choose today or a future date for the deadline.');
-    try { addTask({ title: form.title, subject: form.subject === GENERAL_SUBJECT ? '' : form.subject,
-      subjectId: offered.find((choice) => choice.label === form.subject)?.subjectId,
-      allSubjects: form.subject === GENERAL_SUBJECT,
-      date: form.date, by: user?.name, personal: false }); }
-    catch (error) { setError(error.message); return; }
+    try {
+        await addTask({
+        title: form.title,
+        platform: form.platform,
+        subjectId: offered.find((choice) => choice.label === form.subject)?.subjectId,
+        allSubjects: form.subject === GENERAL_SUBJECT,
+        date: form.date,
+        personal: false,
+        });
+    } catch (err) {
+        setError(errorMessage(err));
+        return;
+    }
     finishForm();
 };
 
 const deleteItem = (item) => {
     if (item.kind === 'event') setEvents((p) => p.filter((x) => x.id !== item.id));
-    else deleteTask(item.id);
+    else setDeletingTask(item);
 };
 
 const canDelete = (item) => (item.kind === 'event' ? item.type === 'personal' : isMayor);
 
-const addTodo = (e) => {
+const addTodo = async (e) => {
     e.preventDefault();
     const text = todoText.trim();
     if (!text) return;
-    addTask({ title: text, date: toKey(new Date()), by: user?.name, personal: true });
-    setTodoText('');
+    setTodoError('');
+    try {
+        await addTask({ title: text, date: toKey(new Date()), personal: true });
+        setTodoText('');
+    } catch (err) {
+        setTodoError(errorMessage(err));
+    }
 };
 
 const toggleTodo = toggleTask;
@@ -198,7 +217,7 @@ const deleteTodo = deleteTask;
 /* ---------- small render helpers ---------- */
 const itemLabel = (item) =>
     item.kind === 'task'
-    ? `Task: ${item.title}`
+    ? `Task: ${item.title}${item.platform ? ` · ${item.platform}` : ''}`
     : `${fmtTime(item.start)} ${item.title}`;
 
 const renderRow = (item) => (
@@ -208,7 +227,7 @@ const renderRow = (item) => (
         <span className={styles.rowTitle}>{item.title}</span>
         <span className={styles.rowMeta}>
         {item.kind === 'task'
-            ? `Due${item.subject ? ` · ${item.subject}` : ''}`
+            ? `Due${item.subject ? ` · ${item.subject}` : ''}${item.platform ? ` · ${item.platform}` : ''}`
             : `${fmtTime(item.start)} – ${fmtTime(item.end)}${item.subject ? ` · ${item.subject}` : ''}`}
         </span>
     </div>
@@ -229,6 +248,9 @@ const renderRow = (item) => (
         >
         ✕
         </button>
+    )}
+    {item.kind === 'task' && isMayor && (
+        <button type="button" className={styles.iconBtn} onClick={() => setEditingTask(item)} aria-label={`Edit ${item.title}`}>✎</button>
     )}
     </li>
 );
@@ -441,6 +463,14 @@ return (
                     ))}
                 </select>
                 </label>
+                <label className={styles.field}>
+                Platform or location
+                <select value={form.platform} onChange={setField('platform')}>
+                    {PLATFORMS.map((p) => (
+                    <option key={p}>{p}</option>
+                    ))}
+                </select>
+                </label>
                 <div className={styles.field}>
                 <label htmlFor="calendar-task-date">Due date</label>
                 <DatePicker id="calendar-task-date" value={form.date} min={today} required onChange={setField('date')} />
@@ -483,9 +513,12 @@ return (
                     <div className={styles.rowBody}>
                         <span className={styles.rowTitle}>{t.title}</span>
                         <span className={`${styles.rowMeta} ${overdue ? styles.overdue : ''}`}>
-                        {t.subject ? `${t.subject} · ` : ''}{overdue ? 'Overdue, ' : 'Due '}{fmtShort(t.date)}
+                        {t.subject ? `${t.subject} · ` : ''}{t.platform ? `${t.platform} · ` : ''}{overdue ? 'Overdue, ' : 'Due '}{fmtShort(t.date)}
                         </span>
                     </div>
+                    {isMayor && (
+                        <button type="button" className={styles.iconBtn} onClick={() => setEditingTask(t)} aria-label={`Edit ${t.title}`}>✎</button>
+                    )}
                     {isMayor && (
                         <button
                         type="button"
@@ -512,6 +545,8 @@ return (
             />
             <button type="submit" className="btn alt">Add</button>
             </form>
+            {todoError && <p className={styles.error}>{todoError}</p>}
+            {taskError && <p className={styles.error} role="alert">{taskError}</p>}
             {todos.length === 0 ? (
             <div className="empty">You're all caught up.</div>
             ) : (
@@ -540,6 +575,37 @@ return (
         </div>
         </aside>
     </div>
+        {editingTask && (
+            <Modal
+                title="Edit task"
+                description="Change the title, deadline or platform. To change the subject, delete this task and assign it again."
+                submitLabel="Save changes"
+                fields={[
+                { key: 'title', label: 'Task title', required: true },
+                { key: 'due', label: 'Deadline', type: 'date', required: true },
+                { key: 'platform', label: 'Platform or location', type: 'select', options: PLATFORMS },
+                ]}
+                initialValues={{ title: editingTask.title, due: editingTask.date, platform: editingTask.platform || PLATFORMS[0] }}
+                onSave={async (values) => {
+                await updateTask(editingTask.id, { title: values.title, date: values.due, platform: values.platform });
+                setEditingTask(null);
+                }}
+                onClose={() => setEditingTask(null)}
+            />
+        )}
+
+        {deletingTask && (
+            <ConfirmDialog
+                title="Delete this task?"
+                message={`"${deletingTask.title}" will be removed for everyone in your block, including their completion records.`}
+                confirmLabel="Delete"
+                onCancel={() => setDeletingTask(null)}
+                onConfirm={async () => {
+                await removeTask(deletingTask.id);
+                setDeletingTask(null);
+                }}
+            />
+        )}
     </div>
 );
 }

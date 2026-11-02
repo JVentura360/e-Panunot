@@ -24,6 +24,7 @@ class TaskController extends Controller
         $tasks = \App\Services\SubjectAccess::scope(Task::query(), $user, 'tasks')
             ->with([
                 'subject',
+                'creator',
                 'assignments' => fn ($q) => $q->where('user_id', $user->id),
             ])
             ->orderBy('due_date')

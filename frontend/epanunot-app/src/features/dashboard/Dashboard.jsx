@@ -16,13 +16,15 @@ import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { applicationEligibility } from '../block/enrollmentRules.js';
 
 export default function Dashboard({ user }) {
-  const { tasks, addTask: saveTask, toggleTask: toggle } = useTasks(); // shared with Calendar
+  const { tasks, error: taskError, addTask: saveTask, toggleTask: toggle, updateTask, removeTask } = useTasks();
   const annQuery = useApiQuery('/announcements', { enabled: Boolean(user.block_id) });
   const anns = annQuery.data?.data ?? [];
   const [modal, setModal] = useState(null);
   const [filter, setFilter] = useState('open');
   const [editingAnn, setEditingAnn] = useState(null);
   const [deletingAnn, setDeletingAnn] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
+  const [deletingTask, setDeletingTask] = useState(null);
   const isMayor = user.role === 'mayor';
   const eligibility = applicationEligibility(user);
   const { choices } = useSubjectChoices(user);
@@ -36,11 +38,10 @@ export default function Dashboard({ user }) {
     .sort((a, b) => Number(a.done) - Number(b.done));
   const personal = tasks.filter((task) => task.personal && matchesFilter(task));
 
-  const addTask = (values, personalTask) => {
-    saveTask({
+  const addTask = async (values, personalTask) => {
+    await saveTask({
       title: values.title, date: values.due, platform: values.platform,
-      by: user.name, personal: personalTask,
-      subject: values.subject === 'All block subjects' ? '' : values.subject,
+      personal: personalTask,
       subjectId: offered.find((choice) => choice.label === values.subject)?.subjectId,
       allSubjects: !personalTask && values.subject === 'All block subjects',
     });
@@ -69,6 +70,8 @@ export default function Dashboard({ user }) {
         </div>
       </header>
 
+      {taskError && <p role="alert" className={styles.error}>{taskError}</p>}
+
       <div className={styles.stats} aria-label="Task summary">
         <div className={styles.stat}><span>To Do</span><strong>{pending.length.toString().padStart(2, '0')}</strong><small>One task at a time.</small></div>
         <div className={styles.stat}><span>Due Soon</span><strong>{dueSoon.toString().padStart(2, '0')}</strong><small>Overdue, today or tomorrow</small></div>
@@ -95,7 +98,7 @@ export default function Dashboard({ user }) {
                 </div>
                 {!eligibility.allowed && <p>{eligibility.reason}</p>}
               </PlannerEmpty>
-            ) : assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
+            ) : assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} onEdit={isMayor ? setEditingTask : undefined} onDelete={isMayor ? setDeletingTask : undefined} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
           </section>
           {!isMayor && <section className={styles.section}>
             <h3>Personal tasks <span>{personal.length}</span></h3>
@@ -133,35 +136,67 @@ export default function Dashboard({ user }) {
         />
       )}
       {editingAnn && (
-      <Modal
-        title="Edit Announcement"
-        description="Update what your block sees."
-        submitLabel="Save changes"
-        fields={[
-          { key: 'title', label: 'Title', required: true },
-          { key: 'description', label: 'Message', type: 'textarea', required: true },
-        ]}
-        initialValues={{ title: editingAnn.title, description: editingAnn.description }}
-        onSave={async (values) => {
-          await api(`/announcements/${editingAnn.id}`, { method: 'PUT', body: values });
-          setEditingAnn(null);
-        }}
-        onClose={() => setEditingAnn(null)}
-      />
-    )}
+        <Modal
+          title="Edit Announcement"
+          description="Update what your block sees."
+          submitLabel="Save changes"
+          fields={[
+            { key: 'title', label: 'Title', required: true },
+            { key: 'description', label: 'Message', type: 'textarea', required: true },
+          ]}
+          initialValues={{ title: editingAnn.title, description: editingAnn.description }}
+          onSave={async (values) => {
+            await api(`/announcements/${editingAnn.id}`, { method: 'PUT', body: values });
+            setEditingAnn(null);
+          }}
+          onClose={() => setEditingAnn(null)}
+        />
+      )}
 
-    {deletingAnn && (
-      <ConfirmDialog
-        title="Delete this announcement?"
-        message={`"${deletingAnn.title}" will be removed for everyone in your block.`}
-        confirmLabel="Delete"
-        onCancel={() => setDeletingAnn(null)}
-        onConfirm={async () => {
-          await api(`/announcements/${deletingAnn.id}`, { method: 'DELETE' });
-          setDeletingAnn(null);
-        }}
-      />
-    )}
+      {deletingAnn && (
+        <ConfirmDialog
+          title="Delete this announcement?"
+          message={`"${deletingAnn.title}" will be removed for everyone in your block.`}
+          confirmLabel="Delete"
+          onCancel={() => setDeletingAnn(null)}
+          onConfirm={async () => {
+            await api(`/announcements/${deletingAnn.id}`, { method: 'DELETE' });
+            setDeletingAnn(null);
+          }}
+        />
+      )}
+
+      {editingTask && (
+        <Modal
+          title="Edit task"
+          description="Change the title, deadline or platform. To change the subject, delete this task and assign it again."
+          submitLabel="Save changes"
+          fields={[
+            { key: 'title', label: 'Task title', required: true },
+            { key: 'due', label: 'Deadline', type: 'date', required: true },
+            { key: 'platform', label: 'Platform or location', type: 'select', options: PLATFORMS },
+          ]}
+          initialValues={{ title: editingTask.title, due: editingTask.date, platform: editingTask.platform || PLATFORMS[0] }}
+          onSave={async (values) => {
+            await updateTask(editingTask.id, { title: values.title, date: values.due, platform: values.platform });
+            setEditingTask(null);
+          }}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
+
+      {deletingTask && (
+        <ConfirmDialog
+          title="Delete this task?"
+          message={`"${deletingTask.title}" will be removed for everyone in your block, including their completion records.`}
+          confirmLabel="Delete"
+          onCancel={() => setDeletingTask(null)}
+          onConfirm={async () => {
+            await removeTask(deletingTask.id);
+            setDeletingTask(null);
+          }}
+        />
+      )}
     </div>
   );
 }

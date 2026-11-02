@@ -1,7 +1,7 @@
 import { fmt, daysLeft } from './dateUtils';
 import styles from './Dashboard.module.css';
 
-export default function TaskItem({ t, onToggle }) {
+export default function TaskItem({ t, onToggle, onEdit, onDelete }) {
   const left = daysLeft(t.due);
   return (
     <li data-sort-id={t.id} className={`${styles.item} ${left <= 1 && !t.done ? styles.urgent : ''} ${t.done ? styles.done : ''}`}>
@@ -19,6 +19,12 @@ export default function TaskItem({ t, onToggle }) {
       </div>
       <span className={styles.tag}>{t.platform || 'StepS'}</span>
       <span className={styles.due}>{t.done ? 'Completed' : left < 0 ? `${Math.abs(left)}d overdue` : left === 0 ? 'Due today' : left === 1 ? 'Tomorrow' : fmt(t.due)}</span>
+      {(onEdit || onDelete) && (
+        <div className={styles.itemActions}>
+          {onEdit && <button type="button" className={styles.inlineAction} onClick={() => onEdit(t)} aria-label={`Edit ${t.title}`}>Edit</button>}
+          {onDelete && <button type="button" className={styles.inlineAction} onClick={() => onDelete(t)} aria-label={`Delete ${t.title}`}>Delete</button>}
+        </div>
+      )}
     </li>
   );
 }

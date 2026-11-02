@@ -216,6 +216,7 @@ CREATE TABLE personal_todos (
     id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     user_id        BIGINT UNSIGNED NOT NULL,
     title          VARCHAR(255) NOT NULL,
+    due_date       DATE NULL,
     is_done        TINYINT(1) NOT NULL DEFAULT 0,
     google_task_id VARCHAR(255) NULL,
     created_at     TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,

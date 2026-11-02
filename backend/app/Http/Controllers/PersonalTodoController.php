@@ -38,6 +38,7 @@ class PersonalTodoController extends Controller
         $todo = PersonalTodo::create([
             'user_id' => $request->user()->id,
             'title' => $request->validated('title'),
+            'due_date' => $request->validated('due_date'), 
             'is_done' => false,
         ]);
 

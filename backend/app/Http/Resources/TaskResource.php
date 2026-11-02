@@ -27,6 +27,10 @@ class TaskResource extends JsonResource
                 'code' => $this->subject?->code,
                 'name' => $this->subject?->name,
             ]),
+            'created_by' => $this->whenLoaded('creator', fn () => [
+                'id' => $this->creator?->id,
+                'name' => $this->creator?->name,
+            ]),
             'completed_at' => $this->whenLoaded(
                 'assignments',
                 fn () => $this->assignments->first()?->completed_at
