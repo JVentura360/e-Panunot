@@ -63,6 +63,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/mayor-applications/{id}', [AdminMayorApplicationController::class, 'show']);
         Route::post('/mayor-applications/{id}/approve', [AdminMayorApplicationController::class, 'approve']);
         Route::post('/mayor-applications/{id}/reject', [AdminMayorApplicationController::class, 'reject']);
+        Route::delete('/blocks/{blockId}/mayor', [AdminMayorApplicationController::class, 'removeMayor']);
     });
 
     // Anyone in the block

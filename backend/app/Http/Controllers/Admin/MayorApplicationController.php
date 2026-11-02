@@ -93,6 +93,19 @@ class MayorApplicationController extends Controller
         ]);
     }
 
+    /**
+     * DELETE /api/admin/blocks/{blockId}/mayor
+     */
+    public function removeMayor(MayorApprovalService $service, int $blockId)
+    {
+        $admin = $this->requireAdmin();
+        $service->removeMayor($blockId, $admin);
+
+        return response()->json([
+            'message' => 'Mayor removed. The block has no mayor until a new application is approved.',
+        ]);
+    }
+
     private function requireAdmin()
     {
         $user = auth()->user();

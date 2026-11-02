@@ -22,7 +22,8 @@ class BlockGoogleCalendarController extends Controller
         abort_if(! $block, 404, 'Block not found.');
 
         abort_unless(
-            app(BlockPolicy::class)->view($request->user(), $block),
+            app(BlockPolicy::class)->view($request->user(), $block)
+                || \App\Services\SubjectAccess::canAccess($request->user(), $blockId),
             403,
             'You do not belong to this block.'
         );

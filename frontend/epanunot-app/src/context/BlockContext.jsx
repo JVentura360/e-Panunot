@@ -56,7 +56,7 @@ export function BlockProvider({ user, children }) {
     () =>
       blocks
         .filter((b) => b.mayorId)
-        .map((b) => ({ id: b.mayorId, name: b.mayor, email: b.mayorEmail, block: b.name })),
+        .map((b) => ({ id: b.mayorId, blockId: b.id, name: b.mayor, email: b.mayorEmail, block: b.name })),
     [blocks]
   );
 
@@ -86,8 +86,17 @@ export function BlockProvider({ user, children }) {
     [load]
   );
 
+  // Admin only. Throws on failure so the confirm pop-up can show the message.
+  const removeMayor = useCallback(
+    async (blockId) => {
+      await api(`/admin/blocks/${blockId}/mayor`, { method: 'DELETE' });
+      await load(true);
+    },
+    [load]
+  );
+
   return (
-    <BlockContext.Provider value={{ apps, mayors, blocks, loading, error, load, approve, reject }}>
+    <BlockContext.Provider value={{ apps, mayors, blocks, loading, error, load, approve, reject, removeMayor }}>
       {children}
     </BlockContext.Provider>
   );

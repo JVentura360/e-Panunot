@@ -1,8 +1,25 @@
+import { useState } from 'react';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import styles from './AdminDashboard.module.css';
 
-export default function MayorsAndBlocks({ mayors, blocks }) {
+export default function MayorsAndBlocks({ mayors, blocks, onRemove }) {
+    const [removing, setRemoving] = useState(null);
+
     return (
         <>
+            {removing && (
+                <ConfirmDialog
+                    title="Remove this mayor?"
+                    message={`${removing.name} will stop being the mayor of ${removing.block} and become a regular student in that block. The block keeps its members and tasks but has no mayor until a new application is approved.`}
+                    confirmLabel="Remove mayor"
+                    onCancel={() => setRemoving(null)}
+                    onConfirm={async () => {
+                        await onRemove(removing.blockId);
+                        setRemoving(null);
+                    }}
+                />
+            )}
+
             <div className={styles.section}>
                 <h3 className={styles.sectionTitle}>Mayors</h3>
                 {mayors.length === 0 ? (
@@ -11,12 +28,22 @@ export default function MayorsAndBlocks({ mayors, blocks }) {
                 <div className={styles.tableWrap}>
                     <table className={styles.table}>
                     <thead>
-                        <tr><th>Name</th><th>Email</th><th>Block</th></tr>
+                        <tr><th>Name</th><th>Email</th><th>Block</th><th>Actions</th></tr>
                     </thead>
                     <tbody>
                         {mayors.map((m) => (
                         <tr key={m.id}>
                             <td>{m.name}</td><td>{m.email}</td><td>{m.block}</td>
+                            <td>
+                                <button
+                                    type="button"
+                                    className={`${styles.btn} ${styles.reject}`}
+                                    onClick={() => setRemoving(m)}
+                                    aria-label={`Remove ${m.name} as mayor of ${m.block}`}
+                                >
+                                    Remove
+                                </button>
+                            </td>
                         </tr>
                         ))}
                     </tbody>

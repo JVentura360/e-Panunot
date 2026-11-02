@@ -12,6 +12,7 @@ import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import { PLATFORMS } from '../../data/mockData';
 import { useCalendarEvents } from './useCalendarEvents.js';
 import { gridRange } from './calendarMapper.js';
+import GoogleCalendarButtons from './GoogleCalendarButton.jsx';
 
 /* ---------- helpers ---------- */
 const pad = (n) => String(n).padStart(2, '0');
@@ -456,6 +457,7 @@ return (
                 </button>
             )}
             </div>
+            <GoogleCalendarButtons user={user} choices={choices} />
             {eventsError && <p className={styles.error} role="alert">Could not load events. {errorMessage(eventsError)}</p>}
             {eventsLoading && <p className={styles.rowMeta}>Loading events…</p>}
 

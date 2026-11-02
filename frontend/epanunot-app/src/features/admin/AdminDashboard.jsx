@@ -16,6 +16,7 @@ export default function AdminDashboard() {
         blocks,
         approve,
         reject,
+        removeMayor,
         load,
         loading,
         error,
@@ -61,6 +62,7 @@ export default function AdminDashboard() {
                 <MayorsAndBlocks
                     mayors={mayors}
                     blocks={blocks}
+                    onRemove={removeMayor}
                 />
             )}
         </div>

@@ -526,6 +526,27 @@ cursor: pointer;
 margin-top: 2px;
 }
 
+.googleRow {
+display: flex;
+flex-direction: column;
+gap: 6px;
+margin-bottom: 12px;
+}
+
+.googleBtn {
+display: inline-flex;
+align-items: center;
+justify-content: center;
+text-decoration: none;
+}
+
+.googleAdded {
+font-size: 0.8rem;
+font-weight: 600;
+margin: 0;
+}
+
+
 
 /* ---------- Responsive ---------- */
 @media (max-width: 900px) {

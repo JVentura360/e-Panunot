@@ -44,7 +44,9 @@ class GoogleCalendarService
      */
     public function ensureBlockCalendar(int $blockId): string
     {
-        return DB::transaction(function () use ($blockId) {
+        $created = false;
+
+        $calendarId = DB::transaction(function () use ($blockId, &$created) {
             $block = DB::table('blocks')->where('id', $blockId)->lockForUpdate()->first();
 
             if (! $block) {
@@ -66,8 +68,28 @@ class GoogleCalendarService
                 'updated_at' => now(),
             ]);
 
+            $created = true;
+
             return $calendarId;
         });
+
+        if ($created) {
+            // Share with the mayor and everyone already in the block (outside the lock).
+            DB::table('users')
+                ->where('block_id', $blockId)
+                ->orWhereIn('id', DB::table('blocks')->where('id', $blockId)->select('mayor_id'))
+                ->orWhereIn('id', DB::table('subject_enrollments')->where('block_id', $blockId)->select('user_id'))
+                ->pluck('email')
+                ->each(function ($email) use ($calendarId) {
+                    try {
+                        $this->share($calendarId, $email);
+                    } catch (\Throwable $e) {
+                        report($e); // one bad email must not stop the sync
+                    }
+                });
+        }
+
+        return $calendarId;
     }
 
     /** Creates a calendar owned by the service account. Returns its id. */

@@ -177,6 +177,82 @@ class MayorApprovalService
     }
 
     /**
+     * Remove the mayor of a block (admin only).
+     *
+     *  - the block keeps existing but has no mayor (blocks.mayor_id = null)
+     *  - the old mayor becomes a normal student again (users.role) and LEAVES the
+     *    block (like a member removed by the mayor), so they can apply as mayor
+     *    again or join a block as a student
+     *  - their approved application is marked rejected so the approval is really
+     *    revoked and the history is not misleading
+     *  - a new application for this block can then be approved
+     *
+     * @return object the block row
+     */
+    public function removeMayor(int $blockId, object $admin): object
+    {
+        $removedEmail = null;
+
+        $block = DB::transaction(function () use ($blockId, $admin, &$removedEmail) {
+            $block = DB::table('blocks')->where('id', $blockId)->lockForUpdate()->first();
+            abort_unless($block, 404, 'Block not found.');
+
+            $term = DB::table('terms')->where('id', $block->term_id)->lockForUpdate()->first();
+            if (! $term || ! $term->is_active) {
+                $this->fail('term', 'A mayor can only be removed during the active semester.');
+            }
+
+            if ($block->mayor_id === null) {
+                $this->fail('block', 'This block does not have a mayor.');
+            }
+
+            $mayorId = (int) $block->mayor_id;
+            $mayor = DB::table('users')->where('id', $mayorId)->lockForUpdate()->first();
+            $removedEmail = $mayor?->email;
+
+            DB::table('blocks')->where('id', $blockId)->update([
+                'mayor_id' => null,
+                'updated_at' => now(),
+            ]);
+
+            DB::table('users')
+                ->where('id', $mayorId)
+                ->where('role', Role::Mayor->value)
+                ->update(['role' => Role::Student->value, 'updated_at' => now()]);
+
+            // Take them out of the block, same as when a mayor removes a member.
+            // Without this they still "belong to a block" and cannot apply as mayor again.
+            DB::table('subject_enrollments')->where('user_id', $mayorId)->where('block_id', $blockId)->delete();
+            DB::table('student_term_profiles')->where('user_id', $mayorId)->where('term_id', $block->term_id)->where('regular_block_id', $blockId)->delete();
+            DB::table('users')->where('id', $mayorId)->where('block_id', $blockId)->update(['block_id' => null, 'updated_at' => now()]);
+            DB::table('task_assignments')
+                ->where('user_id', $mayorId)
+                ->whereIn('task_id', DB::table('tasks')->where('block_id', $blockId)->select('id'))
+                ->delete();
+
+            DB::table('mayor_applications')
+                ->where('block_id', $blockId)
+                ->where('user_id', $mayorId)
+                ->where('status', ApplicationStatus::Approved->value)
+                ->update([
+                    'status' => ApplicationStatus::Rejected->value,
+                    'reviewed_by' => $admin->id,
+                    'reviewed_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            return DB::table('blocks')->where('id', $blockId)->first();
+        });
+
+        // Take the old mayor off the block's Google calendar.
+        if ($removedEmail) {
+            SyncBlockCalendarAccess::dispatch($blockId, $removedEmail, false);
+        }
+
+        return $block;
+    }
+
+    /**
      * Reject a pending application.
      *
      * @return object the application row, joined with its term
