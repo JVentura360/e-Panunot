@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Services;
-
+use App\Jobs\SyncBlockCalendarAccess;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -93,6 +93,7 @@ class StudentEnrollmentService
             if ($studentType === 'regular' || $joining) {
                 DB::table('users')->where('id', $userId)->update(['block_id' => $blockId, 'updated_at' => now()]);
             }
+            SyncBlockCalendarAccess::dispatch($blockId, $user->email, true)->afterCommit();
             return $this->snapshot($userId);
         }, 3);
     }
