@@ -7,6 +7,7 @@ import { api, errorMessage, queryClient, API_BASE } from '../../api/client.js';
 import { useApiQuery } from '../../api/useApiQuery.js';
 import { toConcern, toMessage } from './concernMapper.js';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
+import { useTasks } from '../../context/TaskContext.jsx';
 
 // Single-file Concerns feature (prototype). Sections, in order:
 // helpers, StatusTag, ConcernList, ConcernThread, NewConcernModal, Concerns (page).
@@ -288,6 +289,7 @@ return (
         <div className={styles.facts}>
         <span><strong>Subject:</strong> {concern.subject}</span>
         <span><strong>Category:</strong> {concern.category}</span>
+        {concern.task && <span><strong>Related task:</strong> {concern.task.title} (due {formatDate(concern.task.due_date)})</span>}
         {isMayor && <span><strong>Raised by:</strong> {concern.studentName}</span>}
         <span><strong>Sent:</strong> {formatDateTime(concern.createdAt)}</span>
         </div>
@@ -366,7 +368,7 @@ return (
 }
 
 // ======================= NewConcernModal =======================
-function NewConcernModal({ onClose, onCreate, choices, user, ledger }) {
+function NewConcernModal({ onClose, onCreate, choices, tasks }) {
     const MAX_FILES = 5;
 const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'];
@@ -379,6 +381,13 @@ const [error, setError] = useState('');
 const [sending, setSending] = useState(false);
 const fileInput = useRef(null);
 const dialogRef = useRef(null);
+const [taskId, setTaskId] = useState('');
+const showSubject = category === 'Academic' || category === 'Schedule';
+const subjectRequired = category === 'Academic';
+const chosen = choices.find((c) => c.value === subject);
+const taskOptions = category === 'Academic' && chosen
+    ? tasks.filter((t) => String(t.subjectId) === String(chosen.subjectId))
+    : [];
 
 useEffect(() => {
     const dialog = dialogRef.current;
@@ -424,12 +433,11 @@ const submit = async (e) => {
     setSending(true);
     try {
         await onCreate({
-            title: title.trim(),
-            subjectId: choices.find((choice) => choice.value === subject)?.subjectId ?? null,
-            blockId: choices.find((choice) => choice.value === subject)?.blockId ?? user.block_id,
-            category,
-            description: description.trim(),
+            title: title.trim(), 
+            category, description: description.trim(), 
             files,
+            choice: showSubject ? chosen : undefined, 
+            taskId: taskId || undefined
         });
     } catch (err) {
         setError(errorMessage(err));
@@ -460,24 +468,34 @@ return (
 
         <div className={styles.row2}>
         <div className={styles.field}>
-            <label htmlFor="nc-subject">Subject</label>
-            <select id="nc-subject" className={styles.input} value={subject} required onChange={(e) => setSubject(e.target.value)}>
-            <option value="" disabled>Select a subject</option>
-            {user.block_id && <option value="general">Other / block-wide concern</option>}
-            {choices.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
-            </select>
-            {ledger.isPending && <p role="status">Loading enrolled subjects…</p>}
-            {ledger.error && <p role="alert">{errorMessage(ledger.error)} <button type="button" className="btn ghost" onClick={() => ledger.refetch()}>Retry</button></p>}
-            {!ledger.isPending && !ledger.error && !choices.length && !user.block_id && <p>Join a block and enroll in subjects through My Ledger before raising a concern.</p>}
-        </div>
-        <div className={styles.field}>
             <label htmlFor="nc-category">Category</label>
-            <select id="nc-category" className={styles.input} value={category} required onChange={(e) => setCategory(e.target.value)}>
+            <select id="nc-category" className={styles.input} value={category} required
+            onChange={(e) => { setCategory(e.target.value); setTaskId(''); if (e.target.value === 'Other') setSubject(''); }}>
             <option value="" disabled>Select a category</option>
             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
             </select>
         </div>
+        {showSubject && (
+            <div className={styles.field}>
+            <label htmlFor="nc-subject">Subject</label>
+            <select id="nc-subject" className={styles.input} value={subject} required={subjectRequired}
+                onChange={(e) => { setSubject(e.target.value); setTaskId(''); }}>
+                <option value="" disabled={subjectRequired}>{subjectRequired ? 'Select a subject' : 'No specific subject'}</option>
+                {choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            </select>
+            </div>
+        )}
         </div>
+
+        {category === 'Academic' && chosen && (
+        <div className={styles.field}>
+            <label htmlFor="nc-task">Related task (optional)</label>
+            <select id="nc-task" className={styles.input} value={taskId} onChange={(e) => setTaskId(e.target.value)}>
+            <option value="">None</option>
+            {taskOptions.map((t) => <option key={t.rawId} value={t.rawId}>{t.title} (due {t.date})</option>)}
+            </select>
+        </div>
+        )}
 
         <div className={styles.field}>
         <label htmlFor="nc-desc">Description</label>
@@ -521,7 +539,9 @@ return (
 // Mounted at path="/concerns/*": the splat holds the concern id, if any.
 // Desktop shows list + thread side by side; mobile shows one at a time (see CSS).
 export default function Concerns({ user }) {
-const { choices, ledger } = useSubjectChoices(user);
+const { choices } = useSubjectChoices(user);
+const { tasks: allTasks } = useTasks();
+const classTasks = allTasks.filter((t) => !t.personal);
 const navigate = useNavigate();
 const { '*': splat } = useParams();
 const selectedId = splat ? splat.replace(/\/$/, '') : null;
@@ -578,8 +598,11 @@ const createConcern = async (form) => {
     body.append('title', form.title);
     body.append('category', form.category.toLowerCase());
     body.append('description', form.description);
-    body.append('block_id', form.blockId);
-    if (form.subjectId) body.append('subject_id', form.subjectId);
+    if (form.choice) {
+        body.append('subject_id', form.choice.subjectId);
+        body.append('block_id', form.choice.blockId);
+    }
+    if (form.taskId) body.append('task_id', form.taskId);
     form.files.forEach((f) => body.append('attachments[]', f));
 
     const res = await api('/concerns', { method: 'POST', body });
@@ -640,7 +663,7 @@ return (
         </section>
     </div>
 
-    {creating && <NewConcernModal choices={choices} user={user} ledger={ledger} onClose={() => setCreating(false)} onCreate={createConcern} />}
+    {creating && <NewConcernModal choices={choices} tasks={classTasks} onClose={() => setCreating(false)} onCreate={createConcern} />}
     </div>
 );
 }

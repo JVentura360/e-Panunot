@@ -14,6 +14,7 @@ use App\Enums\ConcernStatus;
     'block_id',
     'student_id',
     'subject_id',
+    'task_id',
     'title',
     'category',
     'description',
@@ -48,6 +49,11 @@ class Concern extends Model
     public function subject(): BelongsTo
     {
         return $this->belongsTo(Subject::class, 'subject_id');
+    }
+
+    public function task(): BelongsTo
+    {
+        return $this->belongsTo(Task::class, 'task_id');
     }
 
     public function messages(): HasMany

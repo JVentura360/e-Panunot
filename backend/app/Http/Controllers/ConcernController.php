@@ -19,14 +19,16 @@ class ConcernController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $concerns = Concern::where(function ($query) use ($user): void {
-            $query->where('student_id', $user->id);
-            if ($user->role === Role::Mayor && $user->block_id) {
-                $query->orWhere('block_id', $user->block_id);
-            }
-        })
+        $isMayor = $user->role === Role::Mayor;
+        abort_if($isMayor && ! $user->block_id, 403, 'You are not in a block yet.');
+
+        $concerns = Concern::query()
+            // mayor: their block's concerns. student: everything they filed, in any block.
+            ->when($isMayor,
+                fn ($q) => $q->where('block_id', $user->block_id),
+                fn ($q) => $q->where('student_id', $user->id))
             ->when($request->query('status'), fn ($q, $status) => $q->where('status', $status))
-            ->with(['student', 'subject', 'attachments'])
+            ->with(['student', 'subject', 'task', 'attachments'])
             ->latest()
             ->get();
 
@@ -36,12 +38,17 @@ class ConcernController extends Controller
     public function store(StoreConcernRequest $request)
     {
         $user = $request->user();
-        $blockId = (int) $request->input('block_id', $user->block_id);
-        abort_unless(\App\Services\SubjectAccess::canAccess($user, $blockId, $request->integer('subject_id') ?: null), 403, 'You are not enrolled in this block.');
+        $data = $request->safe()->except('attachments');
+        $task = isset($data['task_id']) ? \App\Models\Task::find($data['task_id']) : null;
+
+        // routing: the task's block, else the chosen block, else the primary block
+        $blockId = $task?->block_id ?? ($data['block_id'] ?? $user->block_id);
+        abort_unless($blockId, 403, 'You are not in a block yet.');
 
         $concern = Concern::create([
-            ...$request->safe()->except('attachments'),
+            ...$data,
             'block_id' => $blockId,
+            'subject_id' => $task?->subject_id ?? ($data['subject_id'] ?? null),
             'student_id' => $user->id,
         ]);
 
@@ -55,7 +62,7 @@ class ConcernController extends Controller
         }
 
         return new ConcernResource(
-            $concern->refresh()->load(['student', 'subject', 'attachments'])
+            $concern->refresh()->load(['student', 'subject', 'task', 'attachments'])
         );
     }
 
@@ -91,7 +98,7 @@ class ConcernController extends Controller
             });
         }
 
-        return new ConcernResource($concern->load(['student', 'subject', 'attachments']));
+        return new ConcernResource($concern->load(['student', 'subject', 'task', 'attachments']));
     }
 
     public function download(Request $request, ConcernAttachment $attachment)
