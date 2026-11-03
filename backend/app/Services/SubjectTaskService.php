@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Jobs\SyncTaskToGoogle;
 use App\Models\Task;
 use App\Models\User;
+use App\Notifications\NewTaskNotification;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +16,10 @@ class SubjectTaskService
     {
         $candidate = DB::table('blocks')->where('id', $mayor->block_id)->first();
         abort_unless($candidate, 403, 'You are not assigned to a block.');
-        return DB::transaction(function () use ($mayor, $values, $candidate): Collection {
+
+        $notifyQueue = [];                                                        // NEW
+
+        $result = DB::transaction(function () use ($mayor, $values, $candidate, &$notifyQueue): Collection {   // CHANGED
             $term = DB::table('terms')->where('id', $candidate->term_id)->lockForUpdate()->first();
             abort_unless($term && $term->is_active, 422, 'This term is no longer active.');
             $block = DB::table('blocks')->where('id', $candidate->id)->lockForUpdate()->first();
@@ -39,9 +44,21 @@ class SubjectTaskService
                     DB::table('task_assignments')->insert(['task_id' => $task->id, 'user_id' => $userId, 'created_at' => now(), 'updated_at' => now()]);
                 }
                 SyncTaskToGoogle::dispatch($task->id)->afterCommit();
-                $tasks->push($task->load('subject'));
+                $task->load('subject');
+                $tasks->push($task);
+                $notifyQueue[] = [$task, $recipients->all()];
             }
             return $tasks;
         }, 3);
+
+        // after the transaction has committed                                    // NEW
+        foreach ($notifyQueue as [$task, $userIds]) {
+            Notification::send(
+                User::whereIn('id', $userIds)->where('id', '!=', $mayor->id)->get(),
+                new NewTaskNotification($task)
+            );
+        }
+
+        return $result;                                                           // CHANGED
     }
 }

@@ -15,6 +15,17 @@ class ConcernTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_concern_notifications_preserve_student_only_resolution_after_merge(): void
+    {
+        [$block, $mayor, $student] = $this->makeBlockWithMayorAndStudent();
+        $id = $this->actingAs($student)->postJson('/api/concerns', ['title' => 'Merged concern', 'category' => 'other',
+            'description' => 'Please help.', 'block_id' => $block->id])->assertCreated()->json('data.id');
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $mayor->id, 'type' => \App\Notifications\NewConcernNotification::class]);
+        $this->actingAs($mayor)->patchJson('/api/concerns/'.$id.'/status', ['status' => 'resolved'])->assertForbidden();
+        $this->actingAs($student)->patchJson('/api/concerns/'.$id.'/status', ['status' => 'resolved'])->assertOk();
+        $this->assertDatabaseHas('notifications', ['notifiable_id' => $mayor->id, 'type' => \App\Notifications\ConcernStatusNotification::class]);
+    }
+
     public function test_concern_images_allow_five_mb_and_protect_downloads(): void
     {
         Storage::fake('local');

@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use App\Services\SubjectAccess;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class AnnouncementController extends Controller
 {
@@ -62,7 +63,7 @@ class AnnouncementController extends Controller
      */
     public function update(UpdateAnnouncementRequest $request, Announcement $announcement)
     {
-        $this->ensureOwnBlock($request, $announcement);
+        Gate::authorize('update', $announcement);
 
         $announcement->update($request->validated());
 
@@ -74,16 +75,11 @@ class AnnouncementController extends Controller
      */
     public function destroy(Request $request, Announcement $announcement)
     {
-        $this->ensureOwnBlock($request, $announcement);
+        Gate::authorize('delete', $announcement);
 
         $announcement->delete();
 
         return response()->noContent();
-    }
-
-    private function ensureOwnBlock(Request $request, Announcement $announcement): void
-    {
-        abort_unless($announcement->block_id === $request->user()->block_id, 403);
     }
 
     /** Same audience rule as tasks: subject enrollments, plus students from before enrollment existed. */

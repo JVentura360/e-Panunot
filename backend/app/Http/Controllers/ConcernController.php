@@ -8,6 +8,9 @@ use App\Http\Requests\StoreConcernRequest;
 use App\Http\Resources\ConcernResource;
 use App\Models\Concern;
 use App\Models\ConcernAttachment;
+use App\Models\User;
+use App\Notifications\ConcernStatusNotification;
+use App\Notifications\NewConcernNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -69,6 +72,11 @@ class ConcernController extends Controller
                 ]);
             }
 
+            $mayor = User::find(DB::table('blocks')->where('id', $blockId)->value('mayor_id'));
+            if ($mayor && $mayor->id !== $user->id) {
+                $mayor->notify(new NewConcernNotification($concern->load('student')));
+            }
+
             return new ConcernResource(
                 $concern->refresh()->load(['student', 'subject', 'task', 'attachments'])
             );
@@ -109,6 +117,14 @@ class ConcernController extends Controller
                         'message_text' => 'Status changed to ' . str_replace('_', ' ', $status->value) . '.',
                     ]);
                 });
+
+                $recipient = $isMayor
+                    ? $concern->student
+                    : User::find(DB::table('blocks')->where('id', $concern->block_id)->value('mayor_id'));
+
+                if ($recipient && $recipient->id !== $user->id) {
+                    $recipient->notify(new ConcernStatusNotification($concern, str_replace('_', ' ', $status->value)));
+                }
             }
 
             return new ConcernResource($concern->load(['student', 'subject', 'task', 'attachments']));
