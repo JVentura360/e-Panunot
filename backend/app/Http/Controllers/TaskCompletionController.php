@@ -6,6 +6,7 @@ use App\Http\Resources\TaskResource;
 use App\Models\Task;
 use App\Models\TaskAssignment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class TaskCompletionController extends Controller
 {
@@ -36,7 +37,7 @@ class TaskCompletionController extends Controller
         $user = $request->user();
 
         // you can only complete tasks that belong to your own block
-        abort_unless($task->block_id && \App\Services\SubjectAccess::canAccess($user, $task->block_id, $task->subject_id), 403);
+        Gate::authorize('view', $task);
 
         return TaskAssignment::firstOrCreate([
             'task_id' => $task->id,

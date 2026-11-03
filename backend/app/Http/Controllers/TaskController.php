@@ -12,6 +12,7 @@ use App\Models\TaskAssignment;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class TaskController extends Controller
 {
@@ -57,7 +58,7 @@ class TaskController extends Controller
      */
     public function update(UpdateTaskRequest $request, Task $task)
     {
-        $this->ensureOwnBlock($request, $task);
+        Gate::authorize('update', $task);
 
         $task->update($request->validated());
         SyncTaskToGoogle::dispatch($task->id);
@@ -69,7 +70,7 @@ class TaskController extends Controller
      */
     public function destroy(Request $request, Task $task)
     {
-        $this->ensureOwnBlock($request, $task);
+        Gate::authorize('delete', $task);
         $googleEventId = $task->google_event_id;
         $blockId = $task->block_id;
 
@@ -79,13 +80,5 @@ class TaskController extends Controller
         }
 
         return response()->noContent();
-    }
-
-    /**
-     * Block a mayor from touching another block's tasks.
-     */
-    private function ensureOwnBlock(Request $request, Task $task): void
-    {
-        abort_unless($task->block_id === $request->user()->block_id, 403);
     }
 }

@@ -3,24 +3,29 @@
 namespace App\Policies;
 
 use App\Enums\Role;
-use App\Models\User;
 use App\Models\Announcement;
+use App\Models\User;
+use App\Services\SubjectAccess;
 
 class AnnouncementPolicy
 {
     public function view(User $user, Announcement $announcement): bool
     {
-        return $user->block_id === $announcement->block_id;
+        return SubjectAccess::canAccess(
+            $user,
+            (int) $announcement->block_id,
+            $announcement->subject_id ? (int) $announcement->subject_id : null
+        );
     }
 
-    public function create(User $user): bool
+    public function update(User $user, Announcement $announcement): bool
     {
-        return $user->role === Role::Mayor;
+        return $user->role === Role::Mayor
+            && (int) $user->block_id === (int) $announcement->block_id;
     }
 
     public function delete(User $user, Announcement $announcement): bool
     {
-        return $user->role === Role::Mayor
-            && $user->block_id === $announcement->block_id;
+        return $this->update($user, $announcement);
     }
 }
