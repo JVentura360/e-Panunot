@@ -4,6 +4,7 @@ import { useApiQuery } from '../../api/useApiQuery.js';
 import { toApplication } from '../../context/BlockContext.jsx';
 import styles from './Profile.module.css';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
+import { api, errorMessage } from '../../api/client.js';
 
 const NAME_MAX = 60;
 
@@ -36,8 +37,9 @@ function DetailRow({ label, hint, children }) {
 function NameEditor({ initial, onSave, onCancel }) {
     const [value, setValue] = useState(initial);
     const [error, setError] = useState('');
+    const [saving, setSaving] = useState(false);
 
-    const submit = (e) => {
+    const submit = async (e) => {
         e.preventDefault();
 
         const name = value.trim().replace(/\s+/g, ' ');
@@ -47,7 +49,11 @@ function NameEditor({ initial, onSave, onCancel }) {
             return;
         }
 
-        onSave(name);
+        setError('');
+        setSaving(true);
+        try { await onSave(name); }
+        catch (error) { setError(errorMessage(error)); }
+        finally { setSaving(false); }
     };
 
     return (
@@ -55,6 +61,7 @@ function NameEditor({ initial, onSave, onCancel }) {
             <input
                 className={styles.input}
                 value={value}
+                disabled={saving}
                 maxLength={NAME_MAX}
                 autoFocus
                 aria-label="Name"
@@ -66,8 +73,8 @@ function NameEditor({ initial, onSave, onCancel }) {
             />
 
             <div className={styles.editActions}>
-                <button type="submit" className="btn alt">
-                    Save name
+                <button type="submit" className="btn alt" disabled={saving}>
+                    {saving ? 'Saving…' : 'Save name'}
                 </button>
 
                 <button
@@ -164,9 +171,9 @@ export default function Profile({ user, onUpdateUser }) {
     const roleLabel = ROLE_LABELS[user.role] || user.role;
     const hasBlock = user.block && user.block !== '-';
 
-    const saveName = (name) => {
-        // TODO: PATCH the new name to the Laravel API before updating local state.
-        onUpdateUser({ name });
+    const saveName = async (name) => {
+        const response = await api('/me', { method: 'PATCH', body: { name } });
+        onUpdateUser({ name: response.data.name });
         setEditing(false);
         setSaved(true);
     };

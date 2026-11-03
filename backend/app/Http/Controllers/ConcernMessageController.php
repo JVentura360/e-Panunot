@@ -22,6 +22,7 @@ class ConcernMessageController extends Controller
 
         if ($concern->$flag) {
             $concern->update([$flag => false]);
+            app(\App\Services\ClientSyncState::class)->changed($request, \App\Services\SubjectAccess::blockIds($request->user()));
         }
 
         return ConcernMessageResource::collection(

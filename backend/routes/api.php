@@ -16,11 +16,13 @@ use App\Http\Controllers\MeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', \App\Http\Middleware\TrackClientChanges::class])->group(function () {
+    Route::get('/sync', [\App\Http\Controllers\ClientSyncController::class, 'show'])->middleware('throttle:20,1');
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
     Route::get('/me', [MeController::class, 'show']);
+    Route::patch('/me', [MeController::class, 'update']);
     Route::get('/enrollment-profile', [\App\Http\Controllers\EnrollmentProfileController::class, 'show']);
     Route::put('/enrollment-profile', [\App\Http\Controllers\EnrollmentProfileController::class, 'update']);
     Route::post('/enrollment-profile/reconcile-mayor', [\App\Http\Controllers\EnrollmentProfileController::class, 'reconcile']);
