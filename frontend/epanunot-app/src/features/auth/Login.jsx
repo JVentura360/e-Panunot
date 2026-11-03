@@ -17,7 +17,7 @@ export default function Login({ error: sessionError = '', onLogin }) {
     const [accounts, setAccounts] = useState([]);
     const [developmentError, setDevelopmentError] = useState('');
     useEffect(() => {
-        if (!import.meta.env.DEV) return;
+        if (!import.meta.env.DEV && import.meta.env.VITE_LOCAL_ACCOUNTS !== 'true') return;
         let active = true;
         developmentAccounts()
             .then((response) => { if (active) setAccounts(response.data); })

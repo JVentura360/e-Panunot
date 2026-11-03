@@ -6,8 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:phone": "vite build --mode phone",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "preview:phone": "vite preview --mode phone"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.105.0",
