@@ -22,6 +22,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\TrackClientChanges::clas
         return $request->user();
     });
     Route::get('/me', [MeController::class, 'show']);
+    Route::post('/offline-sync', [\App\Http\Controllers\OfflineSyncController::class, 'store'])->middleware('throttle:30,1');
     Route::patch('/me', [MeController::class, 'update']);
     Route::get('/enrollment-profile', [\App\Http\Controllers\EnrollmentProfileController::class, 'show']);
     Route::put('/enrollment-profile', [\App\Http\Controllers\EnrollmentProfileController::class, 'update']);

@@ -15,11 +15,13 @@ import styles from './Dashboard.module.css';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { applicationEligibility } from '../block/enrollmentRules.js';
 import AnnouncementDialog from './AnnouncementDialog.jsx';
+import { useOffline } from '../../offline/useOffline.js';
 import { blockLabel, shortDate } from './announcementUtils.js';
 
 export default function Dashboard({ user }) {
+  const { online } = useOffline();
   const { tasks, error: taskError, addTask: saveTask, toggleTask: toggle, updateTask, removeTask } = useTasks();
-  const annQuery = useApiQuery('/announcements', { enabled: Boolean(user.block_id) });
+  const annQuery = useApiQuery('/announcements', { enabled: online && Boolean(user.block_id) });
   const anns = annQuery.data?.data ?? [];
   const [modal, setModal] = useState(null);
   const [filter, setFilter] = useState('open');
@@ -55,7 +57,7 @@ export default function Dashboard({ user }) {
     { key: 'title', label: 'Task title', placeholder: 'e.g. Submit your laboratory report', required: true },
     { key: 'due', label: 'Deadline', type: 'date', required: true, disallowPast: true },
     { key: 'platform', label: 'Platform or location', type: 'select', options: PLATFORMS },
-    ...(isMayor ? [{ key: 'subject', label: 'Subject', type: 'select', options: ['All block subjects', ...offered.map((choice) => choice.label)] }] : []),
+    ...(isMayor && modal !== 'mine' ? [{ key: 'subject', label: 'Subject', type: 'select', options: ['All block subjects', ...offered.map((choice) => choice.label)] }] : []),
   ];
 
   return (
@@ -68,8 +70,8 @@ export default function Dashboard({ user }) {
           <p>{isMayor ? 'Here’s what’s happening in your block.' : 'Let’s take today one task at a time.'}</p>
         </div>
         <div className={styles.headerActions}>
-          {isMayor && <button className="btn alt" onClick={() => setModal('ann')}>New Announcement</button>}
-          <button className="btn" onClick={() => setModal(isMayor ? 'task' : 'mine')}>{isMayor ? 'Assign a Task' : 'Add personal task'}</button>
+          {isMayor && <button data-online-only className="btn alt" onClick={() => setModal('ann')}>New Announcement</button>}
+          <button className="btn" onClick={() => setModal(isMayor && online ? 'task' : 'mine')}>{isMayor && online ? 'Assign a Task' : 'Add personal task'}</button>
         </div>
       </header>
 
@@ -97,19 +99,19 @@ export default function Dashboard({ user }) {
                 <p>Enter your block code and confirm your student status, or apply as mayor to create a block.</p>
                 <div className={styles.blockActions}>
                   <Link className="btn" to="/join-block">Join a Block</Link>
-                  <button type="button" className="btn alt" disabled={!eligibility.allowed} title={eligibility.reason || undefined} onClick={() => setModal('apply')}>Apply as Mayor</button>
+                  <button data-online-only type="button" className="btn alt" disabled={!eligibility.allowed} title={eligibility.reason || undefined} onClick={() => setModal('apply')}>Apply as Mayor</button>
                 </div>
                 {!eligibility.allowed && <p>{eligibility.reason}</p>}
               </PlannerEmpty>
             ) : assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} onEdit={isMayor ? setEditingTask : undefined} onDelete={isMayor ? setDeletingTask : undefined} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
           </section>
-          {!isMayor && <section className={styles.section}>
+          {(!isMayor || !online) && <section className={styles.section}>
             <h3>Personal tasks <span>{personal.length}</span></h3>
             {personal.length ? <AnimatedList className={styles.list}>{personal.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'A fresh page for your own plans.'}{filter !== 'done' && <button className={styles.inlineAction} onClick={() => setModal('mine')}>Add your first task</button>}</PlannerEmpty>}
           </section>}
         </div>
 
-        <aside className={styles.noticePanel}>
+        {online && <aside className={styles.noticePanel}>
           <div className={styles.sectionHead}><div><p className={styles.eyebrow}>The block board</p><h2>Announcements</h2></div><span className={styles.count}>{anns.length}</span></div>
           {anns.length ? anns.map((announcement, index) => (
             <article className={styles.ann} key={announcement.id} onClick={() => setViewingAnn(announcement)}>
@@ -134,7 +136,7 @@ export default function Dashboard({ user }) {
             </article>
           )) : <div className="empty">No announcements yet.</div>}
           <div className={styles.note}><strong>Stay in the loop.</strong><p>Check your block board for updates before planning your day.</p><Link className={styles.textLink} to="/concerns">{isMayor ? 'Review student concerns' : 'Have a concern? Let’s talk'}</Link></div>
-        </aside>
+        </aside>}
       </div>
 
       {(modal === 'task' || modal === 'mine') && <Modal title={modal === 'task' ? 'Assign a Task' : 'Add a personal task'} description={modal === 'task' ? 'Give your block a clear task and deadline.' : 'Keep your own deadlines alongside your class tasks.'} submitLabel={modal === 'task' ? 'Assign task' : 'Add task'} fields={taskFields} onSave={(values) => addTask(values, modal === 'mine')} onClose={() => setModal(null)} />}

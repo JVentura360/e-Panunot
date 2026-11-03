@@ -3,7 +3,7 @@ import styles from './Calendar.module.css';
 import DatePicker from '../../components/DatePicker';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
 import AnimatedList from '../../components/AnimatedList.jsx';
-import { unfinishedFirst, validDeadline } from '../../components/taskListUtils.js';
+import { unfinishedFirst } from '../../components/taskListUtils.js';
 import { useTasks } from '../../context/TaskContext.jsx';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { errorMessage } from '../../api/client.js';
@@ -12,6 +12,8 @@ import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import { PLATFORMS } from '../../data/mockData';
 import { useCalendarEvents } from './useCalendarEvents.js';
 import { gridRange } from './calendarMapper.js';
+import { useOffline } from '../../offline/useOffline.js';
+import { requireOnline } from '../../offline/runtime.js';
 import GoogleCalendarButtons from './GoogleCalendarButton.jsx';
 
 /* ---------- helpers ---------- */
@@ -49,11 +51,12 @@ const VIEWS = [
 const EMPTY_FORM = { title: '', date: TODAY_KEY, start: '09:00', end: '10:00', subject: GENERAL_SUBJECT, platform: PLATFORMS[0], shareWithBlock: false, editingId: null };
 
 function chipClass(item) {
-if (item.kind === 'task') return styles.chipTask;
+if (item.kind === 'task') return item.personal ? styles.chipPersonal : styles.chipTask;
 return item.type === 'personal' ? styles.chipPersonal : styles.chipClass;
 }
 
 export default function Calendar({ user }) {
+const { online } = useOffline();
 const { choices } = useSubjectChoices(user);
 const offered = choices.filter((choice) => choice.blockId === user.block_id);
 const subjectOptions = [GENERAL_SUBJECT, ...offered.map((choice) => choice.label)];
@@ -94,7 +97,7 @@ const range = useMemo(() => gridRange(monthDays), [monthDays]);
 const { events, loading: eventsLoading, error: eventsError, createEvent, updateEvent, removeEvent } = useCalendarEvents({
     from: range.from,
     to: range.to,
-    enabled: user.role !== 'admin',
+    enabled: online && user.role !== 'admin',
 });
 
 const itemsByDay = useMemo(() => {
@@ -102,13 +105,13 @@ const itemsByDay = useMemo(() => {
     const push = (key, item) => {
     (map[key] = map[key] || []).push(item);
     };
-    events.forEach((e) => push(e.date, { ...e, kind: 'event' }));
-    tasks.forEach((t) => push(t.date, { ...t, kind: 'task' }));
+    (online ? events : []).forEach((e) => push(e.date, { ...e, kind: 'event' }));
+    allTasks.forEach((t) => push(t.date, { ...t, kind: 'task' }));
     Object.values(map).forEach((list) =>
     list.sort((a, b) => (a.start || '99:99').localeCompare(b.start || '99:99'))
     );
     return map;
-}, [events, tasks]);
+}, [events, allTasks, online]);
 
 const weekDays = useMemo(() => {
     const start = startOfWeek(cursor);
@@ -229,7 +232,7 @@ const deleteItem = (item) => {
     else setDeletingTask(item);
 };
 
-const canDelete = (item) => (item.kind === 'event' ? item.canEdit : isMayor);
+const canDelete = (item) => (item.kind === 'event' ? item.canEdit : !item.personal && isMayor);
 
 const addTodo = async (e) => {
     e.preventDefault();
@@ -277,17 +280,17 @@ const renderRow = (item) => (
         <button
         type="button"
         className={styles.iconBtn}
-        onClick={() => deleteItem(item)}
+        data-online-only onClick={() => deleteItem(item)}
         aria-label={`Delete ${item.title}`}
         >
         ✕
         </button>
     )}
-    {item.kind === 'task' && isMayor && (
-        <button type="button" className={styles.iconBtn} onClick={() => setEditingTask(item)} aria-label={`Edit ${item.title}`}>✎</button>
+    {item.kind === 'task' && !item.personal && isMayor && (
+        <button type="button" className={styles.iconBtn} data-online-only onClick={() => setEditingTask(item)} aria-label={`Edit ${item.title}`}>✎</button>
     )}
     {item.kind === 'event' && item.canEdit && (
-        <button type="button" className={styles.iconBtn} onClick={() => startEditEvent(item)} aria-label={`Edit ${item.title}`}>✎</button>
+        <button type="button" className={styles.iconBtn} data-online-only onClick={() => startEditEvent(item)} aria-label={`Edit ${item.title}`}>✎</button>
     )}
     </li>
 );
@@ -448,16 +451,16 @@ return (
             </div>
 
             <div className={styles.actions}>
-            <button type="button" className="btn alt" onClick={() => openPanel('event')}>
+            <button type="button" className="btn alt" data-online-only onClick={() => { requireOnline(); openPanel('event'); }}>
                 + Event
             </button>
             {isMayor && (
-                <button type="button" className="btn" onClick={() => openPanel('task')}>
+                <button type="button" className="btn" data-online-only onClick={() => { requireOnline(); openPanel('task'); }}>
                 + Create task
                 </button>
             )}
             </div>
-            <GoogleCalendarButtons user={user} choices={choices} />
+            <div data-online-only><GoogleCalendarButtons user={user} choices={choices} /></div>
             {eventsError && <p className={styles.error} role="alert">Could not load events. {errorMessage(eventsError)}</p>}
             {eventsLoading && <p className={styles.rowMeta}>Loading events…</p>}
 
@@ -577,14 +580,14 @@ return (
                         </span>
                     </div>
                     {isMayor && (
-                        <button type="button" className={styles.iconBtn} onClick={() => setEditingTask(t)} aria-label={`Edit ${t.title}`}>✎</button>
+                        <button type="button" className={styles.iconBtn} data-online-only onClick={() => setEditingTask(t)} aria-label={`Edit ${t.title}`}>✎</button>
                     )}
                     {isMayor && (
                         <button
                         type="button"
                         className={styles.iconBtn}
                         onClick={() => deleteItem({ ...t, kind: 'task' })}
-                        aria-label={`Delete ${t.title}`}
+                        data-online-only aria-label={`Delete ${t.title}`}
                         >
                         ✕
                         </button>
@@ -624,7 +627,7 @@ return (
                     type="button"
                     className={styles.iconBtn}
                     onClick={() => deleteTodo(t.id)}
-                    aria-label={`Delete ${t.title}`}
+                    data-online-only aria-label={`Delete ${t.title}`}
                     >
                     ✕
                     </button>

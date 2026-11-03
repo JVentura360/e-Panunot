@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { subjectRowsError, subjectPayload, scopeKey, proposalForScope } from './subjectLoadForm.js';
+import { makeSubjectRows, subjectRowsError, subjectPayload, scopeKey, proposalForScope } from './subjectLoadForm.js';
 
 test('subject proposal rows require complete distinct codes and full names', () => {
   assert.ok(subjectRowsError([]));
@@ -20,4 +20,14 @@ test('changing scope cannot reuse a proposal from a previous program or year', (
   assert.deepEqual(proposalForScope(draft, scopeKey('ite', 3)), draft.rows);
   assert.deepEqual(proposalForScope(draft, scopeKey('ITE', 2)), []);
   assert.deepEqual(proposalForScope(draft, scopeKey('BSA', 3)), []);
+});
+
+test('admin drafts preserve subject identity for edits and explicitly allow an empty load', () => {
+  const rows = makeSubjectRows([{ id: 7, code: 'ITE301', name: 'Database Systems' }]);
+  rows[0].code = 'ITE302';
+  assert.deepEqual(subjectPayload(rows, { includeIds: true }), [{ id: 7, code: 'ITE302', name: 'Database Systems' }]);
+  assert.deepEqual(subjectPayload(rows), [{ code: 'ITE302', name: 'Database Systems' }]);
+  assert.deepEqual(makeSubjectRows([], { allowEmpty: true }), []);
+  assert.deepEqual(subjectPayload([], { includeIds: true, allowEmpty: true }), []);
+  assert.throws(() => subjectPayload([]));
 });

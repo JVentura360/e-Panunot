@@ -39,7 +39,9 @@ class ClientSyncState
         $path = $request->path();
         $blocks = array_unique([...$previousBlocks, ...SubjectAccess::blockIds($user->fresh())]);
         $scopes = [];
-        if ($path === 'api/me') {
+        if ($path === 'api/offline-sync') {
+            $scopes = ['tasks:user:'.$user->id, 'personal:user:'.$user->id, 'calendar:user:'.$user->id];
+        } elseif ($path === 'api/me') {
             $scopes = ['identity:user:'.$user->id, ...$this->blockScopes(['tasks', 'concerns', 'announcements', 'catalog'], $blocks)];
         } elseif (str_contains($path, 'personal-todos')) {
             $scopes = ['personal:user:'.$user->id, 'calendar:user:'.$user->id];

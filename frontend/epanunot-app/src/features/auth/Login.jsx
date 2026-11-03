@@ -41,7 +41,7 @@ export default function Login({ error: sessionError = '', onLogin }) {
             await loginAsDevelopmentAccount(account);
             const response = await api('/me');
             window.history.replaceState(null, '', '/');
-            onLogin(response.data);
+            await onLogin(response.data);
         } catch (error) {
             setDevelopmentError(errorMessage(error));
         } finally {

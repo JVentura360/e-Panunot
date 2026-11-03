@@ -87,7 +87,7 @@ class SubjectLoadTest extends TestCase
         $this->assertDatabaseCount('subjects', 1);
     }
 
-    public function test_existing_offerings_remain_until_admin_publishes_and_enrolled_removal_rolls_back_every_block(): void
+    public function test_admin_removal_persists_across_blocks_and_clears_enrollments_but_preserves_history(): void
     {
         $term = Term::factory()->active()->create();
         $blocks = [Block::factory()->create(['term_id' => $term->id, 'program' => 'ITE', 'year_level' => 3, 'block_number' => 4]),
@@ -102,10 +102,46 @@ class SubjectLoadTest extends TestCase
         $this->postJson('/api/subject-enrollments', ['block_id' => $blocks[1]->id, 'subject_id' => $subject->id, 'student_type' => 'irregular'])->assertCreated();
         $this->actingAs(User::factory()->admin()->create())->getJson('/api/subject-loads/current?program=ITE&year_level=3')
             ->assertOk()->assertJsonPath('data.load', null)->assertJsonCount(1, 'data.existing_subjects');
-        $this->putJson('/api/admin/subject-loads/current', $this->payload($term))->assertUnprocessable();
-        $this->assertDatabaseCount('subject_loads', 0);
+        $task = \App\Models\Task::factory()->forBlock($blocks[1], $student)->create(['subject_id' => $subject->id]);
+        $assignment = \App\Models\TaskAssignment::create(['task_id' => $task->id, 'user_id' => $student->id, 'completed_at' => now()]);
+        $this->putJson('/api/admin/subject-loads/current', $this->payload($term))->assertOk();
+        $this->assertDatabaseCount('subject_loads', 1);
         $this->assertDatabaseCount('block_subjects', 2);
-        $this->assertDatabaseMissing('subjects', ['code' => 'ITE301']);
-        $this->assertDatabaseCount('subject_enrollments', 1);
+        $this->assertDatabaseMissing('block_subjects', ['subject_id' => $subject->id]);
+        $this->assertDatabaseMissing('subject_enrollments', ['subject_id' => $subject->id]);
+        $this->assertDatabaseHas('tasks', ['id' => $task->id, 'subject_id' => $subject->id]);
+        $this->assertNotNull($assignment->fresh()->completed_at);
+        $this->assertDatabaseHas('subjects', ['id' => $subject->id]);
+        $this->getJson('/api/subject-loads/current?program=ITE&year_level=3')->assertOk()->assertJsonPath('data.load.subjects.0.code', 'ITE301');
+    }
+
+    public function test_admin_can_edit_existing_subject_identity_and_clear_the_load(): void
+    {
+        $term = Term::factory()->active()->create();
+        $this->actingAs(User::factory()->admin()->create());
+        $subjectId = $this->putJson('/api/admin/subject-loads/current', $this->payload($term))->assertOk()->json('data.load.subjects.0.id');
+        $this->putJson('/api/admin/subject-loads/current', $this->payload($term, ['expected_revision' => 1,
+            'subjects' => [['id' => $subjectId, 'code' => 'ITE302', 'name' => 'advanced database systems']]]))
+            ->assertOk()->assertJsonPath('data.load.subjects.0.id', $subjectId)->assertJsonPath('data.load.subjects.0.name', 'Advanced Database Systems');
+        $this->assertDatabaseCount('subjects', 1);
+        $this->putJson('/api/admin/subject-loads/current', $this->payload($term, ['expected_revision' => 2, 'subjects' => []]))
+            ->assertOk()->assertJsonCount(0, 'data.load.subjects');
+        $this->getJson('/api/subject-loads/current?program=ITE&year_level=3')->assertOk()->assertJsonCount(0, 'data.load.subjects');
+    }
+
+    public function test_catalog_edits_reject_unrelated_ids_and_advance_other_shared_load_revisions(): void
+    {
+        $term = Term::factory()->active()->create();
+        $this->actingAs(User::factory()->admin()->create());
+        $id = $this->putJson('/api/admin/subject-loads/current', $this->payload($term))->assertOk()->json('data.load.subjects.0.id');
+        $this->putJson('/api/admin/subject-loads/current', $this->payload($term, ['program' => 'BSA']))->assertOk();
+        $unrelated = Subject::create(['code' => 'OTHER', 'name' => 'Other Subject']);
+        $this->putJson('/api/admin/subject-loads/current', $this->payload($term, ['expected_revision' => 1,
+            'subjects' => [['id' => $unrelated->id, 'code' => 'OTHER', 'name' => 'Changed Name']]]))->assertUnprocessable();
+        $this->putJson('/api/admin/subject-loads/current', $this->payload($term, ['expected_revision' => 1,
+            'subjects' => [['id' => $id, 'code' => 'ITE301', 'name' => 'advanced database systems']]]))->assertOk();
+        $this->getJson('/api/subject-loads/current?program=BSA&year_level=3')->assertOk()
+            ->assertJsonPath('data.load.revision', 2)->assertJsonPath('data.load.subjects.0.name', 'Advanced Database Systems');
+        $this->putJson('/api/admin/subject-loads/current', $this->payload($term, ['program' => 'BSA', 'expected_revision' => 1]))->assertConflict();
     }
 }

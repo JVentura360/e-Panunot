@@ -66,19 +66,42 @@ class SubjectLoadService
             'existing_subjects' => $existing->all()];
     }
 
-    public function publish(int $termId, string $program, int $yearLevel, int $expectedRevision, array $subjects, int $adminId): object
+    public function publish(int $termId, string $program, int $yearLevel, int $expectedRevision, array $subjects, int $adminId, bool $removeEnrollments = false): object
     {
-        $rows = $this->normalizeSubjects($subjects);
+        Validator::make(['subjects' => $subjects], ['subjects.*.id' => ['nullable', 'integer', 'min:1', 'distinct']])->validate();
+        $rows = $subjects === [] ? [] : $this->normalizeSubjects($subjects);
 
-        return DB::transaction(function () use ($termId, $program, $yearLevel, $expectedRevision, $rows, $adminId): object {
+        return DB::transaction(function () use ($termId, $program, $yearLevel, $expectedRevision, $rows, $subjects, $adminId, $removeEnrollments): object {
             $term = DB::table('terms')->where('id', $termId)->lockForUpdate()->first();
             abort_unless($term && $term->is_active, 422, 'This term is no longer active. Reload before saving.');
             abort_unless(DB::table('users')->where('id', $adminId)->where('role', 'admin')->exists(), 403, 'Only admins can change subject loads.');
             $program = mb_strtoupper(trim($program));
             $load = $this->find($termId, $program, $yearLevel);
             abort_if(($load?->revision ?? 0) !== $expectedRevision, 409, 'The subject load changed. Reload and review the latest revision before saving.');
+            $blocks = $this->blocks($termId, $program, $yearLevel)->lockForUpdate()->pluck('id')->all();
+            $previousSubjects = DB::table('block_subjects')->whereIn('block_id', $blocks)->get()->groupBy('block_id')
+                ->map(fn ($rows): array => $rows->pluck('subject_id')->all())->all();
+            $editableIds = array_unique([...(array_merge([], ...array_values($previousSubjects))), ...array_map(fn (object $subject): int => $subject->id, $load?->subjects ?? [])]);
             $ids = [];
             foreach ($rows as $index => $row) {
+                $subjectId = $subjects[$index]['id'] ?? null;
+                if ($subjectId !== null) {
+                    if (! in_array((int) $subjectId, $editableIds, true)) {
+                        throw ValidationException::withMessages(["subjects.$index.id" => 'Reload the load before editing this subject.']);
+                    }
+                    $subject = Subject::whereKey($subjectId)->lockForUpdate()->firstOrFail();
+                    if (Subject::whereRaw('UPPER(code) = ?', [$row['code']])->where('id', '!=', $subject->id)->exists()) {
+                        throw ValidationException::withMessages(["subjects.$index.code" => 'This code already belongs to another subject.']);
+                    }
+                    $subject->fill($row);
+                    if ($subject->isDirty()) {
+                        $subject->save();
+                        DB::table('subject_loads')->whereIn('id', DB::table('subject_load_subject')->where('subject_id', $subject->id)->select('subject_load_id'))
+                            ->where('id', '!=', $load?->id ?? 0)->increment('revision', 1, ['updated_by' => $adminId, 'updated_at' => now()]);
+                    }
+                    $ids[] = $subject->id;
+                    continue;
+                }
                 $subject = Subject::whereRaw('UPPER(code) = ?', [$row['code']])->lockForUpdate()->first()
                     ?? Subject::createOrFirst(['code' => $row['code']], ['name' => $row['name']]);
                 if (mb_strtolower($subject->name) !== mb_strtolower($row['name'])) {
@@ -86,19 +109,20 @@ class SubjectLoadService
                 }
                 $ids[] = $subject->id;
             }
-            $blocks = $this->blocks($termId, $program, $yearLevel)->lockForUpdate()->pluck('id')->all();
-            $previousSubjects = DB::table('block_subjects')->whereIn('block_id', $blocks)->get()->groupBy('block_id')
-                ->map(fn ($rows): array => $rows->pluck('subject_id')->all())->all();
-            $this->syncBlocks($blocks, $ids);
+            $this->syncBlocks($blocks, $ids, $removeEnrollments);
             if ($load) {
                 $id = $load->id;
+                $latestRevision = DB::table('subject_loads')->where('id', $id)->lockForUpdate()->value('revision');
+                abort_if((int) $latestRevision !== $expectedRevision, 409, 'The subject load changed. Reload and review the latest revision before saving.');
                 DB::table('subject_loads')->where('id', $id)->update(['revision' => $load->revision + 1, 'updated_by' => $adminId, 'updated_at' => now()]);
             } else {
                 $id = DB::table('subject_loads')->insertGetId(['term_id' => $termId, 'program' => $program, 'year_level' => $yearLevel,
                     'revision' => 1, 'updated_by' => $adminId, 'created_at' => now(), 'updated_at' => now()]);
             }
             DB::table('subject_load_subject')->where('subject_load_id', $id)->delete();
-            DB::table('subject_load_subject')->insert(array_map(fn (int $subjectId): array => ['subject_load_id' => $id, 'subject_id' => $subjectId], $ids));
+            if ($ids) {
+                DB::table('subject_load_subject')->insert(array_map(fn (int $subjectId): array => ['subject_load_id' => $id, 'subject_id' => $subjectId], $ids));
+            }
             app(StudentEnrollmentService::class)->syncRegularMembers($blocks, $previousSubjects);
 
             return $this->find($termId, $program, $yearLevel);
@@ -121,8 +145,11 @@ class SubjectLoadService
         return DB::table('blocks')->where('term_id', $termId)->whereRaw('UPPER(program) = ?', [mb_strtoupper(trim($program))])->where('year_level', $yearLevel);
     }
 
-    private function syncBlocks(array $blocks, array $subjects): void
+    private function syncBlocks(array $blocks, array $subjects, bool $removeEnrollments = false): void
     {
+        if ($removeEnrollments) {
+            DB::table('subject_enrollments')->whereIn('block_id', $blocks)->whereNotIn('subject_id', $subjects)->delete();
+        }
         $enrolled = DB::table('subject_enrollments as e')->join('subjects as s', 's.id', '=', 'e.subject_id')
             ->whereIn('e.block_id', $blocks)->whereNotIn('e.subject_id', $subjects)->value('s.code');
         if ($enrolled) {

@@ -3,6 +3,7 @@ import { api, apiQueryOptions, errorMessage, queryClient } from '../api/client.j
 import { useApiQuery } from '../api/useApiQuery.js';
 import { unfinishedFirst, validDeadline } from '../components/taskListUtils.js';
 import { toClassTask, toPersonalTask } from './taskMapper.js';
+import { createOfflinePersonal, completeOfflineTask, getOfflineState, requireOnline } from '../offline/runtime.js';
 
 const TaskContext = createContext(null);
 
@@ -23,6 +24,10 @@ export function TaskProvider({ user, children }) {
   const classQuery = useApiQuery('/tasks', { enabled });
   const personalQuery = useApiQuery('/personal-todos', { enabled });
   const [error, setError] = useState('');
+  const canSaveOffline = () => {
+    const state = getOfflineState();
+    return state.available && state.accountId != null && String(state.accountId) === String(user.id);
+  };
 
   const tasks = useMemo(
     () => unfinishedFirst([
@@ -50,9 +55,15 @@ export function TaskProvider({ user, children }) {
     if (!validDeadline(values.date, today())) throw new Error('Choose today or a future date for the deadline.');
 
     if (values.personal) {
+      if (canSaveOffline()) {
+        await createOfflinePersonal({ title, due_date: values.date });
+        return;
+      }
+      requireOnline();
       await api('/personal-todos', { method: 'POST', body: { title, due_date: values.date } });
       return;
     }
+    requireOnline();
     await api('/tasks', {
       method: 'POST',
       body: {
@@ -70,6 +81,11 @@ export function TaskProvider({ user, children }) {
     const done = !task.done;
     const path = task.personal ? '/personal-todos' : '/tasks';
     return attempt(async () => {
+      if (canSaveOffline()) {
+        await completeOfflineTask(task.rawId, task.personal, done);
+        return;
+      }
+      requireOnline();
       if (task.personal) {
         mark(path, task.rawId, { is_done: done });
         await api(`/personal-todos/${task.rawId}`, { method: 'PATCH', body: { is_done: done } });
@@ -84,13 +100,18 @@ export function TaskProvider({ user, children }) {
     const task = tasks.find((t) => t.id === id);
     if (!task) return;
     if (!task.personal && user.role !== 'mayor') return;
-    return attempt(() => api(task.personal ? `/personal-todos/${task.rawId}` : `/tasks/${task.rawId}`, { method: 'DELETE' }));
+    return attempt(async () => {
+      requireOnline();
+      if (task.pendingSync) throw new Error('Wait for this task to sync before deleting it.');
+      await api(task.personal ? `/personal-todos/${task.rawId}` : `/tasks/${task.rawId}`, { method: 'DELETE' });
+    });
   };
 
   // Mayor only. Throws on failure so the pop-up can show the message.
   const updateTask = async (id, values) => {
     const task = tasks.find((t) => t.id === id);
     if (!task || task.personal || user.role !== 'mayor') return;
+    requireOnline();
     const title = values.title.trim();
     if (!title) throw new Error('Please add a title.');
     const dateChanged = values.date !== task.date;
@@ -111,6 +132,8 @@ export function TaskProvider({ user, children }) {
   const removeTask = async (id) => {
     const task = tasks.find((t) => t.id === id);
     if (!task || task.personal || user.role !== 'mayor') return;
+    requireOnline();
+    if (task.pendingSync) throw new Error('Wait for this task to sync before deleting it.');
     await api(`/tasks/${task.rawId}`, { method: 'DELETE' });
   };
 

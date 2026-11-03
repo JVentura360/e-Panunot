@@ -1,0 +1,8 @@
+.status { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.25rem; margin-bottom: 1.5rem; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); }
+.status strong, .status span { display: block; }
+.status span { margin-top: .3rem; font-size: .9rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; flex-shrink: 0; }
+.unavailable { padding: 2rem 0; max-width: 42rem; }
+.unavailable p { margin: 1rem 0 1.5rem; }
+@media (max-width: 640px) { .status { align-items: stretch; flex-direction: column; } }
+

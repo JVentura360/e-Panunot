@@ -318,3 +318,4 @@
   .right { gap: 8px; }
   .brand { font-size: 1.4rem; }
 }
+.updateMessage { margin: 0; padding: 8px 12px; color: var(--muted); font-size: .8rem; line-height: 1.45; overflow-wrap: anywhere; }

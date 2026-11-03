@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'task_id',
     'user_id',
     'completed_at',
+    'completion_revision',
     'last_reminded_at',
     'reminders_sent',
 ])]
@@ -19,6 +20,7 @@ class TaskAssignment extends Model
     {
         return [
             'completed_at' => 'datetime',
+            'completion_revision' => 'integer',
             'last_reminded_at' => 'datetime',
             'reminders_sent' => 'integer',
         ];

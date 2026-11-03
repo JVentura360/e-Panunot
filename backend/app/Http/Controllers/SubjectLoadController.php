@@ -28,10 +28,10 @@ class SubjectLoadController extends Controller
     {
         $data = $request->validate($this->scopeRules() + [
             'term_id' => ['required', 'integer', 'exists:terms,id'],
-            'expected_revision' => ['required', 'integer', 'min:0'], 'subjects' => ['required', 'array', 'min:1', 'max:60'],
+            'expected_revision' => ['required', 'integer', 'min:0'], 'subjects' => ['present', 'array', 'max:60'],
         ]);
         $snapshot = DB::transaction(function () use ($data, $request, $loads): array {
-            $loads->publish($data['term_id'], $data['program'], $data['year_level'], $data['expected_revision'], $data['subjects'], $request->user()->id);
+            $loads->publish($data['term_id'], $data['program'], $data['year_level'], $data['expected_revision'], $data['subjects'], $request->user()->id, true);
 
             return $loads->snapshot($data['term_id'], $data['program'], $data['year_level']);
         }, 3);

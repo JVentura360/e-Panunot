@@ -4,6 +4,9 @@ import { api, errorMessage } from '../../api/client.js';
 import { useApiQuery } from '../../api/useApiQuery.js';
 import navStyles from '../navigation/Navigation.module.css';
 import styles from './NotificationBell.module.css';
+import { useOffline } from '../../offline/useOffline.js';
+import { offlineOnly } from '../../offline/runtime.js';
+import { canOpenOffline } from '../../offline/policy.js';
 
 const dateTime = new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
@@ -13,8 +16,9 @@ export default function NotificationBell({ user }) {
     const wrapRef = useRef(null);
     const buttonRef = useRef(null);
     const navigate = useNavigate();
+    const { online } = useOffline();
 
-    const query = useApiQuery('/notifications', { enabled: user.role !== 'admin', refetchInterval: 30000 });
+    const query = useApiQuery('/notifications', { enabled: user.role !== 'admin', refetchInterval: online ? 30000 : false });
     const items = query.data?.data ?? [];
     const unread = query.data?.unread_count ?? 0;
 
@@ -38,6 +42,12 @@ export default function NotificationBell({ user }) {
     };
 
     const openItem = (item) => run(async () => {
+        if (!online) {
+            if (!canOpenOffline(item.link, user.role)) { offlineOnly(); return; }
+            setOpen(false);
+            navigate(item.link);
+            return;
+        }
         if (!item.read) await api(`/notifications/${item.id}/read`, { method: 'POST' });
         setOpen(false);
         navigate(item.link);
@@ -66,8 +76,9 @@ export default function NotificationBell({ user }) {
             <div className={styles.panel}>
             <div className={styles.head}>
                 <strong>Notifications</strong>
-                {unread > 0 && <button type="button" className={styles.link} onClick={markAll}>Mark all as read</button>}
+                {unread > 0 && <button type="button" data-online-only className={styles.link} onClick={markAll}>Mark all as read</button>}
             </div>
+            {!online && <p className={styles.empty}>Saved notifications · read status stays unchanged offline.</p>}
             {error && <p role="alert" className={styles.error}>{error}</p>}
             {items.length === 0 ? (
                 <p className={styles.empty}>You&rsquo;re all caught up.</p>

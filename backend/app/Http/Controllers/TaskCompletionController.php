@@ -4,48 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\TaskResource;
 use App\Models\Task;
-use App\Models\TaskAssignment;
+use App\Services\TaskCompletionService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 
 class TaskCompletionController extends Controller
 {
     // POST /tasks/{task}/complete  -> mark done
-    public function store(Request $request, Task $task)
+    public function store(Request $request, Task $task): TaskResource
     {
-        $assignment = $this->findAssignment($request, $task);
-
-        if (! $assignment->completed_at) {
-            $assignment->update(['completed_at' => now()]);
-        }
-
+        $task = app(TaskCompletionService::class)->set($request->user(), $task->id, true);
         return $this->respond($request, $task);
     }
 
     // DELETE /tasks/{task}/complete  -> undo
-    public function destroy(Request $request, Task $task)
+    public function destroy(Request $request, Task $task): TaskResource
     {
-        $assignment = $this->findAssignment($request, $task);
-
-        $assignment->update(['completed_at' => null]);
-
+        $task = app(TaskCompletionService::class)->set($request->user(), $task->id, false);
         return $this->respond($request, $task);
     }
 
-    private function findAssignment(Request $request, Task $task): TaskAssignment
-    {
-        $user = $request->user();
-
-        // you can only complete tasks that belong to your own block
-        Gate::authorize('view', $task);
-
-        return TaskAssignment::firstOrCreate([
-            'task_id' => $task->id,
-            'user_id' => $user->id,
-        ]);
-    }
-
-    private function respond(Request $request, Task $task)
+    private function respond(Request $request, Task $task): TaskResource
     {
         $task->load([
             'subject',

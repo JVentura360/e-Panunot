@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import BlockMembersDialog from './BlockMembersDialog.jsx';
 import styles from './AdminDashboard.module.css';
 
 export default function MayorsAndBlocks({ mayors, blocks, onRemove }) {
     const [removing, setRemoving] = useState(null);
+    const [viewing, setViewing] = useState(null);
 
     return (
         <>
+            {viewing && <BlockMembersDialog key={viewing.id} block={viewing} onClose={() => setViewing(null)} />}
             {removing && (
                 <ConfirmDialog
                     title="Remove this mayor?"
@@ -60,12 +63,13 @@ export default function MayorsAndBlocks({ mayors, blocks, onRemove }) {
                 <div className={styles.tableWrap}>
                     <table className={styles.table}>
                     <thead>
-                        <tr><th>Block</th><th>Mayor</th><th>Members</th></tr>
+                        <tr><th>Block</th><th>Mayor</th><th>Members</th><th>Actions</th></tr>
                     </thead>
                     <tbody>
                         {blocks.map((b) => (
                         <tr key={b.id}>
                             <td>{b.name}</td><td>{b.mayor}</td><td>{b.members}</td>
+                            <td><button type="button" className="btn ghost" onClick={() => setViewing(b)} aria-label={`View members of ${b.name}`}>View members</button></td>
                         </tr>
                         ))}
                     </tbody>

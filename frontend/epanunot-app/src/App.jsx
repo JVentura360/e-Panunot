@@ -1,4 +1,5 @@
 import { TaskProvider } from './context/TaskContext.jsx';
+import MessageDialog from './components/MessageDialog.jsx';
 import { useState, useEffect } from 'react';
 import { useApiQuery } from './api/useApiQuery.js';
 import { BlockProvider } from './context/BlockContext.jsx';
@@ -18,9 +19,11 @@ import Concerns from './features/concerns/Concerns.jsx';
 import Calendar from './features/calendar/Calendar.jsx';
 import BlockRequiredDialog from './features/concerns/BlockRequiredDialog.jsx';
 import { canUseConcerns } from './features/block/enrollmentRules.js';
+import { activateOfflineAccount, getOfflineState, syncOffline } from './offline/runtime.js';
 
 export default function App() {
     const [loggedOut, setLoggedOut] = useState(false);
+    const [logoutError, setLogoutError] = useState('');
     const [, renderSession] = useState(0);
     const identity = useApiQuery('/me', { enabled: !loggedOut });
     const user = loggedOut ? null : identity.data?.data;
@@ -35,7 +38,9 @@ export default function App() {
 
     useEffect(() => {
         if (!accountId) return;
+        void syncOffline().catch(() => {});
         return startClientSync({ accountId,
+            available: () => getOfflineState().online && document.visibilityState === 'visible' && navigator.onLine !== false,
             read: async () => (await api('/sync', { force: true })).data,
             refresh: refreshSyncQueries,
             accountChanged: () => {
@@ -45,7 +50,8 @@ export default function App() {
         });
     }, [accountId]);
 
-    const handleLogin = (account) => {
+    const handleLogin = async (account) => {
+        await activateOfflineAccount(account);
         queryClient.setQueryData(apiQueryOptions('/me').queryKey, { data: account });
         setLoggedOut(false);
         renderSession((value) => value + 1);
@@ -56,7 +62,8 @@ export default function App() {
             setLoggedOut(true);
             navigate('/');
         } catch (error) {
-            window.alert(errorMessage(error));
+            if (error.code === 'OFFLINE_ONLY') return;
+            setLogoutError(errorMessage(error));
         }
     };
 
@@ -130,6 +137,6 @@ export default function App() {
             </Route>
 
             <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes></TaskProvider></BlockProvider>
+        </Routes>{logoutError && <MessageDialog title="Could not sign out" message={logoutError} onClose={() => setLogoutError('')} />}</TaskProvider></BlockProvider>
     );
 }

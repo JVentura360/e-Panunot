@@ -36,6 +36,7 @@ class TaskResource extends JsonResource
                 fn () => $this->assignments->first()?->completed_at
             ),
             'created_at' => $this->created_at,
+            'completion_revision' => $this->whenLoaded('assignments', fn () => (int) ($this->assignments->first()?->completion_revision ?? 0)),
         ];
     }
 }

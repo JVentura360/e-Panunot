@@ -245,3 +245,7 @@
   .tab { flex: 1; padding-inline: 12px; }
   .row { padding: 16px; flex-wrap: wrap; }
 }
+.membersDialog.membersDialog { width: min(760px, calc(100% - 32px)); }
+.memberSearch { display: grid; gap: 8px; margin: 24px 0 16px; font-weight: 600; }
+.memberSearch input { min-height: 48px; width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--control-border); border-radius: 8px; }
+.mayorBadge { display: inline-block; margin-left: 8px; font-size: .75rem; color: var(--forest); }

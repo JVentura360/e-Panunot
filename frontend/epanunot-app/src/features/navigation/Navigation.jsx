@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ApplyMayorModal from './ApplyMayorModal.jsx';
 import styles from './Navigation.module.css';
@@ -6,6 +6,8 @@ import { applyTheme } from '../../theme.js';
 import { applicationEligibility, blockNavigation, canUseConcerns } from '../block/enrollmentRules.js';
 import BlockRequiredDialog from '../concerns/BlockRequiredDialog.jsx';
 import NotificationBell from '../notifications/NotificationBell.jsx';
+import { applyUpdate, checkForUpdate, getUpdateState, initializePwa, subscribeUpdates } from '../../pwa/updates.js';
+import { finishOfflineUpdate, prepareOfflineUpdate } from '../../offline/runtime.js';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -126,6 +128,26 @@ function SlidingNav({ className, label, children }) {
 // The active tab now comes from the URL (NavLink), so activeTab/onTabChange are gone.
 
 export default function Navigation({ user, onLogout }) {
+  const update = useSyncExternalStore(subscribeUpdates, getUpdateState, getUpdateState);
+  const [updateBusy, setUpdateBusy] = useState(false);
+  const [updateError, setUpdateError] = useState('');
+  useEffect(() => { void initializePwa(); }, []);
+  const installUpdate = async () => {
+    setUpdateBusy(true);
+    setUpdateError('');
+    try {
+      await prepareOfflineUpdate();
+      if (!await applyUpdate()) {
+        finishOfflineUpdate();
+        setUpdateBusy(false);
+        setUpdateError('No update is ready. Check for updates again.');
+      }
+    } catch (error) {
+      finishOfflineUpdate();
+      setUpdateBusy(false);
+      setUpdateError(error.message || 'Save your changes before installing the update.');
+    }
+  };
   const [blockNotice, setBlockNotice] = useState(false);
   const concernsUnavailable = !canUseConcerns(user);
   const interceptConcerns = (event, to) => {
@@ -222,15 +244,15 @@ export default function Navigation({ user, onLogout }) {
                   </div>
                   <hr className={styles.divider} />
                   {user.role !== 'admin' && (
-                    <button className={styles.dropdownItem} role="menuitem"
+                    <button data-online-only className={styles.dropdownItem} role="menuitem"
                       onClick={() => { setProfileOpen(false); navigate('/profile'); }}>
                       <IconProfile /> My profile
                     </button>
                   )}
-                  {user.role === 'mayor' && <button className={styles.dropdownItem} role="menuitem"
+                  {user.role === 'mayor' && <button data-online-only className={styles.dropdownItem} role="menuitem"
                     onClick={() => { setProfileOpen(false); navigate('/block'); }}><IconBlock /> Block Management</button>}
                   {user.role === 'student' && (
-                    <button className={styles.dropdownItem} role="menuitem"
+                    <button data-online-only className={styles.dropdownItem} role="menuitem"
                       disabled={!eligibility.allowed} title={eligibility.reason || undefined}
                       onClick={() => { if (eligibility.allowed) { setProfileOpen(false); setApplyOpen(true); } }}>
                       <IconStar /> Apply as Mayor
@@ -243,6 +265,16 @@ export default function Navigation({ user, onLogout }) {
                     <span>Theme</span>
                     <span className={styles.themeChoice}>{theme === 'dark' ? 'Dark' : 'Light'}<span className={styles.themeSwitch} data-dark={theme === 'dark'} aria-hidden="true" /></span>
                   </button>
+                  {update.supported && <>
+                    <hr className={styles.divider} />
+                    <button type="button" className={styles.dropdownItem} role="menuitem" disabled={update.checking || updateBusy}
+                      data-online-only onClick={() => { setUpdateError(''); void checkForUpdate(); }}>
+                      {update.checking ? 'Checking for updates…' : 'Check for updates'}
+                    </button>
+                    {update.ready && <button type="button" className={styles.dropdownItem} role="menuitem" disabled={updateBusy}
+                      onClick={() => void installUpdate()}>{updateBusy ? 'Installing update…' : 'Install update and restart'}</button>}
+                    {(updateError || update.message) && <p className={styles.updateMessage} role="status">{updateError || update.message}</p>}
+                  </>}
                   <hr className={styles.divider} />
                   <button className={`${styles.dropdownItem} ${styles.danger}`} role="menuitem" onClick={onLogout}>
                     <IconSignOut /> Sign out

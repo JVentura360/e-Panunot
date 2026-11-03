@@ -7,6 +7,8 @@ use App\Http\Requests\UpdatePersonalTodoRequest;
 use App\Http\Resources\PersonalTodoResource;
 use App\Models\PersonalTodo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Models\User;
 
 /**
  * A student's private to-do checklist. Every query is limited to the signed-in
@@ -55,7 +57,16 @@ class PersonalTodoController extends Controller
     {
         $this->ownOrFail($request, $personalTodo);
 
-        $personalTodo->update($request->validated());
+        $personalTodo = DB::transaction(function () use ($request, $personalTodo): PersonalTodo {
+            User::whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
+            $todo = PersonalTodo::whereKey($personalTodo->id)->lockForUpdate()->firstOrFail();
+            $todo->fill($request->validated());
+            if ($todo->isDirty(['title', 'due_date', 'is_done'])) {
+                $todo->revision = (int) $todo->revision + 1;
+                $todo->save();
+            }
+            return $todo;
+        }, 3);
 
         return new PersonalTodoResource($personalTodo);
     }
@@ -67,7 +78,10 @@ class PersonalTodoController extends Controller
     {
         $this->ownOrFail($request, $personalTodo);
 
-        $personalTodo->delete();
+        DB::transaction(function () use ($request, $personalTodo): void {
+            User::whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
+            PersonalTodo::whereKey($personalTodo->id)->lockForUpdate()->firstOrFail()->delete();
+        }, 3);
 
         return response()->noContent();
     }

@@ -2,10 +2,12 @@
 // One place that talks to the Laravel API. Every screen imports { api } from here.
 import { QueryClient } from '@tanstack/react-query';
 import { syncPaths } from './clientSync.js';
+import { getOfflineState, offlineView, offlineRecord, cacheOfflineRead, setOfflineConnectivity, configureOfflineTransport,
+  forgetOfflineIdentity, requireOnline, logoutOfflineAccount, purgeOfflineAccount, restoreOfflineFallback, finishOfflineLogout } from '../offline/runtime.js';
 
 export const queryClient = new QueryClient({ defaultOptions: { queries: {
   staleTime: 120000, gcTime: 600000, retry: false,
-  refetchOnWindowFocus: false, refetchOnReconnect: true,
+  refetchOnWindowFocus: false, refetchOnReconnect: true, networkMode: 'always',
 } } });
 
 export async function refreshSyncQueries(domains) {
@@ -16,6 +18,7 @@ export async function refreshSyncQueries(domains) {
 let cacheGeneration = 0;
 export function clearApiCache() {
   cacheGeneration++;
+  forgetOfflineIdentity();
   requestControllers.forEach((controller) => controller.abort());
   queryClient.clear();
 }
@@ -53,9 +56,28 @@ export class ApiError extends Error {
  */
 export function apiQueryOptions(path, { query } = {}) {
   const sensitive = ['/me', '/join-requests/mine', '/mayor-applications/mine'].includes(path);
+  const generation = cacheGeneration;
   return {
-    queryKey: ['api', cacheGeneration, path, query ?? {}],
-    queryFn: () => request(BASE + path, { query }),
+    queryKey: ['api', generation, path, query ?? {}],
+    queryFn: async () => {
+      if (!getOfflineState().online) {
+        const saved = offlineView(path);
+        if (path === '/me' && !saved) throw new ApiError('You are offline. Connect and sign in once to save data on this device.', 0);
+        return saved;
+      }
+      const owner = getOfflineState().accountId;
+      try {
+        const data = await request(BASE + path, { query });
+        return generation === cacheGeneration ? await cacheOfflineRead(path, data, owner) : data;
+      } catch (error) {
+        if (error.status === 0 && generation === cacheGeneration) await restoreOfflineFallback();
+        if (error.status === 0 && generation === cacheGeneration && offlineRecord()) {
+          setOfflineConnectivity(false);
+          return offlineView(path);
+        }
+        throw error;
+      }
+    },
     staleTime: sensitive ? 60000 : path === '/subjects' || path === '/admin/terms/current' ? 600000 : 120000,
     refetchOnWindowFocus: sensitive,
   };
@@ -67,6 +89,7 @@ export async function api(path, { method = 'GET', body, query, force = false } =
     if (force) await queryClient.invalidateQueries({ queryKey: options.queryKey, exact: true, refetchType: 'none' });
     return queryClient.fetchQuery(options);
   }
+  requireOnline();
   const result = await request(BASE + path, { method, body, query });
   const affected = path.includes('terms') ? null
     : path.includes('enrollment-profile') || /\/blocks\/\d+\/(enrollment|join)$/.test(path) ? ['/enrollment-profile', '/me', '/subject-enrollments', '/blocks', '/subjects', '/tasks', '/calendar', '/announcements', '/mayor-applications', '/admin/mayor-applications', '/concerns']
@@ -83,9 +106,14 @@ export async function api(path, { method = 'GET', body, query, force = false } =
 }
 
 export async function logout() {
-  const result = await request(`${SERVER}/logout`, { method: 'POST' });
-  clearApiCache();
-  return result;
+  requireOnline();
+  await logoutOfflineAccount();
+  try {
+    const result = await request(`${SERVER}/logout`, { method: 'POST' });
+    await purgeOfflineAccount();
+    clearApiCache();
+    return result;
+  } finally { finishOfflineLogout(); }
 }
 
 export async function developmentAccounts() {
@@ -97,6 +125,7 @@ export async function developmentAccounts() {
 }
 
 export async function loginAsDevelopmentAccount(account) {
+  requireOnline();
   const result = await request(`${SERVER}/auth/development/login`, { method: 'POST', body: { account } });
   clearApiCache();
   return result;
@@ -194,3 +223,18 @@ export function errorMessage(error) {
   }
   return error?.message ?? 'Something went wrong.';
 }
+
+configureOfflineTransport({
+  verify: async () => (await request(BASE + '/me')).data,
+  upload: async (accountId, operations) => (await request(BASE + '/offline-sync', { method: 'POST', body: {
+    account_id: Number(accountId), operations: operations.map((saved) => {
+      const operation = { ...saved };
+      delete operation.attempted;
+      return operation;
+    }),
+  } })).data,
+  lists: async () => {
+    const [tasks, personal] = await Promise.all([request(BASE + '/tasks'), request(BASE + '/personal-todos')]);
+    return { tasks, personal };
+  },
+});

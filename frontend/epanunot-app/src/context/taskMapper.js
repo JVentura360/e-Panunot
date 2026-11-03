@@ -16,6 +16,7 @@ const date = dateKey(row.due_date);
         date,
         due: endOfDay(date),
         done: Boolean(row.completed_at),
+        pendingSync: Boolean(row._offline_pending),
     };
 };
 
@@ -32,5 +33,6 @@ export const toPersonalTask = (row) => {
         date,
         due: endOfDay(date),
         done: Boolean(row.is_done),
+        pendingSync: Boolean(row._offline_pending),
     };
 };
