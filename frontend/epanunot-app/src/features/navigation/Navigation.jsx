@@ -124,7 +124,7 @@ function SlidingNav({ className, label, children }) {
 //
 // The active tab now comes from the URL (NavLink), so activeTab/onTabChange are gone.
 
-export default function Navigation({ user, onLogout, notifCount = 0 }) {
+export default function Navigation({ user, onLogout }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const profileButtonRef = useRef(null);

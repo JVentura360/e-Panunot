@@ -1,11 +1,18 @@
 // src/api/client.js
 // One place that talks to the Laravel API. Every screen imports { api } from here.
 import { QueryClient } from '@tanstack/react-query';
+import { syncPaths } from './clientSync.js';
 
 export const queryClient = new QueryClient({ defaultOptions: { queries: {
   staleTime: 120000, gcTime: 600000, retry: false,
   refetchOnWindowFocus: false, refetchOnReconnect: true,
 } } });
+
+export async function refreshSyncQueries(domains) {
+  const affected = syncPaths(domains);
+  await queryClient.invalidateQueries({ refetchType: 'active', predicate: (query) => query.queryKey[0] === 'api'
+    && query.queryKey[2] !== '/sync' && (affected === null || affected.some((path) => query.queryKey[2] === path || query.queryKey[2].startsWith(path + '/'))) });
+}
 let cacheGeneration = 0;
 export function clearApiCache() {
   cacheGeneration++;
@@ -103,12 +110,17 @@ async function request(address, { method = 'GET', body, query } = {}) {
 
   const controller = new AbortController();
   requestControllers.add(controller);
-  pendingCount++;
-  notifyRequests();
+  const visibleRequest = !url.pathname.endsWith('/api/sync');
+  if (visibleRequest) {
+    pendingCount++;
+    notifyRequests();
+  }
   const pending = send(url, { method, body, signal: controller.signal }).finally(() => {
     requestControllers.delete(controller);
-    pendingCount--;
-    notifyRequests();
+    if (visibleRequest) {
+      pendingCount--;
+      notifyRequests();
+    }
   });
   return pending;
 }
@@ -160,6 +172,15 @@ async function send(url, { method, body, signal: parentSignal }) {
 
   if (!response.ok) {
     throw new ApiError(data?.message ?? `Request failed (${response.status})`, response.status, data?.errors);
+  }
+
+  if (url.pathname === new URL(BASE, window.location.origin).pathname + '/me') {
+    const previousId = queryClient.getQueryData(['api', generation, '/me', {}])?.data?.id;
+    if (previousId != null && data?.data?.id != null && String(previousId) !== String(data.data.id)) {
+      clearApiCache();
+      window.dispatchEvent(new Event('auth:expired'));
+      throw new ApiError('Your signed-in account changed. Please sign in again.', 401);
+    }
   }
 
   return data;

@@ -4,8 +4,28 @@ import assert from 'node:assert/strict';
 globalThis.window = { location: { origin: 'http://localhost:5173' }, dispatchEvent: () => {}, addEventListener: () => {}, removeEventListener: () => {} };
 globalThis.document = { cookie: 'XSRF-TOKEN=encoded%3Dcsrf' };
 
-const { api, logout, googleLoginUrl, developmentAccounts, loginAsDevelopmentAccount, getPendingRequestCount, subscribeRequests, clearApiCache, apiQueryOptions, queryClient } = await import('./client.js');
+const { api, logout, googleLoginUrl, developmentAccounts, loginAsDevelopmentAccount, getPendingRequestCount, subscribeRequests, clearApiCache, apiQueryOptions, queryClient, refreshSyncQueries } = await import('./client.js');
 queryClient.setDefaultOptions({ queries: { ...queryClient.getDefaultOptions().queries, gcTime: Infinity } });
+
+test('sync checks do not show request loading, and changed domains refresh only active data', async () => {
+  const reads = [];
+  globalThis.fetch = async (url) => {
+    reads.push(url.pathname);
+    if (url.pathname === '/api/sync') assert.equal(getPendingRequestCount(), 0);
+    return new Response(JSON.stringify({ data: [] }));
+  };
+  await api('/sync', { force: true });
+  for (const path of ['/tasks', '/calendar', '/personal-todos', '/announcements']) await api(path);
+  const observer = new QueryObserver(queryClient, apiQueryOptions('/tasks'));
+  const unsubscribe = observer.subscribe(() => {});
+  reads.length = 0;
+  await refreshSyncQueries(['tasks']);
+  assert.deepEqual(reads, ['/api/tasks']);
+  assert.equal(queryClient.getQueryState(apiQueryOptions('/calendar').queryKey).isInvalidated, true);
+  assert.equal(queryClient.getQueryState(apiQueryOptions('/personal-todos').queryKey).isInvalidated, false);
+  assert.equal(queryClient.getQueryState(apiQueryOptions('/announcements').queryKey).isInvalidated, false);
+  unsubscribe();
+});
 beforeEach(() => clearApiCache());
 afterEach(() => clearApiCache());
 const { QueryObserver, focusManager } = await import('@tanstack/react-query');
@@ -214,6 +234,22 @@ test('account switching clears old cached identity', async () => {
   assert.equal((await api('/me')).data.name, 'student-one');
   await loginAsDevelopmentAccount('student-two');
   assert.equal((await api('/me')).data.name, 'student-two');
+});
+
+test('identity changes from another tab expire the old account before its private cache can be reused', async () => {
+  let id = 4;
+  let expired = false;
+  const dispatch = window.dispatchEvent;
+  window.dispatchEvent = (event) => { if (event.type === 'auth:expired') expired = true; };
+  globalThis.fetch = async (url) => new Response(JSON.stringify({ data: url.pathname.endsWith('/me') ? { id } : ['private account four'] }));
+  await api('/me');
+  await api('/personal-todos');
+  id = 9;
+  await assert.rejects(api('/me', { force: true }));
+  assert.equal(expired, true);
+  assert.equal(queryClient.getQueryData(apiQueryOptions('/personal-todos').queryKey), undefined);
+  assert.equal(queryClient.getQueryData(apiQueryOptions('/me').queryKey), undefined);
+  window.dispatchEvent = dispatch;
 });
 
 test('page remounts reuse data, and stale refresh keeps cached content visible', async () => {

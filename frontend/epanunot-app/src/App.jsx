@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { useApiQuery } from './api/useApiQuery.js';
 import { BlockProvider } from './context/BlockContext.jsx';
 import LoadingScreen from './components/LoadingScreen.jsx';
-import { apiQueryOptions, queryClient, logout, errorMessage } from './api/client.js';
+import { api, apiQueryOptions, queryClient, logout, errorMessage, refreshSyncQueries, clearApiCache } from './api/client.js';
+import { startClientSync } from './api/clientSync.js';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 
 import Login from './features/auth/Login.jsx';
@@ -21,6 +22,7 @@ export default function App() {
     const [, renderSession] = useState(0);
     const identity = useApiQuery('/me', { enabled: !loggedOut });
     const user = loggedOut ? null : identity.data?.data;
+    const accountId = user?.id;
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -28,6 +30,18 @@ export default function App() {
         window.addEventListener('auth:expired', expired);
         return () => window.removeEventListener('auth:expired', expired);
     }, []);
+
+    useEffect(() => {
+        if (!accountId) return;
+        return startClientSync({ accountId,
+            read: async () => (await api('/sync', { force: true })).data,
+            refresh: refreshSyncQueries,
+            accountChanged: () => {
+                clearApiCache();
+                window.dispatchEvent(new Event('auth:expired'));
+            },
+        });
+    }, [accountId]);
 
     const handleLogin = (account) => {
         queryClient.setQueryData(apiQueryOptions('/me').queryKey, { data: account });
