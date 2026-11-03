@@ -4,6 +4,7 @@ import ApplyMayorModal from './ApplyMayorModal.jsx';
 import styles from './Navigation.module.css';
 import { applyTheme } from '../../theme.js';
 import { applicationEligibility, blockNavigation } from '../block/enrollmentRules.js';
+import NotificationBell from '../notifications/NotificationBell.jsx';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -38,11 +39,6 @@ const IconBlock = () => (
 const IconLedger = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
     <path d="M4 3h14a2 2 0 0 1 2 2v16H6a2 2 0 0 1-2-2V3Z" /><path d="M4 17h16M8 3v14M11 7h6M11 11h6" />
-  </svg>
-);
-const IconBell = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
 );
 const IconChevron = ({ open }) => (
@@ -191,10 +187,7 @@ export default function Navigation({ user, onLogout, notifCount = 0 }) {
           </div>
 
           <div className={styles.right}>
-            <button className={styles.iconBtn} disabled title="Notifications are coming soon" aria-label="Notifications (coming soon)">
-              <IconBell />
-              {notifCount > 0 && <span className={styles.notifBadge} aria-hidden="true">{notifCount}</span>}
-            </button>
+            <NotificationBell user={user} />
 
             <div ref={profileRef} className={styles.profileWrapper}>
               <button

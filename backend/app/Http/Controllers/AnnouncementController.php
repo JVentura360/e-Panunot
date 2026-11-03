@@ -6,6 +6,10 @@ use App\Http\Requests\StoreAnnouncementRequest;
 use App\Http\Requests\UpdateAnnouncementRequest;
 use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
+use App\Models\User;
+use App\Notifications\NewAnnouncementNotification;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use App\Services\SubjectAccess;
 use Illuminate\Http\Request;
 
@@ -39,6 +43,8 @@ class AnnouncementController extends Controller
             'block_id' => $user->block_id,
             'created_by' => $user->id,
         ]);
+
+        Notification::send($this->recipients($announcement), new NewAnnouncementNotification($announcement));
 
         return new AnnouncementResource($announcement->load(['creator', 'subject', 'block.term']));
     }
@@ -78,5 +84,24 @@ class AnnouncementController extends Controller
     private function ensureOwnBlock(Request $request, Announcement $announcement): void
     {
         abort_unless($announcement->block_id === $request->user()->block_id, 403);
+    }
+
+    /** Same audience rule as tasks: subject enrollments, plus students from before enrollment existed. */
+    private function recipients(Announcement $announcement)
+    {
+        $block = DB::table('blocks')->where('id', $announcement->block_id)->first();
+
+        $enrolled = DB::table('subject_enrollments')
+            ->where('block_id', $block->id)
+            ->when($announcement->subject_id, fn ($q) => $q->where('subject_id', $announcement->subject_id))
+            ->pluck('user_id');
+
+        $legacy = DB::table('users')->where('block_id', $block->id)
+            ->whereNotIn('id', DB::table('student_term_profiles')->where('term_id', $block->term_id)->select('user_id'))
+            ->pluck('id');
+
+        return User::whereIn('id', $enrolled->merge($legacy)->unique())
+            ->where('id', '!=', $announcement->created_by)
+            ->get();
     }
 }

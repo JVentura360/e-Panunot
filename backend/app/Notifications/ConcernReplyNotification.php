@@ -2,20 +2,16 @@
 
 namespace App\Notifications;
 
+use App\Models\ConversationMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use App\Models\ConcernMessage;
+use Illuminate\Support\Str;
 
 class ConcernReplyNotification extends Notification
 {
     use Queueable;
 
-    public $message;
-
-    public function __construct(ConcernMessage $message)
-    {
-        $this->message = $message;
-    }
+    public function __construct(public ConversationMessage $message) {}
 
     public function via($notifiable)
     {
@@ -24,9 +20,13 @@ class ConcernReplyNotification extends Notification
 
     public function toArray($notifiable)
     {
+        $sender = $this->message->sender?->name ?? 'Someone';
+
         return [
-            'title' => 'New Reply to your Concern',
-            'message' => 'Someone replied: ' . substr($this->message->message_text, 0, 50) . '...',
+            'kind' => 'concern_reply',
+            'title' => "$sender replied to a concern",
+            'message' => Str::limit($this->message->message_text, 80),
+            'link' => '/concerns/' . $this->message->concern_id,
             'concern_id' => $this->message->concern_id,
         ];
     }

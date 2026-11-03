@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Enums\ConcernStatus;
 use App\Http\Resources\ConcernMessageResource;
 use App\Models\Concern;
+use App\Models\User;
+use App\Notifications\ConcernReplyNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
@@ -67,6 +69,15 @@ class ConcernMessageController extends Controller
 
             return $message;
         });
+
+        // tell the other side
+        $recipient = $isMayor
+            ? $concern->student
+            : User::find(DB::table('blocks')->where('id', $concern->block_id)->value('mayor_id'));
+
+        if ($recipient && $recipient->id !== $user->id) {
+            $recipient->notify(new ConcernReplyNotification($message));
+        }
 
         return new ConcernMessageResource($message->load('sender'));
     }

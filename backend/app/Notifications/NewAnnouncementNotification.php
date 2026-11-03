@@ -2,20 +2,15 @@
 
 namespace App\Notifications;
 
+use App\Models\Announcement;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use App\Models\Announcement;
 
 class NewAnnouncementNotification extends Notification
 {
     use Queueable;
 
-    public $announcement;
-
-    public function __construct(Announcement $announcement)
-    {
-        $this->announcement = $announcement;
-    }
+    public function __construct(public Announcement $announcement) {}
 
     public function via($notifiable)
     {
@@ -25,10 +20,11 @@ class NewAnnouncementNotification extends Notification
     public function toArray($notifiable)
     {
         return [
-            'title' => 'New Announcement',
+            'kind' => 'announcement',
+            'title' => 'New announcement',
             'message' => $this->announcement->title,
+            'link' => '/',
             'announcement_id' => $this->announcement->id,
-            'block_id' => $this->announcement->block_id,
         ];
     }
 }

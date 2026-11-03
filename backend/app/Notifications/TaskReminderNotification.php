@@ -29,6 +29,8 @@ class TaskReminderNotification extends Notification
             'message' => 'Don\'t forget: ' . $this->task->title,
             'task_id' => $this->task->id,
             'due_date' => $this->task->due_date,
+            'kind' => 'task_reminder',
+            'link' => '/calendar',
         ];
     }
 }

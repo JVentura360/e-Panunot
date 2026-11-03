@@ -89,6 +89,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/attachments/{attachment}', [ConcernController::class, 'download']);
     Route::patch('/concerns/{concern}/status', [ConcernController::class, 'updateStatus']);
 
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index']);
+    Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'readAll']);
+    Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'read']);
+
     // Mayor only
     Route::middleware('role:mayor')->group(function () {
         Route::post('/tasks', [TaskController::class, 'store']);
