@@ -6,6 +6,7 @@ export function applicationEligibility(user) {
   return { allowed: true, reason: '' };
 }
 export const isRegularStudent = (user) => user.role === 'mayor' || user.student_type === 'regular';
+export const canUseConcerns = (user) => Boolean(user.block_id);
 export function enrollmentReadiness(joined, profile, ledger) {
   const pending = profile.isPending || joined && ledger.isPending;
   const error = profile.error || joined && ledger.error;

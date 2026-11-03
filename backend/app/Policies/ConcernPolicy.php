@@ -10,9 +10,9 @@ class ConcernPolicy
 {
     public function view(User $user, Concern $concern): bool
     {
-        return $concern->student_id === $user->id
-            || $this->isBlockMayor($user, $concern)
-            || $user->role === Role::Admin;
+        return $this->isBlockMayor($user, $concern) || $user->role === Role::Admin
+            || ($concern->student_id === $user->id && $concern->student_removed_at === null
+                && \App\Services\ConcernMembership::canUse($user));
     }
 
     public function manage(User $user, Concern $concern): bool

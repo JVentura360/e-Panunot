@@ -8,6 +8,7 @@ export const toConcern = (row, viewerRole) => ({
     category: cap(row.category),
     description: row.description,
     status: row.status,
+    closedDueToRemoval: Boolean(row.closed_due_to_removal),
     studentId: row.student?.id,
     studentName: row.student?.name ?? '',
     createdAt: row.created_at,

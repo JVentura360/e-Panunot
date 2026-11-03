@@ -16,6 +16,8 @@ import BlockManagement from './features/block/BlockManagement.jsx';
 import JoinBlock from './features/block/JoinBlock.jsx';
 import Concerns from './features/concerns/Concerns.jsx';
 import Calendar from './features/calendar/Calendar.jsx';
+import BlockRequiredDialog from './features/concerns/BlockRequiredDialog.jsx';
+import { canUseConcerns } from './features/block/enrollmentRules.js';
 
 export default function App() {
     const [loggedOut, setLoggedOut] = useState(false);
@@ -99,7 +101,7 @@ export default function App() {
                 <Route
                     path="/concerns/*"
                     element={member(
-                            <Concerns user={user} />
+                            canUseConcerns(user) ? <Concerns user={user} /> : <BlockRequiredDialog onClose={() => navigate('/')} />
                     )}
                 />
 

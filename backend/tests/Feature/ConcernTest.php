@@ -149,7 +149,7 @@ class ConcernTest extends TestCase
 
     // ── Student cannot update concern status ─────────────────────────────────
 
-    public function test_student_cannot_update_concern_status(): void
+    public function test_only_the_student_owner_can_resolve_the_concern(): void
     {
         [$block, $mayor, $student] = $this->makeBlockWithMayorAndStudent();
 
@@ -158,9 +158,12 @@ class ConcernTest extends TestCase
             'student_id' => $student->id,
         ]);
 
-        $this->actingAs($student)
-            ->patchJson("/api/concerns/{$concern->id}/status", ['status' => 'resolved'])
-            ->assertStatus(403);
+        $this->actingAs($mayor)->patchJson("/api/concerns/{$concern->id}/status", ['status' => 'resolved'])->assertForbidden();
+        $this->patchJson("/api/concerns/{$concern->id}/status", ['status' => 'closed'])->assertForbidden();
+        $this->actingAs(User::factory()->student($block)->create())->patchJson("/api/concerns/{$concern->id}/status", ['status' => 'resolved'])->assertForbidden();
+        $this->actingAs($student)->patchJson("/api/concerns/{$concern->id}/status", ['status' => 'resolved'])->assertOk()->assertJsonPath('data.status', 'resolved');
+        $this->actingAs($mayor)->patchJson("/api/concerns/{$concern->id}/status", ['status' => 'in_progress'])->assertForbidden();
+        $this->actingAs($student)->patchJson("/api/concerns/{$concern->id}/status", ['status' => 'in_progress'])->assertOk();
     }
 
     // ── Student cannot view another block's concerns ──────────────────────────
@@ -185,7 +188,7 @@ class ConcernTest extends TestCase
     // ── Valid status transitions ──────────────────────────────────────────────
 
     #[\PHPUnit\Framework\Attributes\DataProvider('validStatusProvider')]
-    public function test_mayor_can_set_all_valid_statuses(string $status): void
+    public function test_student_owner_can_set_completion_statuses(string $status): void
     {
         [$block, $mayor, $student] = $this->makeBlockWithMayorAndStudent();
 
@@ -194,7 +197,7 @@ class ConcernTest extends TestCase
             'student_id' => $student->id,
         ]);
 
-        $this->actingAs($mayor)
+        $this->actingAs($student)
             ->patchJson("/api/concerns/{$concern->id}/status", ['status' => $status])
             ->assertStatus(200)
             ->assertJsonFragment(['status' => $status]);

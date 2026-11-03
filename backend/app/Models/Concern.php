@@ -33,6 +33,7 @@ class Concern extends Model
             'category' => ConcernCategory::class,
             'student_unread' => 'boolean',
             'mayor_unread' => 'boolean',
+            'student_removed_at' => 'datetime',
         ];
     }
 

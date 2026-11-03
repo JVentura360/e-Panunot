@@ -10,7 +10,12 @@ class NotificationController extends Controller
     {
         $user = $request->user();
 
-        $items = $user->notifications()->latest()->limit(30)->get()->map(fn ($n) => [
+        $visible = $user->notifications()->where(function ($query) use ($user): void {
+            $query->whereNull('data->concern_id')->orWhereNotIn('data->concern_id',
+                \Illuminate\Support\Facades\DB::table('concerns')->where('student_id', $user->id)
+                    ->whereNotNull('student_removed_at')->select('id'));
+        });
+        $items = (clone $visible)->latest()->limit(30)->get()->map(fn ($n) => [
             'id' => $n->id,
             'title' => $n->data['title'] ?? 'Notification',
             'message' => $n->data['message'] ?? '',
@@ -21,7 +26,7 @@ class NotificationController extends Controller
 
         return response()->json([
             'data' => $items,
-            'unread_count' => $user->unreadNotifications()->count(),
+            'unread_count' => (clone $visible)->whereNull('read_at')->count(),
         ]);
     }
 

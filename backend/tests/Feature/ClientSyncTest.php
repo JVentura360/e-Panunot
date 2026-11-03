@@ -102,7 +102,7 @@ class ClientSyncTest extends TestCase
         $this->assertNotSame($deleted['access'], $this->version($student)['access']);
         $this->actingAs($student->fresh())->getJson('/api/me')->assertJsonPath('data.block_id', null);
         $removed = $this->version($student);
-        $this->actingAs($mayor)->postJson('/api/concerns/'.$concernId.'/messages', ['message_text' => 'Follow-up reply'])->assertCreated();
-        $this->assertNotSame($removed['concerns'], $this->version($student)['concerns']);
+        $this->actingAs($mayor)->postJson('/api/concerns/'.$concernId.'/messages', ['message_text' => 'Follow-up reply'])->assertUnprocessable();
+        $this->assertSame($removed['concerns'], $this->version($student)['concerns']);
     }
 }

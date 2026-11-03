@@ -1,6 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applicationEligibility, isRegularStudent, mayWithdrawSubjects, blockNavigation, enrollmentReadiness } from './enrollmentRules.js';
+import { applicationEligibility, isRegularStudent, mayWithdrawSubjects, blockNavigation, enrollmentReadiness, canUseConcerns } from './enrollmentRules.js';
+
+test('concerns require primary membership even when a student has other subject enrollments', () => {
+  assert.equal(canUseConcerns({ role: 'student', enrollment_count: 2 }), false);
+  assert.equal(canUseConcerns({ role: 'student', block_id: 4, enrollment_count: 0 }), true);
+  assert.equal(canUseConcerns({ role: 'mayor', block_id: 4 }), true);
+});
 
 test('initial joining depends on membership lookup rather than a failed subject ledger', () => {
   assert.equal(enrollmentReadiness(false, {}, { error: new Error('Ledger unavailable') }).unavailable, false);

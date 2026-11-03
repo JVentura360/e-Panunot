@@ -319,6 +319,7 @@ class BlockMemberController extends Controller
             $term = DB::table('terms')->where('id', $block->term_id)->lockForUpdate()->first();
             abort_unless($term->is_active, 422, 'Archived block memberships cannot be changed.');
             DB::table('users')->where('id', $memberId)->lockForUpdate()->first();
+            \App\Services\ConcernMembership::closeForRemoval($blockId, $memberId);
             DB::table('subject_enrollments')->where('user_id', $memberId)->where('block_id', $blockId)->delete();
             DB::table('student_term_profiles')->where('user_id', $memberId)->where('term_id', $block->term_id)->where('regular_block_id', $blockId)->delete();
             DB::table('users')->where('id', $memberId)->where('block_id', $blockId)->update([

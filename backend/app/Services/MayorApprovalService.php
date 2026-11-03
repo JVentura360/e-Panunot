@@ -209,6 +209,7 @@ class MayorApprovalService
             $mayorId = (int) $block->mayor_id;
             $mayor = DB::table('users')->where('id', $mayorId)->lockForUpdate()->first();
             $removedEmail = $mayor?->email;
+            ConcernMembership::closeForRemoval($blockId, $mayorId);
 
             DB::table('blocks')->where('id', $blockId)->update([
                 'mayor_id' => null,

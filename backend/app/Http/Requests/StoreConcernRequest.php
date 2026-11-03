@@ -14,7 +14,7 @@ class StoreConcernRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user() && \App\Services\ConcernMembership::canUse($this->user());
     }
 
     /**

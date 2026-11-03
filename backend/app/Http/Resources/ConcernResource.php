@@ -22,6 +22,7 @@ class ConcernResource extends JsonResource
             'category' => $this->category,
             'description' => $this->description,
             'status' => $this->status,
+            'closed_due_to_removal' => $this->student_removed_at !== null,
             'is_unread' => $isStudent ? (bool) $this->student_unread : (bool) $this->mayor_unread,
             'student' => $this->whenLoaded('student', fn () => [
                 'id' => $this->student->id,

@@ -34,52 +34,55 @@ class ConcernMessageController extends Controller
 
     public function store(Request $request, Concern $concern)
     {
-        Gate::authorize('view', $concern);
+        return \App\Services\ConcernMembership::write((int) $concern->block_id, $request->user(), function (User $user) use ($request, $concern): ConcernMessageResource {
+            $concern = Concern::query()->lockForUpdate()->findOrFail($concern->id);
+            Gate::forUser($user)->authorize('view', $concern);
 
-        abort_if($concern->status === ConcernStatus::Closed, 422, 'This concern is closed.');
+            abort_if(in_array($concern->status, [ConcernStatus::Resolved, ConcernStatus::Closed], true)
+                || $concern->student_removed_at !== null, 422, 'Resolved or closed concerns cannot receive replies.');
 
-        $data = $request->validate([
-            'message_text' => ['required', 'string', 'max:5000'],
-        ]);
-
-        $user = $request->user();
-        $isMayor = Gate::allows('manage', $concern);
-
-        $message = DB::transaction(function () use ($concern, $user, $data, $isMayor) {
-            $message = $concern->messages()->create([
-                'sender_id' => $user->id,
-                'type' => 'message',
-                'message_text' => $data['message_text'],
+            $data = $request->validate([
+                'message_text' => ['required', 'string', 'max:5000'],
             ]);
 
-            // the other side now has something unread
-            $updates = $isMayor ? ['student_unread' => true] : ['mayor_unread' => true];
+            $isMayor = Gate::forUser($user)->allows('manage', $concern);
 
-            // first mayor reply on an open concern = work has started
-            if ($isMayor && $concern->status === ConcernStatus::Open) {
-                $updates['status'] = ConcernStatus::InProgress;
-
-                $concern->messages()->create([
+            $message = DB::transaction(function () use ($concern, $user, $data, $isMayor) {
+                $message = $concern->messages()->create([
                     'sender_id' => $user->id,
-                    'type' => 'system',
-                    'message_text' => 'Status changed to in progress.',
+                    'type' => 'message',
+                    'message_text' => $data['message_text'],
                 ]);
+
+                // the other side now has something unread
+                $updates = $isMayor ? ['student_unread' => true] : ['mayor_unread' => true];
+
+                // first mayor reply on an open concern = work has started
+                if ($isMayor && $concern->status === ConcernStatus::Open) {
+                    $updates['status'] = ConcernStatus::InProgress;
+
+                    $concern->messages()->create([
+                        'sender_id' => $user->id,
+                        'type' => 'system',
+                        'message_text' => 'Status changed to in progress.',
+                    ]);
+                }
+
+                $concern->update($updates);
+
+                return $message;
+            });
+
+            // tell the other side
+            $recipient = $isMayor
+                ? $concern->student
+                : User::find(DB::table('blocks')->where('id', $concern->block_id)->value('mayor_id'));
+
+            if ($recipient && $recipient->id !== $user->id) {
+                $recipient->notify(new ConcernReplyNotification($message));
             }
 
-            $concern->update($updates);
-
-            return $message;
+            return new ConcernMessageResource($message->load('sender'));
         });
-
-        // tell the other side
-        $recipient = $isMayor
-            ? $concern->student
-            : User::find(DB::table('blocks')->where('id', $concern->block_id)->value('mayor_id'));
-
-        if ($recipient && $recipient->id !== $user->id) {
-            $recipient->notify(new ConcernReplyNotification($message));
-        }
-
-        return new ConcernMessageResource($message->load('sender'));
     }
 }

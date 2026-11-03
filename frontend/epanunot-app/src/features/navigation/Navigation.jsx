@@ -3,7 +3,8 @@ import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ApplyMayorModal from './ApplyMayorModal.jsx';
 import styles from './Navigation.module.css';
 import { applyTheme } from '../../theme.js';
-import { applicationEligibility, blockNavigation } from '../block/enrollmentRules.js';
+import { applicationEligibility, blockNavigation, canUseConcerns } from '../block/enrollmentRules.js';
+import BlockRequiredDialog from '../concerns/BlockRequiredDialog.jsx';
 import NotificationBell from '../notifications/NotificationBell.jsx';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
@@ -125,6 +126,11 @@ function SlidingNav({ className, label, children }) {
 // The active tab now comes from the URL (NavLink), so activeTab/onTabChange are gone.
 
 export default function Navigation({ user, onLogout }) {
+  const [blockNotice, setBlockNotice] = useState(false);
+  const concernsUnavailable = !canUseConcerns(user);
+  const interceptConcerns = (event, to) => {
+    if (to === '/concerns' && concernsUnavailable) { event.preventDefault(); setBlockNotice(true); }
+  };
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const profileButtonRef = useRef(null);
@@ -178,6 +184,8 @@ export default function Navigation({ user, onLogout }) {
                   key={to}
                   to={to}
                   end={isEnd(to)}
+                  aria-disabled={to === '/concerns' && concernsUnavailable || undefined}
+                  onClick={(event) => interceptConcerns(event, to)}
                   className={({ isActive }) => `${styles.navTab} ${isActive ? styles.navTabActive : ''}`}
                 >
                   {label}
@@ -255,6 +263,8 @@ export default function Navigation({ user, onLogout }) {
               key={to}
               to={to}
               end={isEnd(to)}
+              aria-disabled={to === '/concerns' && concernsUnavailable || undefined}
+              onClick={(event) => interceptConcerns(event, to)}
               className={({ isActive }) => `${styles.mobileItem} ${isActive ? styles.mobileItemActive : ''}`}
             >
               {icon}
@@ -266,6 +276,7 @@ export default function Navigation({ user, onLogout }) {
       )}
 
       {applyOpen && <ApplyMayorModal user={user} onClose={() => setApplyOpen(false)} />}
+      {blockNotice && <BlockRequiredDialog onClose={() => setBlockNotice(false)} />}
     </>
   );
 }

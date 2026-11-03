@@ -203,6 +203,7 @@
 }
 .dropdownItem:disabled { opacity: .55; cursor: not-allowed; }
 .disabledReason { padding: 4px 14px 10px; color: var(--muted); font-size: .8rem; line-height: 1.4; }
+.navTab[aria-disabled='true'], .mobileItem[aria-disabled='true'] { opacity: .55; cursor: help; }
 
 .dropdownItem:hover { background: var(--paper); }
 .themeChoice { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: .75rem; }

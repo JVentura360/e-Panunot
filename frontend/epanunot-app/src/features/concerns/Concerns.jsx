@@ -8,6 +8,7 @@ import { useApiQuery } from '../../api/useApiQuery.js';
 import { toConcern, toMessage } from './concernMapper.js';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { useTasks } from '../../context/TaskContext.jsx';
+import { canReplyToConcern, concernActions } from './concernVisibility.js';
 
 // Single-file Concerns feature (prototype). Sections, in order:
 // helpers, StatusTag, ConcernList, ConcernThread, NewConcernModal, Concerns (page).
@@ -196,30 +197,27 @@ return (
 }
 
 // ======================= ConcernThread =======================
-function Actions({ concern, viewerRole, onStatus, onAskClose }) {
+function Actions({ concern, viewerRole, onStatus, onAskResolve }) {
 const { status } = concern;
+const actions = concernActions(concern, viewerRole);
 
-const close = () => onAskClose();
+if (concern.closedDueToRemoval) {
+    return <span className={styles.actionNote}>The student was removed from this block. This conversation is read-only.</span>;
+}
 
 if (status === 'closed') {
     return <span className={styles.actionNote}>This concern is closed. Replies are turned off.</span>;
 }
 
 if (viewerRole === 'mayor') {
-    if (status === 'resolved') {
-    return <span className={styles.actionNote}>Waiting for the student to confirm the fix or reopen it.</span>;
-    }
     return (
     <>
-        <span className={styles.actionNote}>Update the status as you make progress.</span>
-        {status === 'open' && (
+        <span className={styles.actionNote}>{status === 'resolved' ? 'This concern is resolved.' : 'The student will mark this concern as resolved when the issue is fixed.'}</span>
+        {actions.includes('in_progress') && (
         <button type="button" className="btn alt" onClick={() => onStatus('in_progress', 'Mayor marked this as in progress.')}>
             Mark in progress
         </button>
         )}
-        <button type="button" className="btn" onClick={() => onStatus('resolved', 'Mayor marked this as resolved.')}>
-        Mark resolved
-        </button>
     </>
     );
 }
@@ -227,12 +225,9 @@ if (viewerRole === 'mayor') {
 if (status === 'resolved') {
     return (
     <>
-        <span className={styles.actionNote}>The mayor marked this as resolved. Is it fixed?</span>
-        <button type="button" className="btn alt" onClick={close}>
-        Yes, close it
-        </button>
+        <span className={styles.actionNote}>You marked this concern as resolved.</span>
         <button type="button" className="btn ghost" onClick={() => onStatus('in_progress', "Student reopened this concern: it isn't fixed yet.")}>
-        Not fixed, reopen
+        Reopen concern
         </button>
     </>
     );
@@ -240,19 +235,19 @@ if (status === 'resolved') {
 
 return (
     <>
-    <span className={styles.actionNote}>Reply below, or close this if you no longer need help.</span>
-    <button type="button" className="btn ghost" onClick={close}>
-        Close concern
-    </button>
+    <span className={styles.actionNote}>Mark this concern as resolved once your issue is fixed.</span>
+    {actions.includes('resolve') && <button type="button" className="btn" onClick={onAskResolve}>
+        Mark as resolved
+    </button>}
     </>
 );
 }
 
 function ConcernThread({ concern, viewerRole, onReply, onStatus }) {
 const [preview, setPreview] = useState(null);
-const [confirmingClose, setConfirmingClose] = useState(false);
+const [confirmingResolve, setConfirmingResolve] = useState(false);
 const isMayor = viewerRole === 'mayor';
-const closed = concern.status === 'closed';
+const canReply = canReplyToConcern(concern);
 const [text, setText] = useState('');
 const endRef = useRef(null);
 const prevCount = useRef(concern.messages.length);
@@ -268,7 +263,7 @@ useEffect(() => {
 const submit = (e) => {
     e.preventDefault();
     const trimmed = text.trim();
-    if (!trimmed || closed) return;
+    if (!trimmed || !canReply) return;
     onReply(trimmed);
     setText('');
 };
@@ -307,7 +302,7 @@ return (
 
     <div className={styles.actions}>
         <Actions concern={concern} viewerRole={viewerRole} onStatus={onStatus}
-            onAskClose={() => setConfirmingClose(true)} />
+            onAskResolve={() => setConfirmingResolve(true)} />
     </div>
 
     <div className={styles.messages} role="log" aria-label="Replies">
@@ -336,7 +331,7 @@ return (
         <div ref={endRef} />
     </div>
 
-    {!closed && (
+    {canReply && (
         <form className={styles.composer} onSubmit={submit}>
         <textarea
             className={styles.input}
@@ -354,13 +349,13 @@ return (
     )}
 
     {preview && <AttachmentPreview attachment={preview} onClose={() => setPreview(null)} />}
-    {confirmingClose && (
+    {confirmingResolve && (
         <ConfirmDialog
-        title="Close this concern?"
-        message="You won't be able to reply afterward."
-        confirmLabel="Close concern"
-        onCancel={() => setConfirmingClose(false)}
-        onConfirm={() => { setConfirmingClose(false); onStatus('closed'); }}
+        title="Mark this concern as resolved?"
+        message="Replies will be turned off. You can reopen this concern if the issue returns."
+        confirmLabel="Mark as resolved"
+        onCancel={() => setConfirmingResolve(false)}
+        onConfirm={() => { setConfirmingResolve(false); onStatus('resolved'); }}
         />
     )}
     </>
