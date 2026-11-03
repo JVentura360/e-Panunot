@@ -28,6 +28,7 @@ class TaskDeadlineTest extends TestCase
         app(\App\Services\StudentEnrollmentService::class)->enrollBlock($mayor->id, $block->id, 'regular');
         $this->actingAs($mayor);
         $task = $method === 'PUT' ? Task::factory()->forBlock($block, $mayor)->create(['due_date' => '2026-11-05']) : null;
+        Queue::fake();
 
         $response = $this->json($method, $task ? "/api/tasks/{$task->id}" : '/api/tasks', [
             'title' => 'Deadline test',

@@ -8,10 +8,43 @@ use App\Models\Term;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class ConcernTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_concern_images_allow_five_mb_and_protect_downloads(): void
+    {
+        Storage::fake('local');
+        [, $mayor, $student] = $this->makeBlockWithMayorAndStudent();
+        $files = array_map(fn (string $extension) => UploadedFile::fake()->create('evidence.'.$extension, 5120, $extension === 'png' ? 'image/png' : 'image/jpeg'), ['png', 'jpg', 'jpeg']);
+        $response = $this->actingAs($student)->postJson('/api/concerns', [
+            'title' => 'Schedule evidence', 'category' => 'schedule', 'description' => 'Attached screenshots.', 'attachments' => $files,
+        ])->assertCreated()->assertJsonCount(3, 'data.attachments');
+        $attachment = \App\Models\ConcernAttachment::firstOrFail();
+        Storage::disk('local')->assertExists($attachment->file_path);
+        $this->get('/api/attachments/'.$attachment->id)->assertOk();
+        $this->actingAs($mayor)->get('/api/attachments/'.$attachment->id)->assertOk();
+        $this->actingAs(User::factory()->create())->get('/api/attachments/'.$attachment->id)->assertForbidden();
+    }
+
+    public function test_concern_rejects_oversized_non_image_and_excess_attachments(): void
+    {
+        Storage::fake('local');
+        [, , $student] = $this->makeBlockWithMayorAndStudent();
+        $payload = ['title' => 'Evidence', 'category' => 'schedule', 'description' => 'Details.'];
+        foreach ([UploadedFile::fake()->create('large.png', 5121, 'image/png'),
+            UploadedFile::fake()->create('document.pdf', 10, 'application/pdf'),
+            UploadedFile::fake()->create('pretend.jpg', 10, 'application/pdf')] as $file) {
+            $this->actingAs($student)->postJson('/api/concerns', $payload + ['attachments' => [$file]])
+                ->assertUnprocessable()->assertJsonValidationErrors('attachments.0');
+        }
+        $files = array_map(fn (int $id) => UploadedFile::fake()->create('image'.$id.'.png', 10, 'image/png'), range(1, 6));
+        $this->postJson('/api/concerns', $payload + ['attachments' => $files])->assertUnprocessable()->assertJsonValidationErrors('attachments');
+        $this->assertDatabaseCount('concerns', 0);
+    }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 

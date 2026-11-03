@@ -56,7 +56,7 @@ class StoreConcernRequest extends FormRequest
                 },
             ],
             'attachments' => ['nullable', 'array', 'max:5'],
-            'attachments.*' => ['file', 'max:2048', 'mimes:jpg,jpeg,png,pdf,doc,docx'],
+            'attachments.*' => ['file', 'max:5120', 'mimes:jpg,jpeg,png', 'extensions:jpg,jpeg,png'],
         ];
     }
 
@@ -64,8 +64,9 @@ class StoreConcernRequest extends FormRequest
     {
         return [
             'attachments.max' => 'You can attach up to 5 files.',
-            'attachments.*.max' => 'Each file must be 2 MB or smaller.',
-            'attachments.*.mimes' => 'Only JPG, PNG, PDF, DOC and DOCX files are allowed.',
+            'attachments.*.max' => 'Each image must be 5 MB or smaller.',
+            'attachments.*.mimes' => 'Only PNG, JPG and JPEG images are allowed.',
+            'attachments.*.extensions' => 'Only PNG, JPG and JPEG images are allowed.',
             'attachments.*.uploaded' => 'A file failed to upload. It may be too large.',
         ];
     }

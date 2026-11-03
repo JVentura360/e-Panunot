@@ -370,8 +370,8 @@ return (
 // ======================= NewConcernModal =======================
 function NewConcernModal({ onClose, onCreate, choices, tasks }) {
     const MAX_FILES = 5;
-const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
-const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'];
+const MAX_BYTES = 5 * 1024 * 1024;
+const ALLOWED_EXT = ['jpg', 'jpeg', 'png'];
 const [title, setTitle] = useState('');
 const [subject, setSubject] = useState('');
 const [category, setCategory] = useState('');
@@ -410,10 +410,10 @@ const addFiles = (e) => {
     const accepted = [];
     for (const f of picked) {
         const ext = f.name.split('.').pop().toLowerCase();
-        if (!ALLOWED_EXT.includes(ext)) {
-            problems.push(`${f.name}: only JPG, PNG, PDF, DOC and DOCX files are allowed.`);
+        if (!ALLOWED_EXT.includes(ext) || !['image/png', 'image/jpeg'].includes(f.type)) {
+            problems.push(`${f.name}: only PNG, JPG and JPEG images are allowed.`);
         } else if (f.size > MAX_BYTES) {
-            problems.push(`${f.name}: larger than 2 MB.`);
+            problems.push(`${f.name}: larger than 5 MB.`);
         } else if (!files.some((p) => p.name === f.name)) {
             accepted.push(f);
         }
@@ -505,6 +505,7 @@ return (
 
         <div className={styles.field}>
         <span className={styles.fieldLabel}>Attachments (optional)</span>
+        <p className={styles.hint}>PNG, JPG or JPEG · Up to 5 MB each · Maximum 5 images</p>
         {files.length > 0 && (
             <ul className={styles.files}>
             {files.map((f) => (
@@ -518,7 +519,7 @@ return (
         )}
         <div>
             <button type="button" className="btn ghost" onClick={() => fileInput.current?.click()}>Add attachment</button>
-            <input ref={fileInput} type="file" multiple hidden onChange={addFiles} />
+            <input ref={fileInput} type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" multiple hidden onChange={addFiles} />
         </div>
         </div>
 
