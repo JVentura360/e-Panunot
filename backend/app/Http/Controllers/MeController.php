@@ -8,6 +8,13 @@ use Illuminate\Support\Facades\DB;
 
 class MeController extends Controller
 {
+    public function update(Request $request, \App\Services\StudentEnrollmentService $enrollment): \Illuminate\Http\JsonResponse
+    {
+        $data = $request->validate(['name' => ['required', 'string', 'max:60']]);
+        $request->user()->update(['name' => preg_replace('/\s+/u', ' ', trim($data['name']))]);
+        return $this->show($request, $enrollment);
+    }
+
     /**
      * GET /api/me
      *
