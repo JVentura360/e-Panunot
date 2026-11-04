@@ -98,7 +98,7 @@ class SubjectLoadTest extends TestCase
         }
         $student = User::factory()->create();
         $blocks[1]->update(['mayor_id' => User::factory()->create(['role' => 'mayor'])->id]);
-        $this->actingAs($student)->postJson('/api/blocks/'.$blocks[1]->id.'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($blocks[1]->id, 'irregular');
         $this->postJson('/api/subject-enrollments', ['block_id' => $blocks[1]->id, 'subject_id' => $subject->id, 'student_type' => 'irregular'])->assertCreated();
         $this->actingAs(User::factory()->admin()->create())->getJson('/api/subject-loads/current?program=ITE&year_level=3')
             ->assertOk()->assertJsonPath('data.load', null)->assertJsonCount(1, 'data.existing_subjects');

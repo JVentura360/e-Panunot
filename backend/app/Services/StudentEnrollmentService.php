@@ -25,14 +25,25 @@ class StudentEnrollmentService
         $term = DB::table('terms')->where('is_active', true)->first();
         $user = DB::table('users')->where('id', $userId)->first();
         $profile = $term ? $this->profile($userId, $term->id) : null;
+        $pending = $term ? $this->pendingJoin($userId, $term->id) : null;
         $mayorBlock = $term ? DB::table('blocks')->where('term_id', $term->id)->where('mayor_id', $userId)->first() : null;
         $reason = ! $term ? 'There is no active school term.' : ($user->role === 'admin' ? 'Admins cannot apply as mayor.'
-            : ($mayorBlock ? 'You are already an appointed mayor.' : ($this->hasMembership($userId, $term->id)
-                ? 'You already belong to a block with an assigned mayor.' : ($profile?->student_type === 'irregular' ? 'Only regular students can apply as mayor.' : null))));
+            : ($mayorBlock ? 'You are already an appointed mayor.' : ($pending ? 'Wait for your block join request to be approved, or cancel it first.' : ($this->hasMembership($userId, $term->id)
+                ? 'You already belong to a block with an assigned mayor.' : ($profile?->student_type === 'irregular' ? 'Only regular students can apply as mayor.' : null)))));
         $primaryBlockId = $term ? DB::table('blocks')->where('id', $user->block_id)->where('term_id', $term->id)->value('id') : null;
         return ['term' => $term, 'profile' => $profile, 'primary_block_id' => $primaryBlockId, 'mayor_block_id' => $mayorBlock?->id,
+            'pending_join_request' => $pending ? ['id' => $pending->id, 'block_id' => $pending->block_id,
+                'block_code' => \App\Http\Resources\BlockResource::makeCode($pending->year_level, $term->semester, $pending->program, $pending->block_number),
+                'status' => 'pending', 'student_type' => $pending->student_type, 'mayor_name' => $pending->mayor_name] : null,
             'mayor_needs_reconciliation' => (bool) $mayorBlock && ($profile?->student_type !== 'regular' || (int) $profile?->regular_block_id !== (int) $mayorBlock->id),
             'can_apply_as_mayor' => $reason === null, 'mayor_application_disabled_reason' => $reason];
+    }
+
+    public function pendingJoin(int $userId, int $termId): ?object
+    {
+        return DB::table('block_join_requests as r')->join('blocks as b', 'b.id', '=', 'r.block_id')
+            ->leftJoin('users as m', 'm.id', '=', 'b.mayor_id')->where('r.user_id', $userId)->where('r.status', 'pending')
+            ->where('b.term_id', $termId)->orderByDesc('r.id')->first(['r.*', 'b.program', 'b.year_level', 'b.block_number', 'm.name as mayor_name']);
     }
 
     public function confirmIrregular(int $userId): array
@@ -42,6 +53,7 @@ class StudentEnrollmentService
             abort_unless($term, 422, 'There is no active school term.');
             $user = DB::table('users')->where('id', $userId)->lockForUpdate()->first();
             abort_if($user->role === 'admin', 403, 'Admins cannot enroll.');
+            abort_if($this->pendingJoin($userId, $term->id), 422, 'Cancel your pending join request before changing your status.');
             abort_if(DB::table('blocks')->where('term_id', $term->id)->where('mayor_id', $userId)->exists(), 422, 'An appointed mayor must be a regular student.');
             $profile = $this->profile($userId, $term->id);
             abort_if($profile && $profile->student_type !== 'irregular', 422, 'Your classification is already regular. Individual changes are unavailable.');
@@ -66,6 +78,8 @@ class StudentEnrollmentService
             abort_unless($block->mayor_id, 422, 'This block does not have an appointed mayor.');
             abort_unless(in_array($studentType, ['regular', 'irregular'], true), 422, 'Choose Regular or Irregular.');
             $mayorElsewhere = DB::table('blocks')->where('term_id', $term->id)->where('mayor_id', $userId)->first();
+            abort_if(! $joining && ! $primaryBlockId && (! $mayorElsewhere || (int) $mayorElsewhere->id !== $blockId),
+                422, 'Wait for the mayor to approve your block membership before enrolling.');
             abort_if($mayorElsewhere && ($studentType !== 'regular' || (int) $mayorElsewhere->id !== $blockId), 422, 'A mayor must be regular in their appointed block.');
             $profile = $this->profile($userId, $term->id);
             abort_if($profile && $profile->student_type !== $studentType, 422, 'Your classification is already set for this term.');

@@ -35,6 +35,7 @@ export default function Dashboard({ user }) {
   const { choices } = useSubjectChoices(user);
   const offered = choices.filter((choice) => choice.blockId === user.block_id);
   const needsBlock = user.role === 'student' && !user.block_id;
+  const pendingJoin = user.pending_join_request;
   const pending = tasks.filter((task) => !task.done);
   const completed = tasks.length - pending.length;
   const dueSoon = pending.filter((task) => daysLeft(task.due) <= 1).length;
@@ -92,16 +93,22 @@ export default function Dashboard({ user }) {
             ))}
           </div>
           <section className={styles.section}>
-            <h3>{needsBlock ? 'Find your block' : isMayor ? 'Assigned to your block' : 'From your mayor'} {!needsBlock && <span>{assigned.length}</span>}</h3>
+            <h3>{needsBlock ? pendingJoin ? 'Join request' : 'Find your block' : isMayor ? 'Assigned to your block' : 'From your mayor'} {!needsBlock && <span>{assigned.length}</span>}</h3>
             {needsBlock ? (
               <PlannerEmpty>
+                {pendingJoin ? <>
+                  <h4 className={styles.blockTitle}>Waiting for mayor approval.</h4>
+                  <p>Your request to join {pendingJoin.block_code} is pending. Your ledger will open after approval.</p>
+                  <Link className="btn" to="/join-block">View request</Link>
+                </> : <>
                 <h4 className={styles.blockTitle}>Join your class block.</h4>
-                <p>Enter your block code and confirm your student status, or apply as mayor to create a block.</p>
+                <p>Request to join your class block, or apply as mayor to create a block.</p>
                 <div className={styles.blockActions}>
                   <Link className="btn" to="/join-block">Join a Block</Link>
                   <button data-online-only type="button" className="btn alt" disabled={!eligibility.allowed} title={eligibility.reason || undefined} onClick={() => setModal('apply')}>Apply as Mayor</button>
                 </div>
                 {!eligibility.allowed && <p>{eligibility.reason}</p>}
+                </>}
               </PlannerEmpty>
             ) : assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} onEdit={isMayor ? setEditingTask : undefined} onDelete={isMayor ? setDeletingTask : undefined} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
           </section>

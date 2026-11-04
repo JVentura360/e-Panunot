@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useApiQuery } from '../../api/useApiQuery.js';
 import { api, errorMessage } from '../../api/client.js';
 import EnrollmentStatus from './EnrollmentStatus.jsx';
+import PendingJoinLedger from './PendingJoinLedger.jsx';
 import { isRegularStudent, mayWithdrawSubjects, enrollmentReadiness } from './enrollmentRules.js';
 import styles from './JoinBlock.module.css';
 
@@ -12,6 +13,7 @@ export default function JoinBlock({ user }) {
   const profile = profileQuery.data?.data?.profile;
   const primaryBlockId = profileQuery.data ? profileQuery.data.data.primary_block_id : user.block_id;
   const joined = Boolean(primaryBlockId || user.role === 'mayor');
+  const pendingJoin = profileQuery.data ? profileQuery.data.data.pending_join_request : user.pending_join_request;
   const currentType = profileQuery.data ? profile?.student_type ?? (user.role === 'mayor' ? 'regular' : '') : user.student_type ?? '';
   const effectiveUser = { ...user, student_type: currentType };
   const regular = isRegularStudent(effectiveUser);
@@ -42,7 +44,7 @@ export default function JoinBlock({ user }) {
         student_type: type, ...(joined && type === 'irregular' ? { subject_ids: selected } : {}),
       } });
       setSelected([]);
-      setNotice(!joined ? type === 'regular' ? 'You joined the block. Its subjects are now in your ledger.' : 'You joined the block. Search for blocks below and select the subjects you take.' : 'Your selected subjects are enrolled.');
+      setNotice(!joined ? 'Join request submitted. Please wait for mayor approval.' : 'Your selected subjects are enrolled.');
       if (!joined) setResult(null);
       await Promise.all([profileQuery.refetch(), ledgerQuery.refetch()]);
     } catch (e) { setError(errorMessage(e)); }
@@ -60,6 +62,11 @@ export default function JoinBlock({ user }) {
   const canEnroll = result && result.mayor_name && !subjectsQuery.error && !subjectsQuery.isPending
     && !unavailable && !busy && !anotherRegularBlock && !alreadyRegular
     && (!joined ? type === 'irregular' || type === 'regular' && subjects.length > 0 : type === 'irregular' && selected.length > 0);
+
+  if (!joined && pendingJoin) return <PendingJoinLedger key={pendingJoin.id} request={pendingJoin} onRefresh={async () => {
+    const results = await Promise.all([profileQuery.refetch(), ledgerQuery.refetch()]);
+    if (results[0].error) throw results[0].error;
+  }} />;
 
   return <div className={styles.page}>
     <header className={styles.top}><h1>{joined ? 'My Ledger' : 'Join a Block'}</h1><p>{joined ? `Your block${user.block ? `: ${user.block}` : ''}. Manage the subjects you take below.` : 'Enter your block code, then confirm whether you are a regular or irregular student.'}</p></header>
@@ -89,7 +96,7 @@ export default function JoinBlock({ user }) {
     {(!joined || !regular) && <>
     <section className={styles.section} aria-labelledby="find-subjects-heading">
       <h2 id="find-subjects-heading">{joined ? 'Find subjects by block' : 'Find your block'}</h2>
-      <p className={styles.explanation}>{joined ? 'Search for the blocks where you take subjects. Enrolling here will not change your primary block.' : 'Joining sets your displayed class block. Regular students receive its full subject load; irregular students choose subjects afterward in My Ledger.'}</p>
+      <p className={styles.explanation}>{joined ? 'Search for the blocks where you take subjects. Enrolling here will not change your primary block.' : 'Send a request to the block’s mayor. After approval, regular students receive the block’s subjects; irregular students choose subjects in My Ledger.'}</p>
       <form className={styles.search} onSubmit={search}>
         <label className={styles.srOnly} htmlFor="block-code">Block code</label><input id="block-code" className={styles.input} value={code} onChange={(event) => setCode(event.target.value)} placeholder="31-ITE-04" required maxLength={30} autoComplete="off" />
         <button className="btn" type="submit" disabled={searching || busy || !code.trim()}>{searching ? 'Searching…' : 'Find block'}</button>
@@ -99,8 +106,8 @@ export default function JoinBlock({ user }) {
         {!result.mayor_name && <p className={styles.error}>An appointed mayor is required before this block can accept enrollment.</p>}
         {!joined && <fieldset className={styles.typeChoice} disabled={busy || unavailable || Boolean(currentType)}>
           <legend>Are you a regular or irregular student?</legend>
-          <label><input type="radio" name="student-type" value="regular" checked={type === 'regular'} onChange={() => { setChoice('regular'); setSelected([]); }} />Regular — enroll in every subject in this block</label>
-          <label><input type="radio" name="student-type" value="irregular" checked={type === 'irregular'} onChange={() => setChoice('irregular')} />Irregular — join first, then choose subjects in My Ledger</label>
+          <label><input type="radio" name="student-type" value="regular" checked={type === 'regular'} onChange={() => { setChoice('regular'); setSelected([]); }} />Regular — subjects are assigned after mayor approval</label>
+          <label><input type="radio" name="student-type" value="irregular" checked={type === 'irregular'} onChange={() => setChoice('irregular')} />Irregular — choose subjects after mayor approval</label>
         </fieldset>}
         {!joined && currentType && <p className={styles.explanation}>Your confirmed status for this term is {currentType}.</p>}
         {subjectsQuery.isPending ? <p role="status">Loading offered subjects…</p> : subjectsQuery.error ? <p role="alert">{errorMessage(subjectsQuery.error)} <button className="btn ghost" onClick={() => subjectsQuery.refetch()}>Retry</button></p>
@@ -113,12 +120,12 @@ export default function JoinBlock({ user }) {
                   onChange={(event) => setSelected((old) => event.target.checked ? [...old, subject.id] : old.filter((id) => id !== subject.id))} aria-label={`Select ${subject.code} in ${result.code}`} />}
                 <div className={styles.grow}><div className={styles.meta}>{subject.code}</div><h4 className={styles.name}>{subject.name}</h4>
                   {enrolled && <p className={styles.meta}>Enrolled in {enrolled.block_code}{enrolled.block_id !== result.id && '. Withdraw there first to switch blocks.'}</p>}
-                  {type === 'regular' && !enrolled && <p className={styles.meta}>{alreadyRegular ? 'Not currently enrolled' : 'Enrolled automatically when you join'}</p>}
+                  {type === 'regular' && !enrolled && <p className={styles.meta}>{alreadyRegular ? 'Not currently enrolled' : 'Enrolled automatically after mayor approval'}</p>}
                 </div>
               </li>;
             })}</ul>}
         {anotherRegularBlock ? <p className={styles.explanation}>Regular enrollment is limited to your own block.</p> : alreadyRegular ? <p className={styles.explanation}>You belong to this block.</p>
-          : <div className={styles.actions}><button className="btn" disabled={!canEnroll} onClick={enroll}>{busy ? 'Saving…' : !joined ? 'Join Block' : `Enroll selected subjects (${selected.length})`}</button></div>}
+          : <div className={styles.actions}><button className="btn" disabled={!canEnroll} onClick={enroll}>{busy ? 'Saving…' : !joined ? 'Request to join' : `Enroll selected subjects (${selected.length})`}</button></div>}
       </div>}
     </section>
     </>}

@@ -145,7 +145,7 @@ export default function BlockManagement({ user }) {
 
       <section className={styles.section} id="applications">
         <h3>Join requests</h3>
-        <p className={styles.meta}>Students now join immediately through My ledger after choosing Regular or Irregular. Older requests can be dismissed below.</p>
+        <p className={styles.meta}>Review each student’s status before adding them to your block. Regular students receive the block’s subjects after approval.</p>
         {loading ? (
           <p className={styles.loading}>Loading...</p>
         ) : requests.length === 0 ? (
@@ -157,9 +157,13 @@ export default function BlockManagement({ user }) {
                 <div className={styles.grow}>
                   <div className={styles.name}>{r.student_name}</div>
                   <div className={styles.meta}>
-                    {r.student_email} · Requested {formatDate(r.created_at)}
+                    {r.student_email} · {r.student_type ?? 'Status not selected'} · Requested {formatDate(r.created_at)}
                   </div>
+                  {!r.student_type && <p className={styles.meta}>Ask this student to cancel and resubmit with their Regular or Irregular status.</p>}
                 </div>
+                <button className="btn" disabled={busyId === `request-${r.id}` || !['regular', 'irregular'].includes(r.student_type)} onClick={() => review(r, 'approve')}>
+                  Approve
+                </button>
                 <button
                   className={styles.rejectBtn}
                   disabled={busyId === `request-${r.id}`}

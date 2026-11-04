@@ -73,7 +73,7 @@ class ClientSyncTest extends TestCase
         DB::table('block_subjects')->insert(['block_id' => $block->id, 'subject_id' => $subject->id]);
         app(StudentEnrollmentService::class)->enrollBlock($mayor->id, $block->id, 'regular');
         $student = User::factory()->create();
-        $this->actingAs($student)->postJson('/api/blocks/'.$block->id.'/join', ['student_type' => 'regular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($block->id, 'regular');
         $unrelated = User::factory()->create();
         $other = $this->version($unrelated);
         $before = $this->version($student);

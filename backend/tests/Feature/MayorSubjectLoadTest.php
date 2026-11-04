@@ -131,7 +131,7 @@ class MayorSubjectLoadTest extends TestCase
         $old = Subject::create(['code' => 'OLD301', 'name' => 'Existing Subject']);
         $block->update(['mayor_id' => User::factory()->create(['role' => 'mayor'])->id]);
         DB::table('block_subjects')->insert(['block_id' => $block->id, 'subject_id' => $old->id]);
-        $this->actingAs(User::factory()->create())->postJson('/api/blocks/'.$block->id.'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs(User::factory()->create())->joinApprovedBlock($block->id, 'irregular');
         $this->postJson('/api/subject-enrollments', ['block_id' => $block->id, 'subject_id' => $old->id, 'student_type' => 'irregular'])->assertCreated();
         $student = User::factory()->create();
         $id = $this->apply($student);

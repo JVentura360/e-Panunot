@@ -35,7 +35,7 @@ class SubjectTaskBatchTest extends TestCase
     {
         [$block, $mayor, $subjects] = $this->setupBlock();
         $student = User::factory()->create();
-        app(StudentEnrollmentService::class)->enrollBlock($student->id, $block->id, 'regular');
+        $this->actingAs($student)->joinApprovedBlock($block->id, 'regular');
         $tasks = $this->actingAs($mayor)->postJson('/api/tasks', ['title' => 'Read chapter 1', 'all_subjects' => true,
             'due_date' => now()->addDay()->toDateTimeString()])->assertCreated()->assertJsonCount(3, 'data')->json('data');
         $this->assertCount(3, array_unique(array_column($tasks, 'id')));

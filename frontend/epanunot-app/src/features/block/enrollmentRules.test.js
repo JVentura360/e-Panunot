@@ -21,6 +21,14 @@ test('navigation follows primary membership even when subject ledger is empty', 
   assert.equal(blockNavigation({ role: 'student', block_id: 4, student_type: 'irregular' }).mobileLabel, 'Ledger');
 });
 
+test('pending join holds the ledger and blocks mayor application until approved or cancelled', () => {
+  const user = { role: 'student', pending_join_request: { id: 1, status: 'pending' } };
+  assert.equal(blockNavigation(user).label, 'My Ledger');
+  assert.equal(blockNavigation(user).joined, false);
+  assert.equal(applicationEligibility(user).allowed, false);
+  assert.equal(canUseConcerns(user), false);
+});
+
 test('only an unjoined regular or unclassified student may apply as mayor', () => {
   assert.equal(applicationEligibility({ role: 'student', student_type: 'regular' }).allowed, true);
   assert.equal(applicationEligibility({ role: 'student' }).allowed, true);

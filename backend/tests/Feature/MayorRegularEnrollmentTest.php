@@ -47,17 +47,17 @@ class MayorRegularEnrollmentTest extends TestCase
         $this->actingAs($student->fresh())->getJson('/api/me')->assertJsonPath('data.student_type', 'regular')->assertJsonPath('data.mayor_needs_reconciliation', false);
     }
 
-    public function test_joining_after_application_blocks_stale_approval_without_side_effects(): void
+    public function test_existing_membership_blocks_stale_application_approval_without_side_effects(): void
     {
         $term = Term::factory()->active()->create();
         $student = User::factory()->create();
-        $application = $this->application($term, $student);
         $block = Block::factory()->create(['term_id' => $term->id, 'program' => 'ITE', 'year_level' => 3, 'block_number' => 9]);
         $mayor = User::factory()->student($block)->create(['role' => 'mayor']);
         $block->update(['mayor_id' => $mayor->id]);
         $subject = Subject::create(['code' => 'ITE301', 'name' => 'Database Systems']);
         DB::table('block_subjects')->insert(['block_id' => $block->id, 'subject_id' => $subject->id]);
-        $this->actingAs($student)->postJson('/api/blocks/'.$block->id.'/enrollment', ['student_type' => 'regular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($block->id, 'regular');
+        $application = $this->application($term, $student);
         $this->actingAs(User::factory()->admin()->create())->postJson('/api/admin/mayor-applications/'.$application->id.'/approve', ['expected_revision' => 0])->assertUnprocessable();
         $this->assertDatabaseCount('blocks', 1);
         $this->assertDatabaseCount('subject_loads', 0);
@@ -77,9 +77,9 @@ class MayorRegularEnrollmentTest extends TestCase
         $this->actingAs($admin)->putJson('/api/admin/subject-loads/current', $base)->assertOk();
         $regular = User::factory()->create();
         $irregular = User::factory()->create();
-        $this->actingAs($regular)->postJson('/api/blocks/'.$block->id.'/enrollment', ['student_type' => 'regular'])->assertOk();
+        $this->actingAs($regular)->joinApprovedBlock($block->id, 'regular');
         $subjectId = Subject::where('code', 'ITE301')->value('id');
-        $this->actingAs($irregular)->postJson('/api/blocks/'.$block->id.'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs($irregular)->joinApprovedBlock($block->id, 'irregular');
         $this->actingAs($irregular)->postJson('/api/blocks/'.$block->id.'/enrollment', ['student_type' => 'irregular', 'subject_ids' => [$subjectId]])->assertOk();
         DB::table('subject_enrollments')->where('user_id', $regular->id)->where('subject_id', $subjectId)->delete();
         $base['expected_revision'] = 1;

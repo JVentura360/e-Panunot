@@ -40,7 +40,7 @@ class StudentEnrollmentTypeTest extends TestCase
         $student = User::factory()->create();
         $this->actingAs($student)->postJson('/api/subject-enrollments', ['block_id' => $other->id,
             'subject_id' => $subjects[0]->id, 'student_type' => 'irregular'])->assertUnprocessable();
-        $this->postJson('/api/blocks/'.$home->id.'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->joinApprovedBlock($home->id, 'irregular');
         $this->assertDatabaseCount('subject_enrollments', 0);
         $this->getJson('/api/me')->assertJsonPath('data.block_id', $home->id)->assertJsonPath('data.block', '31-ITE-04');
         $id = $this->postJson('/api/subject-enrollments', ['block_id' => $other->id,
@@ -58,12 +58,12 @@ class StudentEnrollmentTypeTest extends TestCase
         $home = $this->block($term, 4, $subjects);
         $other = $this->block($term, 9, $subjects);
         $student = User::factory()->create();
-        $this->actingAs($student)->postJson('/api/blocks/'.$home->id.'/join', ['student_type' => 'regular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($home->id, 'regular');
         $this->assertDatabaseCount('subject_enrollments', 3);
         $this->actingAs(User::findOrFail($home->mayor_id))->deleteJson('/api/blocks/'.$home->id.'/members/'.$student->id)->assertOk();
         $this->assertNull($student->fresh()->block_id);
         $this->assertDatabaseCount('subject_enrollments', 0);
-        $this->actingAs($student->fresh())->postJson('/api/blocks/'.$home->id.'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs($student->fresh())->joinApprovedBlock($home->id, 'irregular');
         foreach ([$home, $other] as $index => $block) {
             $this->postJson('/api/subject-enrollments', ['block_id' => $block->id, 'subject_id' => $subjects[$index]->id])->assertCreated();
             $task = Task::create(['block_id' => $block->id, 'subject_id' => $subjects[$index]->id,
@@ -84,7 +84,7 @@ class StudentEnrollmentTypeTest extends TestCase
         $term = Term::factory()->active()->create();
         $block = $this->block($term, 4, $this->subjects());
         $student = User::factory()->create();
-        $this->actingAs($student)->postJson('/api/blocks/'.$block->id.'/enrollment', ['student_type' => 'regular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($block->id, 'regular');
         $this->postJson('/api/blocks/'.$block->id.'/enrollment', ['student_type' => 'regular'])->assertOk();
         $this->assertDatabaseCount('subject_enrollments', 3);
         $this->assertDatabaseCount('student_term_profiles', 1);
@@ -163,7 +163,7 @@ class StudentEnrollmentTypeTest extends TestCase
         $block = $this->block($term, 4, [$subject]);
         $student = User::factory()->create();
         $reads = [];
-        $this->actingAs($student)->postJson('/api/blocks/'.$block->id.'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($block->id, 'irregular');
         DB::listen(function (\Illuminate\Database\Events\QueryExecuted $query) use (&$reads): void {
             if ($query->connection->transactionLevel() > 1 && str_starts_with(strtolower($query->sql), 'select')) {
                 $reads[] = $query->sql;

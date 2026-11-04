@@ -35,7 +35,7 @@ class SubjectEnrollmentTest extends TestCase
         $second = $this->offering($term);
         $sameSubject = $this->offering($term, Subject::findOrFail($first['subject_id']));
         $student = User::factory()->create();
-        $this->actingAs($student)->postJson('/api/blocks/'.$first['block_id'].'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($first['block_id'], 'irregular');
         $this->actingAs($student)->postJson('/api/subject-enrollments', $first)->assertCreated();
         $this->postJson('/api/subject-enrollments', $second)->assertCreated();
         $this->postJson('/api/subject-enrollments', $first)->assertUnprocessable()->assertJsonValidationErrors('subject_id');
@@ -43,7 +43,8 @@ class SubjectEnrollmentTest extends TestCase
         $this->getJson('/api/subject-enrollments/mine')->assertOk()->assertJsonCount(2, 'data');
         $this->assertDatabaseCount('subject_enrollments', 2);
         $this->assertSame($first['block_id'], $student->fresh()->block_id);
-        $this->assertDatabaseCount('block_join_requests', 0);
+        $this->assertDatabaseCount('block_join_requests', 1);
+        $this->assertDatabaseHas('block_join_requests', ['user_id' => $student->id, 'status' => 'approved']);
     }
 
     public function test_only_owner_can_withdraw_then_switch_blocks(): void
@@ -52,7 +53,7 @@ class SubjectEnrollmentTest extends TestCase
         $first = $this->offering($term);
         $other = $this->offering($term, Subject::findOrFail($first['subject_id']));
         $student = User::factory()->create();
-        $this->actingAs($student)->postJson('/api/blocks/'.$first['block_id'].'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($first['block_id'], 'irregular');
         $id = $this->actingAs($student)->postJson('/api/subject-enrollments', $first)->assertCreated()->json('data.id');
         $this->actingAs(User::factory()->create())->deleteJson('/api/subject-enrollments/'.$id)->assertNotFound();
         $this->actingAs($student)->deleteJson('/api/subject-enrollments/'.$id)->assertOk();
@@ -73,13 +74,13 @@ class SubjectEnrollmentTest extends TestCase
     {
         $term = Term::factory()->active()->create();
         $offering = $this->offering($term);
-        $this->actingAs(User::factory()->create())->postJson('/api/blocks/'.$offering['block_id'].'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs(User::factory()->create())->joinApprovedBlock($offering['block_id'], 'irregular');
         $this->postJson('/api/subject-enrollments', $offering)->assertCreated();
         $term->forceFill(['is_active' => false])->save();
         $this->getJson('/api/subject-enrollments/mine')->assertOk()->assertJsonCount(0, 'data');
         $this->assertDatabaseCount('subject_enrollments', 1);
         $next = $this->offering(Term::factory()->active()->create(), Subject::findOrFail($offering['subject_id']));
-        $this->postJson('/api/blocks/'.$next['block_id'].'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->joinApprovedBlock($next['block_id'], 'irregular');
         $this->postJson('/api/subject-enrollments', $next)->assertCreated();
     }
 
@@ -102,7 +103,7 @@ class SubjectEnrollmentTest extends TestCase
                 'title' => 'Class event', 'starts_at' => now()->addDay(), 'ends_at' => now()->addDay()->addHour(), 'created_by' => $mayor->id]);
         }
         $student = User::factory()->create();
-        $this->actingAs($student)->postJson('/api/blocks/'.$block->id.'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($block->id, 'irregular');
         $id = $this->actingAs($student)->postJson('/api/subject-enrollments', $offering)->assertCreated()->json('data.id');
         $this->getJson('/api/tasks')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $task->id);
         $this->postJson('/api/tasks/'.$task->id.'/complete')->assertOk();
@@ -130,7 +131,7 @@ class SubjectEnrollmentTest extends TestCase
         $block->update(['mayor_id' => $mayor->id]);
         $student = User::factory()->student($block)->create();
         $irregular = User::factory()->create();
-        $this->actingAs($irregular)->postJson('/api/blocks/'.$block->id.'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs($irregular)->joinApprovedBlock($block->id, 'irregular');
         $this->actingAs($student)->postJson('/api/subject-enrollments', $offering)->assertCreated();
         $this->actingAs($irregular)->postJson('/api/subject-enrollments', $offering)->assertCreated();
         $this->actingAs($mayor)->getJson('/api/blocks/'.$block->id.'/members')->assertOk()->assertJsonCount(3, 'data');
@@ -150,7 +151,7 @@ class SubjectEnrollmentTest extends TestCase
         $mayor = User::factory()->student($block)->create(['role' => 'mayor']);
         $block->update(['mayor_id' => $mayor->id]);
         $student = User::factory()->create();
-        $this->actingAs($student)->postJson('/api/blocks/'.$block->id.'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($block->id, 'irregular');
         $this->actingAs($student)->postJson('/api/subject-enrollments', $offering)->assertCreated();
         $other = Subject::create(['code' => 'OTHER', 'name' => 'Other Subject']);
         DB::table('block_subjects')->insert(['block_id' => $block->id, 'subject_id' => $other->id]);
@@ -171,7 +172,7 @@ class SubjectEnrollmentTest extends TestCase
         $mayor = User::factory()->student($block)->create(['role' => 'mayor']);
         $block->update(['mayor_id' => $mayor->id]);
         $student = User::factory()->create();
-        $this->actingAs($student)->postJson('/api/blocks/'.$block->id.'/join', ['student_type' => 'irregular'])->assertOk();
+        $this->actingAs($student)->joinApprovedBlock($block->id, 'irregular');
         $id = $this->actingAs($student)->postJson('/api/subject-enrollments', $offering)->assertCreated()->json('data.id');
         $term->forceFill(['is_active' => false])->save();
         $this->actingAs($mayor)->deleteJson('/api/blocks/'.$block->id.'/members/'.$student->id)->assertUnprocessable();

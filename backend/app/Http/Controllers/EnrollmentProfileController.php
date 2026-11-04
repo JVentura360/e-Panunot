@@ -12,7 +12,7 @@ class EnrollmentProfileController extends Controller
 {
     public function legacyJoin(): never
     {
-        abort(422, 'Join through My ledger and choose Regular or Irregular. Enrollment is immediate.');
+        abort(422, 'Submit a join request with your Regular or Irregular status and wait for mayor approval.');
     }
 
     public function show(Request $request, StudentEnrollmentService $enrollment): JsonResponse
@@ -37,7 +37,8 @@ class EnrollmentProfileController extends Controller
     {
         $data = $request->validate(['student_type' => ['required', Rule::in(['regular', 'irregular'])],
             'subject_ids' => ['prohibited']]);
-        return response()->json(['data' => $enrollment->enrollBlock($request->user()->id, $blockId, $data['student_type'], [], true)]);
+        return response()->json(['message' => 'Join request submitted. Please wait for mayor approval.',
+            'data' => app(\App\Services\BlockJoinService::class)->submit($request->user()->id, $blockId, $data['student_type'])]);
     }
 
     public function reconcile(Request $request, StudentEnrollmentService $enrollment): JsonResponse

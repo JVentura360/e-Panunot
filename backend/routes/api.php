@@ -40,9 +40,9 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\TrackClientChanges::clas
     Route::get('/blocks/lookup', [BlockController::class, 'lookup'])->middleware('throttle:30,1'); // must come before '{id}'
     Route::get('/blocks/{id}', [BlockController::class, 'show']);
     Route::get('/blocks/{blockId}/members', [BlockMemberController::class, 'index']);
-    Route::post('/blocks/{blockId}/join-requests', [\App\Http\Controllers\EnrollmentProfileController::class, 'legacyJoin']);
+    Route::post('/blocks/{blockId}/join-requests', [BlockMemberController::class, 'store']);
     Route::get('/blocks/{blockId}/join-requests', [BlockMemberController::class, 'requests']);
-    Route::post('/blocks/{blockId}/join-requests/{requestId}/approve', [\App\Http\Controllers\EnrollmentProfileController::class, 'legacyJoin']);
+    Route::post('/blocks/{blockId}/join-requests/{requestId}/approve', [BlockMemberController::class, 'approve']);
     Route::post('/blocks/{blockId}/join-requests/{requestId}/reject', [BlockMemberController::class, 'reject']);
     Route::get('/join-requests/mine', [BlockMemberController::class, 'mine']);
     Route::delete('/join-requests/{requestId}', [BlockMemberController::class, 'cancel']);
