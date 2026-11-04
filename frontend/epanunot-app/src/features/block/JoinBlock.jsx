@@ -76,9 +76,9 @@ export default function JoinBlock({ user }) {
 
   return <div className={styles.page}>
     {withdrawing && <ConfirmDialog title={`Withdraw from ${withdrawing.code}?`}
-      message={`Withdraw from ${withdrawing.name} (${withdrawing.code}) in ${withdrawing.block_code}? This removes the subject from your ledger. You will keep your block membership${user.role === 'mayor' ? ' and mayor role' : ''}.`}
+      message={`Withdraw from ${withdrawing.name} (${withdrawing.code}) in ${withdrawing.block_code}?`}
       confirmLabel="Withdraw" onCancel={() => setWithdrawing(null)} onConfirm={() => withdraw(withdrawing)} />}
-    <header className={styles.top}><h1>{joined ? 'My Ledger' : 'Join a Block'}</h1><p>{joined ? `Your block${user.block ? `: ${user.block}` : ''}. Manage the subjects you take below.` : 'Enter your block code, then confirm whether you are a regular or irregular student.'}</p></header>
+    <header className={styles.top}><h1>{joined ? 'My Ledger' : 'Join a Block'}</h1>{!joined && <p>Enter your block code, then confirm whether you are a regular or irregular student.</p>}</header>
     {joined && <EnrollmentStatus user={user} />}
     {!joined && profileQuery.isPending && <p role="status">Checking your block membership…</p>}
     {!joined && profileQuery.error && <p className={styles.error} role="alert">{errorMessage(profileQuery.error)} <button className="btn ghost" onClick={() => profileQuery.refetch()}>Retry membership check</button></p>}
@@ -103,7 +103,6 @@ export default function JoinBlock({ user }) {
               <p className={styles.subjectMayor}>Mayor: {entry.mayor_name ?? 'Not assigned'}</p>
             </div>
           </li>)}</ul>}
-      {regular && ledger.length > 0 && <p className={styles.explanation}>Your block subjects are enrolled automatically. You can withdraw individual subjects without leaving your block{user.role === 'mayor' ? ' or losing your mayor role' : ''}.</p>}
     </section>}
     {(!joined || !regular) && <>
     <section className={styles.section} aria-labelledby="find-subjects-heading">

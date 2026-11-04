@@ -97,11 +97,12 @@ function NameEditor({ initial, onSave, onCancel }) {
 
 // Block details for mayors, application status for students.
 function RoleSection({ user }) {
-    const applications = useApiQuery('/mayor-applications/mine', { enabled: user.role === 'student' });
+    const applications = useApiQuery('/mayor-applications/mine', { enabled: user.role === 'student' && !user.block_id });
     const block = useApiQuery(`/blocks/${user.block_id}`, { enabled: user.role === 'mayor' && Boolean(user.block_id) });
     const mine = (applications.data?.data ?? []).map(toApplication).reverse();
     const memberCount = block.data?.data?.member_count ?? null;
     const details = user.role === 'student' ? applications : block;
+    if (user.role === 'student' && user.block_id) return null;
     if ((user.role === 'student' || (user.role === 'mayor' && user.block_id)) && details.isPending) {
         return <section className={styles.section}><p role="status">Loading account details…</p></section>;
     }
@@ -183,7 +184,6 @@ export default function Profile({ user, onUpdateUser }) {
             <header className={styles.top}>
                 <div>
                     <h1>Profile</h1>
-                    <p>Your account details in e-Panunot.</p>
                 </div>
             </header>
 

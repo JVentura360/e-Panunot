@@ -611,11 +611,6 @@ return (
     <div className={styles.top}>
         <div>
         <h1>{isMayor ? 'All concerns' : 'My concerns'}</h1>
-        <p>
-            {isMayor
-            ? 'Concerns raised by your blockmates. Reply and update their status here.'
-            : 'Raise an issue with your block mayor and follow up on it here.'}
-        </p>
         </div>
         {!isMayor && (
         <button type="button" className="btn" onClick={() => setCreating(true)}>New concern</button>

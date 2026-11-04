@@ -71,15 +71,14 @@ export default function BlockManagement({ user }) {
     <div className={styles.page}>
       {removingMember && <ConfirmDialog
         title={`Remove ${removingMember.name}?`}
-        message={`Remove ${removingMember.name} from your block? Their subject enrollments and access to your assigned tasks will be removed, and their unresolved concerns will be marked as resolved. Personal tasks will be kept.`}
-        confirmLabel="Remove student"
+        message={`Remove ${removingMember.name}? Block enrollments and assigned-task access will be removed. Concerns will be resolved; personal tasks kept.`}
+        confirmLabel="Remove"
         onCancel={() => setRemovingMember(null)}
         onConfirm={() => removeMember(removingMember)}
       />}
       <header className={styles.top}>
         <div>
           <h1>Block Management  </h1>
-          <p>Manage your blockmates, join requests, and subjects.</p>
           <button type="button" className="btn ghost" onClick={() => Promise.all([memberQuery.refetch(), requestQuery.refetch(), subjectQuery.refetch()])}>Refresh</button>
         </div>
       </header>
@@ -151,7 +150,6 @@ export default function BlockManagement({ user }) {
 
       <section className={styles.section} id="applications">
         <h3>Join requests</h3>
-        <p className={styles.meta}>Review each student’s status before adding them to your block. Regular students receive the block’s subjects after approval.</p>
         {loading ? (
           <p className={styles.loading}>Loading...</p>
         ) : requests.length === 0 ? (
@@ -185,7 +183,6 @@ export default function BlockManagement({ user }) {
 
       <section className={styles.section} id="subjects">
         <h3>Subjects</h3>
-        <p className={styles.meta}>Subject loads are managed by the admin and shared by matching program, year level, and term. Students enroll through My ledger.</p>
         {loading ? (
           <p className={styles.loading}>Loading...</p>
         ) : subjects.length === 0 ? (
