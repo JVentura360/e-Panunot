@@ -14,17 +14,21 @@ export default function TaskItem({ t, onToggle, onEdit, onDelete }) {
         />
       )}
       <div className={styles.grow}>
-        <div className={styles.itemTitle}>{t.title}</div>
+        <div className={styles.taskHeading}>
+          <div className={styles.itemTitle}>{t.title}</div>
+          <span className={styles.due}>{t.done ? 'Completed' : left < 0 ? `${Math.abs(left)}d overdue` : left === 0 ? 'Due today' : left === 1 ? 'Tomorrow' : fmt(t.due)}</span>
+        </div>
         <div className={styles.itemMeta}>{t.personal ? 'Personal' : `${t.subject ? `${t.subject} · ` : ''}Assigned by ${t.by}`}{t.pendingSync ? ' · Pending sync' : ''}</div>
       </div>
+      <div className={styles.taskFooter}>
       <span className={styles.tag}>{t.platform || 'StepS'}</span>
-      <span className={styles.due}>{t.done ? 'Completed' : left < 0 ? `${Math.abs(left)}d overdue` : left === 0 ? 'Due today' : left === 1 ? 'Tomorrow' : fmt(t.due)}</span>
       {(onEdit || onDelete) && (
         <div className={styles.itemActions}>
           {onEdit && <button data-online-only type="button" className={styles.inlineAction} onClick={() => onEdit(t)} aria-label={`Edit ${t.title}`}>Edit</button>}
           {onDelete && <button data-online-only type="button" className={styles.inlineAction} onClick={() => onDelete(t)} aria-label={`Delete ${t.title}`}>Delete</button>}
         </div>
       )}
+      </div>
     </li>
   );
 }

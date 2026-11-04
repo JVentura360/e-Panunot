@@ -29,8 +29,15 @@
 .section > h3 span, .count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; background: var(--sand); border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
 .dailyQuote { max-width: 60ch; text-wrap: pretty; overflow-wrap: anywhere; }
 .list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
-.item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 18px 16px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
-.item:not(:has(input)) { grid-template-columns: minmax(0, 1fr) auto auto; }
+.item { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: 10px 12px; padding: 16px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
+.item:not(:has(input)) { grid-template-columns: minmax(0, 1fr); }
+.item > input { margin-top: 2px; }
+.taskHeading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.taskHeading .due { flex-shrink: 0; }
+.taskFooter { grid-column: 2; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px; min-width: 0; }
+.item:not(:has(input)) .taskFooter { grid-column: 1; }
+.taskFooter .tag { white-space: normal; overflow-wrap: anywhere; }
+.itemActions .inlineAction { margin: 0; min-height: 44px; padding: 8px 12px; font-size: .8125rem; }
 .item input { width: 20px; height: 20px; cursor: pointer; transition: transform 180ms ease; }
 .item input:active { transform: scale(.85); }
 .item { transition: background-color 180ms ease, border-color 180ms ease; }
@@ -38,7 +45,7 @@
 .done { background: color-mix(in srgb, var(--mist) 12%, var(--paper)); }
 .done .itemTitle { text-decoration: line-through; color: var(--muted); }
 .itemTitle { font-size: 0.9rem; font-weight: 600; overflow-wrap: anywhere; }
-.itemMeta { font-size: 0.73rem; color: var(--muted); margin-top: 4px; }
+.itemMeta { font-size: 0.73rem; color: var(--muted); margin-top: 4px; overflow-wrap: anywhere; line-height: 1.5; }
 .grow { min-width: 0; }
 .tag { font-size: 0.65rem; font-weight: 600; padding: 4px 8px; border-radius: 5px; background: color-mix(in srgb, var(--mist) 30%, var(--surface)); white-space: nowrap; }
 .due { font-weight: 600; font-size: 0.73rem; color: var(--forest); white-space: nowrap; }
@@ -54,7 +61,7 @@
 .inlineAction { display: block; margin: 12px auto 0; min-height: 44px; border: 0; border-radius: 8px; background: var(--sand); color: var(--ink); padding: 8px 16px; font-weight: 600; }
 .annActions { display: flex; gap: 1rem; margin-top: 0.5rem; }
 .error { color: #b00020; font-size: 0.9rem; margin: 0 0 1rem; }
-.itemActions { display: flex; gap: 0.75rem; }
+.itemActions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 @media (max-width: 1000px) { .top { align-items: flex-start; flex-direction: column; } .workspace { grid-template-columns: minmax(0, 1fr) 280px; gap: 24px; } }
 @media (max-width: 760px) {
   .page { padding: 24px 16px 32px; }
@@ -70,12 +77,6 @@
   .stat small { display: none; }
   .workspace { grid-template-columns: minmax(0, 1fr); }
   .noticePanel { border-top: 1px solid var(--line); padding-top: 24px; }
-  .item { grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px 12px; }
-  .item:not(:has(input)) { grid-template-columns: minmax(0, 1fr) auto; }
-  .tag { grid-column: 2; justify-self: start; }
-  .item:not(:has(input)) .tag { grid-column: 1; }
-  .due { grid-column: 3; grid-row: 1; }
-  .item:not(:has(input)) .due { grid-column: 2; }
   .filters { width: 100%; }
   .filters button { flex: 1; padding-inline: 8px; }
 }
