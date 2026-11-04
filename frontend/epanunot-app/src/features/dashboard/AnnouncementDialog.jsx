@@ -38,7 +38,6 @@ return (
         <p className={modal.eyebrow}>Announcement</p>
         <h2 id="ann-dialog-title">{announcement.title}</h2>
         </div>
-        <button type="button" className={modal.close} aria-label="Close dialog" onClick={onClose}>×</button>
     </header>
 
     <div className={styles.annDialogMeta}>

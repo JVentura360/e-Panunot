@@ -16,7 +16,7 @@ import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { applicationEligibility } from '../block/enrollmentRules.js';
 import AnnouncementDialog from './AnnouncementDialog.jsx';
 import { useOffline } from '../../offline/useOffline.js';
-import { blockLabel, shortDate } from './announcementUtils.js';
+import { blockLabel, shortDate, readSeen, writeSeen } from './announcementUtils.js';
 
 export default function Dashboard({ user }) {
   const { online } = useOffline();
@@ -28,9 +28,22 @@ export default function Dashboard({ user }) {
   const [editingAnn, setEditingAnn] = useState(null);
   const [deletingAnn, setDeletingAnn] = useState(null);
   const [viewingAnn, setViewingAnn] = useState(null);
+  const [seenAnns, setSeenAnns] = useState(() => readSeen(user.id));
   const [editingTask, setEditingTask] = useState(null);
   const [deletingTask, setDeletingTask] = useState(null);
   const isMayor = user.role === 'mayor';
+  // Announcements this user hasn't seen yet (excluding their own) pop up one at a time.
+  const nextNewAnn = anns.find((a) => !seenAnns.has(a.id) && !(a.created_by?.id != null && a.created_by.id === user.id));
+  const noOtherDialog = !modal && !editingAnn && !deletingAnn && !editingTask && !deletingTask;
+  const dialogAnn = viewingAnn ?? (noOtherDialog ? nextNewAnn : null);
+  const closeAnnDialog = () => {
+    if (dialogAnn) {
+      const next = new Set(seenAnns).add(dialogAnn.id);
+      setSeenAnns(next);
+      writeSeen(user.id, next);
+    }
+    setViewingAnn(null);
+  };
   const eligibility = applicationEligibility(user);
   const { choices } = useSubjectChoices(user);
   const offered = choices.filter((choice) => choice.blockId === user.block_id);
@@ -172,7 +185,7 @@ export default function Dashboard({ user }) {
         onClose={() => setModal(null)}
       />
     )}
-    {viewingAnn && <AnnouncementDialog announcement={viewingAnn} onClose={() => setViewingAnn(null)} />}
+    {dialogAnn && <AnnouncementDialog key={dialogAnn.id} announcement={dialogAnn} onClose={closeAnnDialog} />}
       {editingAnn && (
         <Modal
           title="Edit Announcement"
