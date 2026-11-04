@@ -8,6 +8,9 @@
 .title {
   font-size: 2rem;
 }
+.pageHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
+.pageHeading .title { margin: 0; min-width: 0; }
+.pageHeading button { flex-shrink: 0; }
 
 .subtitle {
   color: var(--muted);
@@ -249,3 +252,29 @@
 .memberSearch { display: grid; gap: 8px; margin: 24px 0 16px; font-weight: 600; }
 .memberSearch input { min-height: 48px; width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--control-border); border-radius: 8px; }
 .mayorBadge { display: inline-block; margin-left: 8px; font-size: .75rem; color: var(--forest); }
+.cellValue { min-width: 0; overflow-wrap: anywhere; }
+.mobileOnly { display: none; }
+
+@media (max-width: 760px) {
+  .responsiveTableWrap { overflow: visible; border: 0; background: transparent; border-radius: 0; }
+  .responsiveTable { display: block; min-width: 0; }
+  .responsiveTable thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .responsiveTable tbody { display: grid; gap: 8px; }
+  .responsiveTable tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 104px); grid-template-areas: 'identity detail' 'secondary action'; align-items: center; gap: 4px 12px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .responsiveTable tbody tr:hover { background: var(--surface); }
+  .responsiveTable td { display: block; min-width: 0; padding: 0; border: 0; font-size: .875rem; }
+  .responsiveTable td:nth-child(1) { grid-area: identity; }
+  .responsiveTable td:nth-child(2) { grid-area: secondary; color: var(--muted); font-size: .8125rem; }
+  .responsiveTable td:nth-child(3) { grid-area: detail; text-align: right; font-size: .75rem; color: var(--muted); }
+  .responsiveTable td:nth-child(4) { grid-area: action; justify-self: end; }
+  .responsiveTable td:first-child .cellValue { font-weight: 600; }
+  .responsiveTable td button { min-width: 0; max-width: 100%; min-height: 44px; padding: 8px 12px; font-size: .8125rem; }
+  .mobileOnly { display: inline; }
+  .membersTable tbody tr { grid-template-areas: 'identity detail' 'secondary detail'; }
+  .membersTable td:nth-child(3) .cellValue { display: inline-block; padding: 4px 8px; border-radius: 6px; background: var(--sage-soft); color: var(--ink); font-size: .6875rem; line-height: 1.4; }
+  .membersTable .mayorBadge { margin-left: 4px; font-size: .6875rem; }
+  .membersDialog.membersDialog { padding: 24px 16px; }
+  .membersDialog h2 { overflow-wrap: anywhere; }
+  .memberSearch { min-width: 0; }
+  .memberSearch input { min-width: 0; }
+}

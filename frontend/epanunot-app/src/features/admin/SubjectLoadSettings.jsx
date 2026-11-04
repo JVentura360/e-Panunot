@@ -86,7 +86,6 @@ export default function SubjectLoadSettings() {
   const [selected, setSelected] = useState(null);
   return <section className={styles.section} aria-labelledby="shared-load-title">
     <h2 id="shared-load-title">Shared subject loads</h2>
-    <p className={styles.hint}>Only admins can change loads. Blocks with the same program, year level, and term share one approved load.</p>
     <form className={styles.scope} onSubmit={(event) => { event.preventDefault(); setSelected({ program: program.trim().toUpperCase(), yearLevel: Number(year) }); }}>
       <label>Program code<input required maxLength={20} pattern="[A-Za-z0-9]+" value={program} onChange={(event) => setProgram(event.target.value.toUpperCase())} placeholder="ITE" /></label>
       <label>Year level<select value={year} onChange={(event) => setYear(event.target.value)}>{[1, 2, 3, 4].map((value) => <option key={value} value={value}>Year {value}</option>)}</select></label>

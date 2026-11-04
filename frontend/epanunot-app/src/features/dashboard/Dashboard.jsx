@@ -81,8 +81,7 @@ export default function Dashboard({ user }) {
       <header className={styles.top}>
         <div>
           <p className={styles.eyebrow}>{user.block && user.block !== '-' ? user.block : 'Your workspace'} <span> / </span> Overview</p>
-          {!isMayor && <h1>{`Hello, ${user.name.split(' ')[0]}.`}</h1>}
-          <DailyQuote userId={user.id} heading={isMayor} />
+          <DailyQuote userId={user.id} heading />
         </div>
         <div className={styles.headerActions}>
           {isMayor && <button data-online-only className="btn alt" onClick={() => setModal('ann')}>New Announcement</button>}

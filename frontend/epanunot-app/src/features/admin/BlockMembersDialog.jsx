@@ -26,10 +26,10 @@ export default function BlockMembersDialog({ block, onClose }) {
     </label>
     {query.isPending && <p role="status">Loading members…</p>}
     {query.error && <p role="alert">{errorMessage(query.error)} <button type="button" className="btn ghost" onClick={() => query.refetch()}>Retry</button></p>}
-    {!query.isPending && !query.error && <div className={styles.tableWrap}><table className={styles.table}>
+    {!query.isPending && !query.error && <div className={`${styles.tableWrap} ${styles.responsiveTableWrap}`}><table className={`${styles.table} ${styles.responsiveTable} ${styles.membersTable}`} role="table" aria-label={`${block.name} members`}>
       <thead><tr><th>Name</th><th>Email</th><th>Membership</th></tr></thead>
-      <tbody>{visible.map(member => <tr key={member.id}><td>{member.name}{member.is_mayor && <strong className={styles.mayorBadge}>Mayor</strong>}</td>
-        <td>{member.email}</td><td>{Number(member.block_id) === Number(block.id) || member.is_mayor ? 'Primary block' : 'Subject enrollment'}</td></tr>)}</tbody>
+      <tbody>{visible.map(member => <tr key={member.id}><td data-label="Name"><div className={styles.cellValue}>{member.name}{member.is_mayor && <strong className={styles.mayorBadge}>Mayor</strong>}</div></td>
+        <td data-label="Email"><div className={styles.cellValue}>{member.email}</div></td><td data-label="Membership"><div className={styles.cellValue}>{Number(member.block_id) === Number(block.id) || member.is_mayor ? 'Primary block' : 'Subject enrollment'}</div></td></tr>)}</tbody>
     </table>{!visible.length && <p className={styles.empty}>{members.length ? 'No members match your search.' : 'No members in this block yet.'}</p>}</div>}
     <footer className={modal.actions}><button type="button" className="btn ghost" onClick={() => query.refetch()} disabled={query.isFetching}>Refresh</button><button type="button" className="btn" onClick={onClose}>OK</button></footer>
   </dialog>;

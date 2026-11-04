@@ -30,19 +30,14 @@ export default function AdminDashboard() {
 
 
 
-    const pendingCount = apps.filter(
-        (a) => a.status === 'pending'
-    ).length;
 
     return (
         <div className={styles.page}>
             {reviewing && <ApplicationSubjectReview application={reviewing} onApprove={approve} onClose={() => setReviewing(null)} />}
-            <h1 className={styles.title}>{tab === 'term' ? 'School Year' : tab === 'apps' ? 'Applications' : 'Mayors'}</h1>
-
-            <p className={styles.subtitle}>
-                {tab === 'term' ? 'Manage the current academic year and enrollment term.' : tab === 'list' ? 'View current mayors and their blocks.' : `${pendingCount} pending application${pendingCount === 1 ? '' : 's'}. Approving one creates the mayor and block.`}
-            </p>
-            {tab !== 'term' && <button type="button" className="btn ghost" onClick={() => load(true).catch((error) => setNotice(error.message))}>Refresh</button>}
+            <div className={styles.pageHeading}>
+                <h1 className={styles.title}>{tab === 'term' ? 'School Year' : tab === 'apps' ? 'Applications' : 'Mayors'}</h1>
+                {tab !== 'term' && <button type="button" className="btn ghost" onClick={() => load(true).catch((error) => setNotice(error.message))}>Refresh</button>}
+            </div>
 
 
             {notice && (
