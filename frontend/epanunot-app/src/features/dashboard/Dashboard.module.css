@@ -27,6 +27,7 @@
 .section { margin-bottom: 28px; }
 .section > h3 { font-family: 'Figtree', sans-serif; font-size: 0.8rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .section > h3 span, .count { display: inline-grid; place-items: center; min-width: 24px; height: 24px; background: var(--sand); border-radius: 6px; font-size: 0.7rem; font-weight: 600; }
+.dailyQuote { max-width: 60ch; text-wrap: pretty; overflow-wrap: anywhere; }
 .list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .item { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 12px; padding: 18px 16px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
 .item:not(:has(input)) { grid-template-columns: minmax(0, 1fr) auto auto; }

@@ -15,6 +15,7 @@ import styles from './Dashboard.module.css';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { applicationEligibility } from '../block/enrollmentRules.js';
 import AnnouncementDialog from './AnnouncementDialog.jsx';
+import DailyQuote from './DailyQuote.jsx';
 import { useOffline } from '../../offline/useOffline.js';
 import { blockLabel, shortDate, readSeen, writeSeen } from './announcementUtils.js';
 
@@ -80,8 +81,8 @@ export default function Dashboard({ user }) {
       <header className={styles.top}>
         <div>
           <p className={styles.eyebrow}>{user.block && user.block !== '-' ? user.block : 'Your workspace'} <span> / </span> Overview</p>
-          <h1>{isMayor ? 'A little clarity for your day.' : `Hello, ${user.name.split(' ')[0]}.`}</h1>
-          <p>{isMayor ? 'Here’s what’s happening in your block.' : 'Let’s take today one task at a time.'}</p>
+          {!isMayor && <h1>{`Hello, ${user.name.split(' ')[0]}.`}</h1>}
+          <DailyQuote userId={user.id} heading={isMayor} />
         </div>
         <div className={styles.headerActions}>
           {isMayor && <button data-online-only className="btn alt" onClick={() => setModal('ann')}>New Announcement</button>}
