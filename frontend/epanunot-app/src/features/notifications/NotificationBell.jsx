@@ -19,8 +19,13 @@ export default function NotificationBell({ user }) {
     const { online } = useOffline();
 
     const query = useApiQuery('/notifications', { enabled: user.role !== 'admin', refetchInterval: online ? 30000 : false });
-    const items = query.data?.data ?? [];
-    const unread = query.data?.unread_count ?? 0;
+    // Ids marked as read this session; hidden immediately without waiting for a refetch.
+    const [readIds, setReadIds] = useState(() => new Set());
+    const [panelTop, setPanelTop] = useState(0);
+    // Read notifications are removed from the list, so an empty list shows "You're all caught up."
+    const items = (query.data?.data ?? []).filter((n) => !n.read && !readIds.has(n.id));
+    const unread = items.length;
+    const markRead = (ids) => setReadIds((prev) => new Set([...prev, ...ids]));
 
     useEffect(() => {
         if (!open) return;
@@ -48,12 +53,27 @@ export default function NotificationBell({ user }) {
             navigate(item.link);
             return;
         }
-        if (!item.read) await api(`/notifications/${item.id}/read`, { method: 'POST' });
+        if (!item.read) {
+            await api(`/notifications/${item.id}/read`, { method: 'POST' });
+            markRead([item.id]);
+            query.refetch?.();
+        }
         setOpen(false);
         navigate(item.link);
     });
 
-    const markAll = () => run(() => api('/notifications/read-all', { method: 'POST' }));
+    const markAll = () => run(async () => {
+        await api('/notifications/read-all', { method: 'POST' });
+        markRead(items.map((n) => n.id));
+        query.refetch?.();
+    });
+
+    const toggle = () => {
+        // On small screens the panel is fixed-position; anchor it just below the bell.
+        const rect = buttonRef.current?.getBoundingClientRect();
+        if (rect) setPanelTop(Math.round(rect.bottom + 8));
+        setOpen((v) => !v);
+    };
 
     return (
         <div ref={wrapRef} className={styles.wrap}>
@@ -64,7 +84,7 @@ export default function NotificationBell({ user }) {
             aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
             aria-expanded={open}
             aria-haspopup="true"
-            onClick={() => setOpen((v) => !v)}
+            onClick={toggle}
         >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
@@ -73,7 +93,7 @@ export default function NotificationBell({ user }) {
         </button>
 
         {open && (
-            <div className={styles.panel}>
+            <div className={styles.panel} style={{ '--panel-top': `${panelTop}px` }}>
             <div className={styles.head}>
                 <strong>Notifications</strong>
                 {unread > 0 && <button type="button" data-online-only className={styles.link} onClick={markAll}>Mark all as read</button>}

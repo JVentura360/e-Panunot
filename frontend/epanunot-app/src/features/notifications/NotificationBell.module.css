@@ -20,3 +20,14 @@
 .itemTime { font-size: 0.72rem; color: var(--muted); }
 .empty { padding: 16px 8px; margin: 0; color: var(--muted); font-size: 0.85rem; }
 .error { color: #b00020; font-size: 0.85rem; margin: 0 8px 8px; }
+/* Mobile: pin the panel to the viewport so it can never extend off-screen */
+@media (max-width: 600px) {
+  .panel {
+    position: fixed;
+    top: var(--panel-top, 64px); left: 12px; right: 12px;
+    width: auto; max-width: none;
+    max-height: calc(100vh - var(--panel-top, 64px) - 12px);
+    max-height: calc(100dvh - var(--panel-top, 64px) - 12px);
+    box-sizing: border-box;
+  }
+}
