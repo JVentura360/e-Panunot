@@ -25,6 +25,7 @@ export default function JoinBlock({ user }) {
   const [searching, setSearching] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [codeError, setCodeError] = useState('');
   const [notice, setNotice] = useState('');
   const subjectsQuery = useApiQuery('/subjects', { query: { block_id: result?.id }, enabled: Boolean(result) });
   const subjects = subjectsQuery.data?.data ?? [];
@@ -32,9 +33,9 @@ export default function JoinBlock({ user }) {
   const unavailable = readiness.unavailable;
 
   const search = async (event) => {
-    event.preventDefault(); setSearching(true); setError(''); setNotice(''); setResult(null); setSelected([]); setChoice('');
+    event.preventDefault(); setSearching(true); setError(''); setCodeError(''); setNotice(''); setResult(null); setSelected([]); setChoice('');
     try { const response = await api('/blocks/lookup', { query: { code: code.trim().toUpperCase() } }); setResult(response.data); }
-    catch (e) { setError(errorMessage(e)); }
+    catch (e) { setCodeError(errorMessage(e)); }
     finally { setSearching(false); }
   };
   const enroll = async () => {
@@ -98,8 +99,13 @@ export default function JoinBlock({ user }) {
       <h2 id="find-subjects-heading">{joined ? 'Find subjects by block' : 'Find your block'}</h2>
       <p className={styles.explanation}>{joined ? 'Search for the blocks where you take subjects. Enrolling here will not change your primary block.' : 'Send a request to the block’s mayor. After approval, regular students receive the block’s subjects; irregular students choose subjects in My Ledger.'}</p>
       <form className={styles.search} onSubmit={search}>
-        <label className={styles.srOnly} htmlFor="block-code">Block code</label><input id="block-code" className={styles.input} value={code} onChange={(event) => setCode(event.target.value)} placeholder="31-ITE-04" required maxLength={30} autoComplete="off" />
+        <div className={styles.codeField}>
+          <label className={styles.srOnly} htmlFor="block-code">Block code</label>
+          <input id="block-code" className={styles.input} value={code} onChange={(event) => { setCode(event.target.value); setCodeError(''); }} placeholder="31-ITE-04" required maxLength={30} autoComplete="off"
+            aria-invalid={Boolean(codeError)} aria-describedby={codeError ? 'block-code-error' : undefined} />
+        </div>
         <button className="btn" type="submit" disabled={searching || busy || !code.trim()}>{searching ? 'Searching…' : 'Find block'}</button>
+        {codeError && <p id="block-code-error" className={styles.fieldError} role="alert">{codeError}</p>}
       </form>
       {result && <div className={styles.result}>
         <h3 className={styles.code}>{result.code}</h3><p className={styles.meta}>{result.school_year} · Semester {result.semester} · Mayor: {result.mayor_name ?? 'Not assigned'}</p>

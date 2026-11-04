@@ -9,10 +9,17 @@
 .top p { color: var(--muted); margin-top: 4px; }
 
 .search {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 6px 10px;
   margin-bottom: 16px;
 }
+
+.codeField { flex: 1; min-width: 0; display: grid; gap: 6px; }
+.codeField .input { width: 100%; }
+.fieldError { grid-column: 1 / -1; margin: 0; color: var(--danger); font-size: .875rem; line-height: 1.5; }
+.input[aria-invalid='true'] { border-color: var(--danger); }
 
 .input {
   flex: 1;
