@@ -95,14 +95,12 @@ export default function JoinBlock({ user }) {
       {ledgerQuery.isPending ? <p role="status">Loading your ledger…</p> : ledgerQuery.error ? <p className={styles.error} role="alert">{errorMessage(ledgerQuery.error)} <button className="btn ghost" onClick={() => ledgerQuery.refetch()}>Retry</button></p>
         : ledger.length === 0 ? <div className="empty">No subjects enrolled. You still belong to your block.{!regular && ' Find a block below to select the subjects you take.'}</div>
           : <ul className={styles.subjectGrid}>{ledger.map((entry) => <li className={styles.subjectCard} key={entry.id}>
+            {editingLedger && mayWithdrawSubjects(effectiveUser) && <button className={styles.withdrawButton} disabled={busy || unavailable} onClick={() => setWithdrawing(entry)} aria-label={`Withdraw from ${entry.code} in ${entry.block_code}`}>Withdraw</button>}
             <div className={styles.subjectContent}>
-              <div className={styles.subjectIdentifiers}><span className={styles.subjectCode}>{entry.code}</span><span className={styles.subjectBlock}>{entry.block_code}</span></div>
               <h3 className={styles.subjectTitle}>{entry.name}</h3>
+              <p className={styles.subjectIdentifiers}><span className={styles.subjectCode}>{entry.code}</span><span aria-hidden="true"> · </span><span>{entry.block_code}</span></p>
               <p className={styles.subjectTerm}>{entry.school_year}<span aria-hidden="true"> · </span>Semester {entry.semester}</p>
-            </div>
-            <div className={styles.subjectFooter}>
-              <p className={styles.subjectMayor}><span>Mayor</span><strong>{entry.mayor_name ?? 'Not assigned'}</strong></p>
-              {editingLedger && mayWithdrawSubjects(effectiveUser) && <button className={styles.withdrawButton} disabled={busy || unavailable} onClick={() => setWithdrawing(entry)} aria-label={`Withdraw from ${entry.code} in ${entry.block_code}`}>Withdraw</button>}
+              <p className={styles.subjectMayor}>Mayor: {entry.mayor_name ?? 'Not assigned'}</p>
             </div>
           </li>)}</ul>}
       {regular && ledger.length > 0 && <p className={styles.explanation}>Your block subjects are enrolled automatically. You can withdraw individual subjects without leaving your block{user.role === 'mayor' ? ' or losing your mayor role' : ''}.</p>}

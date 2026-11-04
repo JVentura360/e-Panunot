@@ -3,6 +3,7 @@ import { useApiQuery } from '../../api/useApiQuery.js';
 import { api, errorMessage } from '../../api/client.js';
 import styles from './BlockManagement.module.css';
 import EnrollmentStatus from './EnrollmentStatus.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 // The API sends UTC timestamps like "2026-10-30 11:24:00".
 const formatDate = (value) =>
@@ -22,6 +23,8 @@ export default function BlockManagement({ user }) {
   const queryError = memberQuery.error || requestQuery.error || subjectQuery.error;
   const error = actionError || (queryError ? errorMessage(queryError) : '');
   const [busyId, setBusyId] = useState(null);
+  const [editingMembers, setEditingMembers] = useState(false);
+  const [removingMember, setRemovingMember] = useState(null);
   const review = async (request, action) => {
     setBusyId(`request-${request.id}`);
     setError('');
@@ -36,14 +39,11 @@ export default function BlockManagement({ user }) {
   };
 
   const removeMember = async (member) => {
-    if (!window.confirm(`Remove ${member.name} from your block?`)) return;
-
     setBusyId(`member-${member.id}`);
     setError('');
     try {
       await api(`/blocks/${blockId}/members/${member.id}`, { method: 'DELETE' });
-    } catch (e) {
-      setError(errorMessage(e));
+      setRemovingMember(null);
     } finally {
 
       setBusyId(null);
@@ -69,6 +69,13 @@ export default function BlockManagement({ user }) {
 
   return (
     <div className={styles.page}>
+      {removingMember && <ConfirmDialog
+        title={`Remove ${removingMember.name}?`}
+        message={`Remove ${removingMember.name} from your block? Their subject enrollments and access to your assigned tasks will be removed, and their unresolved concerns will be marked as resolved. Personal tasks will be kept.`}
+        confirmLabel="Remove student"
+        onCancel={() => setRemovingMember(null)}
+        onConfirm={() => removeMember(removingMember)}
+      />}
       <header className={styles.top}>
         <div>
           <h1>Block Management  </h1>
@@ -114,13 +121,21 @@ export default function BlockManagement({ user }) {
       </section>
 
       <section className={styles.section} id="blockmates">
-        <h3>Blockmates</h3>
+        <div className={styles.sectionHead}>
+          <h3>Blockmates</h3>
+          <button type="button" className="btn ghost" aria-pressed={editingMembers}
+            disabled={busyId !== null || (!editingMembers && (loading || !members.some((member) => !member.is_mayor)))}
+            onClick={() => setEditingMembers((editing) => !editing)}>{editingMembers ? 'Done' : 'Edit'}</button>
+        </div>
         {loading ? (
           <p className={styles.loading}>Loading...</p>
         ) : (
           <div className={styles.list}>
             {members.map((m) => (
-              <div className={styles.item} key={m.id}>
+              <div className={`${styles.item} ${styles.memberItem}`} key={m.id}>
+                {editingMembers && !m.is_mayor && <button type="button"
+                  className={styles.removeButton} disabled={busyId !== null}
+                  onClick={() => setRemovingMember(m)} aria-label={`Remove ${m.name} from your block`}>Remove</button>}
                 <div className={styles.grow}>
                   <div className={styles.name}>
                     {m.name}
@@ -128,15 +143,6 @@ export default function BlockManagement({ user }) {
                   </div>
                   <div className={styles.meta}>{m.email}</div>
                 </div>
-                {!m.is_mayor && (
-                  <button
-                    className={styles.rejectBtn}
-                    disabled={busyId === `member-${m.id}`}
-                    onClick={() => removeMember(m)}
-                  >
-                    Remove
-                  </button>
-                )}
               </div>
             ))}
           </div>

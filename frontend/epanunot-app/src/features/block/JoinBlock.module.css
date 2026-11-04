@@ -129,44 +129,18 @@
 .grow { flex: 1; min-width: 0; }
 .name { font-weight: 600; }
 
-.subjectGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr));
-  gap: 16px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.subjectCard {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--surface);
-  overflow: hidden;
-}
-
-.subjectContent { padding: 20px 20px 16px; }
-.subjectIdentifiers { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
-.subjectCode { font-size: .875rem; font-weight: 700; color: var(--forest); overflow-wrap: anywhere; }
-.subjectBlock { font-size: .8125rem; color: var(--muted); text-align: right; overflow-wrap: anywhere; }
-.subjectTitle { margin: 0; font-size: 1.125rem; font-weight: 700; line-height: 1.35; overflow-wrap: anywhere; }
-.subjectTerm { margin: 8px 0 0; font-size: .8125rem; line-height: 1.5; color: var(--muted); }
-.subjectFooter { display: flex; align-items: center; gap: 16px; justify-content: space-between; margin-top: auto; padding: 12px 20px; border-top: 1px solid var(--line); }
-.subjectMayor { display: grid; gap: 2px; min-width: 0; margin: 0; font-size: .8125rem; line-height: 1.4; overflow-wrap: anywhere; }
-.subjectMayor span { color: var(--muted); font-size: .75rem; }
-.subjectMayor strong { font-weight: 500; }
+.subjectGrid { display: grid; gap: 10px; list-style: none; padding: 0; margin: 0; }
+.subjectCard { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 14px 16px; border: 1px solid var(--line); border-left: 6px solid var(--sage); border-radius: 12px; background: var(--surface); }
+.subjectContent { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.subjectTitle { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.4; }
+.subjectIdentifiers { margin: 4px 0 0; font-size: .85rem; color: var(--muted); line-height: 1.5; }
+.subjectCode { font-weight: 600; }
+.subjectTerm, .subjectMayor { margin: 2px 0 0; font-size: .8125rem; line-height: 1.5; color: var(--muted); }
 .withdrawButton { flex-shrink: 0; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--danger); font: inherit; font-size: .8125rem; font-weight: 600; cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
 .withdrawButton:hover:not(:disabled) { background: var(--danger-soft); border-color: var(--danger); }
 .withdrawButton:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; }
 .withdrawButton:disabled { opacity: .5; cursor: not-allowed; }
 
-@media (max-width: 400px) {
-  .subjectContent { padding: 16px; }
-  .subjectFooter { padding: 12px 16px; gap: 12px; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .withdrawButton { transition: none; }

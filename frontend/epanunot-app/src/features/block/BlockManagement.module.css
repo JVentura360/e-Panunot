@@ -96,6 +96,14 @@
 }
 
 .section h3 { font-size: 1.15rem; margin-bottom: 12px; }
+.sectionHead { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.sectionHead h3 { margin: 0; }
+.memberItem { flex-wrap: nowrap; }
+.memberItem .grow { min-width: 0; flex-basis: auto; overflow-wrap: anywhere; }
+.removeButton { flex-shrink: 0; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--danger); font: inherit; font-size: .8125rem; font-weight: 600; cursor: pointer; }
+.removeButton:hover:not(:disabled) { background: var(--danger-soft); border-color: var(--danger); }
+.removeButton:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; }
+.removeButton:disabled { opacity: .55; cursor: not-allowed; }
 
 .list { display: grid; gap: 10px; }
 
@@ -147,7 +155,7 @@
 .acceptBtn, .rejectBtn { min-height: 44px; }
 @media (max-width: 760px) {
   .page { padding: 24px 16px; }
-  .item { flex-wrap: wrap; }
+  .item:not(.memberItem) { flex-wrap: wrap; }
   .grow { flex-basis: 100%; min-width: 0; overflow-wrap: anywhere; }
 }
 
