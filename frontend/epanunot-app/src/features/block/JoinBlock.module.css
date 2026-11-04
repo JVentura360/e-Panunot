@@ -90,7 +90,8 @@
 
 .section { margin-bottom: 28px; }
 .section h2 { font-size: 1.15rem; margin-bottom: 12px; }
-.sectionHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.sectionHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.sectionControls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
 .sectionHead h2 { margin: 0; }
 .count { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 6px; background: var(--sage-soft); font-size: .85rem; }
 .explanation { color: var(--muted); margin: 8px 0 18px; max-width: 72ch; }

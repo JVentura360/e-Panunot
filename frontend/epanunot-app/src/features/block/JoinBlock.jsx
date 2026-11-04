@@ -3,6 +3,7 @@ import { useApiQuery } from '../../api/useApiQuery.js';
 import { api, errorMessage } from '../../api/client.js';
 import EnrollmentStatus from './EnrollmentStatus.jsx';
 import PendingJoinLedger from './PendingJoinLedger.jsx';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import { isRegularStudent, mayWithdrawSubjects, enrollmentReadiness } from './enrollmentRules.js';
 import styles from './JoinBlock.module.css';
 
@@ -27,6 +28,8 @@ export default function JoinBlock({ user }) {
   const [error, setError] = useState('');
   const [codeError, setCodeError] = useState('');
   const [notice, setNotice] = useState('');
+  const [editingLedger, setEditingLedger] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(null);
   const subjectsQuery = useApiQuery('/subjects', { query: { block_id: result?.id }, enabled: Boolean(result) });
   const subjects = subjectsQuery.data?.data ?? [];
   const readiness = enrollmentReadiness(joined, profileQuery, ledgerQuery);
@@ -52,10 +55,12 @@ export default function JoinBlock({ user }) {
     finally { setBusy(false); }
   };
   const withdraw = async (entry) => {
-    if (!window.confirm(`Withdraw from ${entry.code} in ${entry.block_code}? This removes it from your current ledger.`)) return;
     setBusy(true); setError(''); setNotice('');
-    try { await api(`/subject-enrollments/${entry.id}`, { method: 'DELETE' }); setNotice(`Withdrawn from ${entry.code}.`); }
-    catch (e) { setError(errorMessage(e)); }
+    try {
+      await api(`/subject-enrollments/${entry.id}`, { method: 'DELETE' });
+      setNotice(`Withdrawn from ${entry.code}.`);
+      setWithdrawing(null);
+    }
     finally { setBusy(false); }
   };
   const anotherRegularBlock = joined && regular && result && Number(primaryBlockId) !== result.id;
@@ -70,6 +75,9 @@ export default function JoinBlock({ user }) {
   }} />;
 
   return <div className={styles.page}>
+    {withdrawing && <ConfirmDialog title={`Withdraw from ${withdrawing.code}?`}
+      message={`Withdraw from ${withdrawing.name} (${withdrawing.code}) in ${withdrawing.block_code}? This removes the subject from your ledger. You will keep your block membership${user.role === 'mayor' ? ' and mayor role' : ''}.`}
+      confirmLabel="Withdraw" onCancel={() => setWithdrawing(null)} onConfirm={() => withdraw(withdrawing)} />}
     <header className={styles.top}><h1>{joined ? 'My Ledger' : 'Join a Block'}</h1><p>{joined ? `Your block${user.block ? `: ${user.block}` : ''}. Manage the subjects you take below.` : 'Enter your block code, then confirm whether you are a regular or irregular student.'}</p></header>
     {joined && <EnrollmentStatus user={user} />}
     {!joined && profileQuery.isPending && <p role="status">Checking your block membership…</p>}
@@ -77,7 +85,12 @@ export default function JoinBlock({ user }) {
     <div aria-live="polite">{error && <div className={styles.error} role="alert">{error}</div>}{notice && <div className={styles.notice} role="status">{notice}</div>}</div>
     {joined && <section className={styles.section} aria-labelledby="ledger-heading" aria-busy={ledgerQuery.isFetching}>
       <div className={styles.sectionHead}><h2 id="ledger-heading">Enrolled subjects <span className={styles.count}>{ledger.length}</span></h2>
-        <button className="btn ghost" disabled={ledgerQuery.isFetching || busy} onClick={() => Promise.all([ledgerQuery.refetch(), profileQuery.refetch()])}>Refresh</button>
+        <div className={styles.sectionControls}>
+          <button className="btn ghost" disabled={ledgerQuery.isFetching || busy} onClick={() => Promise.all([ledgerQuery.refetch(), profileQuery.refetch()])}>Refresh</button>
+          {mayWithdrawSubjects(effectiveUser) && <button className="btn ghost" aria-pressed={editingLedger}
+            disabled={busy || (!editingLedger && (unavailable || ledger.length === 0))}
+            onClick={() => setEditingLedger((editing) => !editing)}>{editingLedger ? 'Done' : 'Edit'}</button>}
+        </div>
       </div>
       {ledgerQuery.isPending ? <p role="status">Loading your ledger…</p> : ledgerQuery.error ? <p className={styles.error} role="alert">{errorMessage(ledgerQuery.error)} <button className="btn ghost" onClick={() => ledgerQuery.refetch()}>Retry</button></p>
         : ledger.length === 0 ? <div className="empty">No subjects enrolled. You still belong to your block.{!regular && ' Find a block below to select the subjects you take.'}</div>
@@ -89,7 +102,7 @@ export default function JoinBlock({ user }) {
             </div>
             <div className={styles.subjectFooter}>
               <p className={styles.subjectMayor}><span>Mayor</span><strong>{entry.mayor_name ?? 'Not assigned'}</strong></p>
-              {mayWithdrawSubjects(effectiveUser) && <button className={styles.withdrawButton} disabled={busy || unavailable} onClick={() => withdraw(entry)} aria-label={`Withdraw from ${entry.code} in ${entry.block_code}`}>Withdraw</button>}
+              {editingLedger && mayWithdrawSubjects(effectiveUser) && <button className={styles.withdrawButton} disabled={busy || unavailable} onClick={() => setWithdrawing(entry)} aria-label={`Withdraw from ${entry.code} in ${entry.block_code}`}>Withdraw</button>}
             </div>
           </li>)}</ul>}
       {regular && ledger.length > 0 && <p className={styles.explanation}>Your block subjects are enrolled automatically. You can withdraw individual subjects without leaving your block{user.role === 'mayor' ? ' or losing your mayor role' : ''}.</p>}
