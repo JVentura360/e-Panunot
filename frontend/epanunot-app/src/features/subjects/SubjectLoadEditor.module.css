@@ -6,6 +6,7 @@
 .row label { display: grid; gap: 7px; font-size: .9rem; font-weight: 600; min-width: 0; }
 .row input { min-width: 0; width: 100%; min-height: 44px; padding: 10px 12px; font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--control-border); border-radius: 9px; }
 .row input:focus-visible { outline: 2px solid var(--forest); outline-offset: 2px; }
+.row input::placeholder { color: var(--muted); font-weight: 400; opacity: .75; }
 .subjectList { margin: 16px 0; }
 .subjectList > div { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(0, 4fr); gap: 16px; border-bottom: 1px solid var(--line); padding: 12px 0; }
 .subjectList dt { font-weight: 700; overflow-wrap: anywhere; }

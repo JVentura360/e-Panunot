@@ -14,10 +14,10 @@ export default function SubjectLoadEditor({ value, onChange, disabled = false, i
     <p id={`${idPrefix}-hint`} className={styles.hint}>Enter the complete subject name; avoid abbreviations. Codes and capitalization are formatted when approved.</p>
     <div className={styles.rows}>{value.map((row, index) => <div key={row.key} className={styles.row}>
       <label htmlFor={`${idPrefix}-${row.key}-code`}>Subject code {index + 1}
-        <input id={`${idPrefix}-${row.key}-code`} value={row.code} onChange={(event) => update(row.key, 'code', event.target.value)} required maxLength={20} placeholder="ITE 301" autoComplete="off" />
+        <input id={`${idPrefix}-${row.key}-code`} value={row.code} onChange={(event) => update(row.key, 'code', event.target.value)} required maxLength={20} placeholder="Subject Code" autoComplete="off" />
       </label>
       <label htmlFor={`${idPrefix}-${row.key}-name`}>Complete subject name
-        <input id={`${idPrefix}-${row.key}-name`} value={row.name} onChange={(event) => update(row.key, 'name', event.target.value)} required maxLength={255} placeholder="Fundamentals of Database Systems" aria-describedby={`${idPrefix}-hint`} />
+        <input id={`${idPrefix}-${row.key}-name`} value={row.name} onChange={(event) => update(row.key, 'name', event.target.value)} required maxLength={255} placeholder="Subject Name" aria-describedby={`${idPrefix}-hint`} />
       </label>
       <button type="button" className="btn ghost" aria-label={`Remove subject ${index + 1}`} disabled={!allowEmpty && value.length === 1} onClick={() => onChange(value.filter((item) => item.key !== row.key))}>Remove</button>
     </div>)}</div>
