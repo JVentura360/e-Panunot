@@ -401,6 +401,9 @@ flex-direction: column;
 min-width: 0;
 flex: 1;
 }
+.row:has(.studentCalendarAction), .todo:has(.studentCalendarAction) { flex-wrap: wrap; }
+.studentCalendarAction { flex-basis: 100%; display: flex; justify-content: flex-end; }
+.studentCalendarAction a { min-height: 44px; font-size: .8125rem; padding: 8px 12px; text-decoration: none; }
 
 .rowTitle {
 font-size: 0.9rem;

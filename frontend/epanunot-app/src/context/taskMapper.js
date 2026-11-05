@@ -15,6 +15,7 @@ const date = dateKey(row.due_date);
         by: row.created_by?.name ?? 'your mayor',
         date,
         due: endOfDay(date),
+        calendarDeadline: row.due_date,
         done: Boolean(row.completed_at),
         pendingSync: Boolean(row._offline_pending),
     };

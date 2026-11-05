@@ -45,7 +45,7 @@ function BlockCalendarLink({ userId, email, blockId, name, showName }) {
     saveAdded(userId, blockId);
     setAdded(true);
   };
-  const label = showName && name ? `Add ${name} to Google Calendar` : 'Add to Google Calendar';
+  const label = showName && name ? `Subscribe to ${name} calendar` : 'Subscribe to block calendar';
 
   if (added) {
     return (

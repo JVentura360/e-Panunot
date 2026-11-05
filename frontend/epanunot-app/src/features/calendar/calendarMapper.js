@@ -18,6 +18,8 @@ export function toCalendarEvent(row) {
   return {
     id: `e-${row.id}`,
     rawId: row.id,
+    calendarStartsAt: row.starts_at,
+    calendarEndsAt: row.ends_at,
     title: row.title,
     date: dateKeyOf(starts),
     start: timeOf(starts),

@@ -62,6 +62,7 @@
 .annActions { display: flex; gap: 1rem; margin-top: 0.5rem; }
 .error { color: #b00020; font-size: 0.9rem; margin: 0 0 1rem; }
 .itemActions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+.itemActions a.inlineAction { display: inline-flex; align-items: center; text-decoration: none; }
 @media (max-width: 1000px) { .top { align-items: flex-start; flex-direction: column; } .workspace { grid-template-columns: minmax(0, 1fr) 280px; gap: 24px; } }
 @media (max-width: 760px) {
   .page { padding: 24px 16px 32px; }

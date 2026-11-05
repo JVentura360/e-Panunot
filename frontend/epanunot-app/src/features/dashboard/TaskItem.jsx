@@ -1,7 +1,8 @@
 import { fmt, daysLeft } from './dateUtils';
 import styles from './Dashboard.module.css';
+import TaskCalendarLink from '../calendar/TaskCalendarLink.jsx';
 
-export default function TaskItem({ t, onToggle, onEdit, onDelete }) {
+export default function TaskItem({ t, onToggle, onEdit, onDelete, calendarEmail }) {
   const left = daysLeft(t.due);
   return (
     <li data-sort-id={t.id} className={`${styles.item} ${left <= 1 && !t.done ? styles.urgent : ''} ${t.done ? styles.done : ''}`}>
@@ -22,8 +23,9 @@ export default function TaskItem({ t, onToggle, onEdit, onDelete }) {
       </div>
       <div className={styles.taskFooter}>
       <span className={styles.tag}>{t.platform || 'StepS'}</span>
-      {(onEdit || onDelete) && (
+      {(onEdit || onDelete || (!t.personal && calendarEmail)) && (
         <div className={styles.itemActions}>
+          {!t.personal && calendarEmail && <TaskCalendarLink task={t} email={calendarEmail} className={styles.inlineAction} />}
           {onEdit && <button data-online-only type="button" className={styles.inlineAction} onClick={() => onEdit(t)} aria-label={`Edit ${t.title}`}>Edit</button>}
           {onDelete && <button data-online-only type="button" className={styles.inlineAction} onClick={() => onDelete(t)} aria-label={`Delete ${t.title}`}>Delete</button>}
         </div>
