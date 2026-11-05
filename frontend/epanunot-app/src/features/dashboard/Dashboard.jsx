@@ -123,7 +123,7 @@ export default function Dashboard({ user }) {
                 {!eligibility.allowed && <p>{eligibility.reason}</p>}
                 </>}
               </PlannerEmpty>
-            ) : assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} calendarEmail={user.role === 'student' ? user.email : undefined} onEdit={isMayor ? setEditingTask : undefined} onDelete={isMayor ? setDeletingTask : undefined} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
+            ) : assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} calendarEmail={user.email} onEdit={isMayor ? setEditingTask : undefined} onDelete={isMayor ? setDeletingTask : undefined} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
           </section>
           {(!isMayor || !online) && <section className={styles.section}>
             <h3>Personal tasks <span>{personal.length}</span></h3>
@@ -164,7 +164,7 @@ export default function Dashboard({ user }) {
       <Modal
         title="New Announcement"
         description="Share an update with your block."
-        submitLabel="Post announcement"
+        submitLabel="Post"
         fields={[
           { key: 'title', label: 'Title', required: true },
           { key: 'description', label: 'Message', type: 'textarea', required: true },

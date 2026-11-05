@@ -293,7 +293,7 @@ const renderRow = (item) => (
     {item.kind === 'event' && item.canEdit && (
         <button type="button" className={styles.iconBtn} data-online-only onClick={() => startEditEvent(item)} aria-label={`Edit ${item.title}`}>✎</button>
     )}
-    {user.role === 'student' && (item.kind === 'event' || (item.kind === 'task' && !item.personal)) && <div className={styles.studentCalendarAction}><TaskCalendarLink task={item} email={user.email} className="btn ghost" /></div>}
+    {(user.role === 'student' || isMayor) && (item.kind === 'event' || (item.kind === 'task' && !item.personal)) && <div className={styles.studentCalendarAction}><TaskCalendarLink task={item} email={user.email} className="btn ghost" /></div>}
     </li>
 );
 
@@ -594,7 +594,7 @@ return (
                         ✕
                         </button>
                     )}
-                    {user.role === 'student' && <div className={styles.studentCalendarAction}><TaskCalendarLink task={t} email={user.email} className="btn ghost" /></div>}
+                    {(user.role === 'student' || isMayor) && <div className={styles.studentCalendarAction}><TaskCalendarLink task={t} email={user.email} className="btn ghost" /></div>}
                     </li>
                 );
                 })}
