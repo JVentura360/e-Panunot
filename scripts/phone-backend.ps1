@@ -16,6 +16,7 @@ if ($phoneUri.Scheme -ne 'https' -or -not $phoneUri.Host.EndsWith('.devtunnels.m
 }
 $phoneSettings = @{
     FRONTEND_URL = $phoneUri.GetLeftPart([UriPartial]::Authority)
+    GOOGLE_REDIRECT_URI = "$($phoneUri.GetLeftPart([UriPartial]::Authority))/auth/google/callback"
     SANCTUM_STATEFUL_DOMAINS = "$($phoneUri.Host),localhost:5173,localhost:8000"
     SESSION_DOMAIN = $phoneUri.Host
     SESSION_SECURE_COOKIE = 'true'
