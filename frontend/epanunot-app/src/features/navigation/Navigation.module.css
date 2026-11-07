@@ -319,3 +319,51 @@
   .brand { font-size: 1.4rem; }
 }
 .updateMessage { margin: 0; padding: 8px 12px; color: var(--muted); font-size: .8rem; line-height: 1.45; overflow-wrap: anywhere; }
+
+@keyframes accountSheetUp {
+  from { transform: translateY(100%); }
+  to { transform: none; }
+}
+
+.sheetBackdrop { display: none; }
+
+@media (max-width: 760px) {
+  .headerOpen { z-index: 200; }
+
+  .sheetBackdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    background: rgb(var(--shadow-rgb) / 55%);
+  }
+
+  .dropdown {
+    position: fixed;
+    top: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 85dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px 16px calc(16px + env(safe-area-inset-bottom));
+    border-radius: 20px 20px 0 0;
+    border-bottom: 0;
+    animation: accountSheetUp 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .dropdown::before {
+    content: '';
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: 0 auto 8px;
+    border-radius: 4px;
+    background: var(--line);
+  }
+
+  .dropdownItem { min-height: 48px; font-size: 0.95rem; }
+}
