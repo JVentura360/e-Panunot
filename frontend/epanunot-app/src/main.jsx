@@ -10,6 +10,7 @@ import { initializeTheme } from './theme.js';
 import { initializeOffline } from './offline/runtime.js';
 import { apiQueryOptions } from './api/client.js';
 import { initializePwa } from './pwa/updates.js';
+import './pwa/install.js';
 
 initializeTheme();
 await initializeOffline(queryClient, apiQueryOptions);

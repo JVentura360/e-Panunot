@@ -1,0 +1,30 @@
+.page { max-width: 720px; margin: 0 auto; padding: 24px 16px; display: grid; gap: 16px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.top h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); }
+
+.tabs { display: flex; gap: 8px; }
+.tabs button {
+min-height: 44px; padding: 8px 16px; border-radius: 10px;
+border: 1px solid var(--line); background: var(--surface); color: var(--ink); font-weight: 500;
+}
+.tabs .tabActive { background: var(--forest); border-color: var(--forest); color: var(--on-primary); font-weight: 600; }
+
+.group { display: grid; gap: 8px; }
+.group h2 { font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-family: 'Figtree', sans-serif; }
+.list { list-style: none; padding: 0; display: grid; gap: 8px; }
+
+.item {
+display: flex; align-items: flex-start; gap: 12px; width: 100%; text-align: left;
+min-height: 64px; padding: 14px 16px; border-radius: 12px;
+border: 1px solid var(--line); background: var(--surface); color: inherit;
+}
+.item:hover { background: var(--paper); }
+.unread { border-color: var(--forest); background: color-mix(in srgb, var(--sage) 20%, var(--paper)); }
+.dot { flex: none; width: 10px; height: 10px; margin-top: 6px; border-radius: 50%; background: var(--clay); }
+.body { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.title { font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
+.message { font-size: 0.88rem; color: var(--muted); overflow-wrap: anywhere; }
+.time { flex: none; font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+
+.note { color: var(--muted); font-size: 0.85rem; }
+.error { color: var(--danger); font-size: 0.9rem; }

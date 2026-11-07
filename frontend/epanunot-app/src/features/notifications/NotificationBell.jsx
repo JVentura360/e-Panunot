@@ -69,7 +69,10 @@ export default function NotificationBell({ user }) {
     });
 
     const toggle = () => {
-        // On small screens the panel is fixed-position; anchor it just below the bell.
+        if (window.matchMedia('(max-width: 760px)').matches) {
+            navigate('/notifications');
+            return;
+        }
         const rect = buttonRef.current?.getBoundingClientRect();
         if (rect) setPanelTop(Math.round(rect.bottom + 8));
         setOpen((v) => !v);
@@ -115,6 +118,9 @@ export default function NotificationBell({ user }) {
                 ))}
                 </ul>
             )}
+            <button type="button" className={styles.seeAll} onClick={() => { setOpen(false); navigate('/notifications'); }}>
+                See all notifications
+            </button>
             </div>
         )}
         </div>

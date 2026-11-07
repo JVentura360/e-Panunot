@@ -19,8 +19,24 @@
 .itemMsg { font-size: 0.82rem; color: var(--muted); overflow-wrap: anywhere; }
 .itemTime { font-size: 0.72rem; color: var(--muted); }
 .empty { padding: 16px 8px; margin: 0; color: var(--muted); font-size: 0.85rem; }
-.error { color: #b00020; font-size: 0.85rem; margin: 0 8px 8px; }
-/* Mobile: pin the panel to the viewport so it can never extend off-screen */
+.error { color: var(--danger); font-size: 0.85rem; margin: 0 8px 8px; }
+.seeAll {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 12px 8px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--clay);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+.seeAll:hover { background: var(--paper); }
+
 @media (max-width: 600px) {
   .panel {
     position: fixed;

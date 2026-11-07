@@ -63,7 +63,9 @@ const offered = choices.filter((choice) => choice.blockId === user.block_id);
 const subjectOptions = [GENERAL_SUBJECT, ...offered.map((choice) => choice.label)];
 const isMayor = user?.role === 'mayor';
 
-const [view, setView] = useState('month');
+const [view, setView] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches ? 'agenda' : 'month'
+);
 const [cursor, setCursor] = useState(TODAY);
 const [selected, setSelected] = useState(TODAY_KEY);
 

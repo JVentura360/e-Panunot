@@ -20,6 +20,8 @@ import Calendar from './features/calendar/Calendar.jsx';
 import BlockRequiredDialog from './features/concerns/BlockRequiredDialog.jsx';
 import { canUseConcerns } from './features/block/enrollmentRules.js';
 import { activateOfflineAccount, getOfflineState, syncOffline } from './offline/runtime.js';
+import NotificationsPage from './features/notifications/NotificationsPage.jsx';
+import SettingsPage from './features/settings/SettingsPage.jsx';
 
 export default function App() {
     const [loggedOut, setLoggedOut] = useState(false);
@@ -101,8 +103,18 @@ export default function App() {
                 />
 
                 <Route
+                    path="/settings"
+                    element={<SettingsPage user={user} onLogout={handleLogout} />}
+                />
+
+                <Route
                     path="/calendar"
                     element={member(<Calendar user={user} />)}
+                />
+
+                <Route
+                    path="/notifications"
+                    element={member(<NotificationsPage user={user} />)}
                 />
 
                 <Route

@@ -1,13 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import ApplyMayorModal from './ApplyMayorModal.jsx';
 import styles from './Navigation.module.css';
-import { applyTheme } from '../../theme.js';
 import { applicationEligibility, blockNavigation, canUseConcerns } from '../block/enrollmentRules.js';
 import BlockRequiredDialog from '../concerns/BlockRequiredDialog.jsx';
 import NotificationBell from '../notifications/NotificationBell.jsx';
-import { applyUpdate, checkForUpdate, getUpdateState, initializePwa, subscribeUpdates } from '../../pwa/updates.js';
-import { finishOfflineUpdate, prepareOfflineUpdate } from '../../offline/runtime.js';
 
 // ─── Icons ────────────────────────────────────────────────────────────────────
 
@@ -61,6 +58,12 @@ const IconStar = () => (
   </svg>
 );
 
+const IconSettings = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
+  </svg>
+);
+
 // ─── Nav items ────────────────────────────────────────────────────────────────
 // `to` is the URL path. mobileLabel is the short label used in the bottom bar.
 // To add a new page: add an entry here + a <Route> in App.jsx.
@@ -76,12 +79,14 @@ const ADMIN_NAV = [
   { label: 'Applications', mobileLabel: 'Applications', to: '/admin/applications', icon: <IconConcerns /> },
   { label: 'Mayors', mobileLabel: 'Mayors', to: '/admin/mayors', icon: <IconBlock /> },
 ];
+const BLOCK_NAV = { label: 'Block', mobileLabel: 'Block', to: '/block', icon: <IconBlock /> };
 
 function getNavItems(user) {
   if (user.role === 'admin') return ADMIN_NAV; // admins only use /admin
   const items = [...BASE_NAV];
   const membership = blockNavigation(user);
   items.push({ ...JOIN_NAV, ...membership, icon: membership.joined ? <IconLedger /> : <IconBlock /> });
+  if (user.role === 'mayor') items.push(BLOCK_NAV);
   return items;
 }
 
@@ -128,26 +133,6 @@ function SlidingNav({ className, label, children }) {
 // The active tab now comes from the URL (NavLink), so activeTab/onTabChange are gone.
 
 export default function Navigation({ user, onLogout }) {
-  const update = useSyncExternalStore(subscribeUpdates, getUpdateState, getUpdateState);
-  const [updateBusy, setUpdateBusy] = useState(false);
-  const [updateError, setUpdateError] = useState('');
-  useEffect(() => { void initializePwa(); }, []);
-  const installUpdate = async () => {
-    setUpdateBusy(true);
-    setUpdateError('');
-    try {
-      await prepareOfflineUpdate();
-      if (!await applyUpdate()) {
-        finishOfflineUpdate();
-        setUpdateBusy(false);
-        setUpdateError('No update is ready. Check for updates again.');
-      }
-    } catch (error) {
-      finishOfflineUpdate();
-      setUpdateBusy(false);
-      setUpdateError(error.message || 'Save your changes before installing the update.');
-    }
-  };
   const [blockNotice, setBlockNotice] = useState(false);
   const concernsUnavailable = !canUseConcerns(user);
   const interceptConcerns = (event, to) => {
@@ -177,12 +162,6 @@ export default function Navigation({ user, onLogout }) {
     };
   }, [profileOpen]);
   const [applyOpen, setApplyOpen] = useState(false);
-  const [theme, setTheme] = useState(() => document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
-  const toggleTheme = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    setTheme(next);
-  };
   const navigate = useNavigate();
 
   const navItems = getNavItems(user);
@@ -195,7 +174,7 @@ export default function Navigation({ user, onLogout }) {
   return (
     <>
       {/* ── Desktop header ── */}
-      <header className={styles.header}>
+      <header className={`${styles.header} ${profileOpen ? styles.headerOpen : ''}`}>
         <div className={styles.container}>
 
           <div className={styles.left}>
@@ -219,6 +198,7 @@ export default function Navigation({ user, onLogout }) {
           <div className={styles.right}>
             <NotificationBell user={user} />
 
+            {profileOpen && <div className={styles.sheetBackdrop} aria-hidden="true" />}
             <div ref={profileRef} className={styles.profileWrapper}>
               <button
                 ref={profileButtonRef}
@@ -249,8 +229,10 @@ export default function Navigation({ user, onLogout }) {
                       <IconProfile /> My profile
                     </button>
                   )}
-                  {user.role === 'mayor' && <button data-online-only className={styles.dropdownItem} role="menuitem"
-                    onClick={() => { setProfileOpen(false); navigate('/block'); }}><IconBlock /> Block Management</button>}
+                  <button className={styles.dropdownItem} role="menuitem"
+                    onClick={() => { setProfileOpen(false); navigate('/settings'); }}>
+                    <IconSettings /> Settings
+                  </button>
                   {user.role === 'student' && (
                     <button data-online-only className={styles.dropdownItem} role="menuitem"
                       disabled={!eligibility.allowed} title={eligibility.reason || undefined}
@@ -258,23 +240,6 @@ export default function Navigation({ user, onLogout }) {
                       <IconStar /> Apply as Mayor
                     </button>
                   )}
-                  <button className={styles.dropdownItem} role="menuitemcheckbox" aria-label="Dark theme" aria-checked={theme === 'dark'} onClick={toggleTheme}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M20.9 13A9 9 0 0 1 11 3.1 9 9 0 1 0 20.9 13Z" />
-                    </svg>
-                    <span>Theme</span>
-                    <span className={styles.themeChoice}>{theme === 'dark' ? 'Dark' : 'Light'}<span className={styles.themeSwitch} data-dark={theme === 'dark'} aria-hidden="true" /></span>
-                  </button>
-                  {update.supported && <>
-                    <hr className={styles.divider} />
-                    <button type="button" className={styles.dropdownItem} role="menuitem" disabled={update.checking || updateBusy}
-                      data-online-only onClick={() => { setUpdateError(''); void checkForUpdate(); }}>
-                      {update.checking ? 'Checking for updates…' : 'Check for updates'}
-                    </button>
-                    {update.ready && <button type="button" className={styles.dropdownItem} role="menuitem" disabled={updateBusy}
-                      onClick={() => void installUpdate()}>{updateBusy ? 'Installing update…' : 'Install update and restart'}</button>}
-                    {(updateError || update.message) && <p className={styles.updateMessage} role="status">{updateError || update.message}</p>}
-                  </>}
                   <hr className={styles.divider} />
                   <button className={`${styles.dropdownItem} ${styles.danger}`} role="menuitem" onClick={onLogout}>
                     <IconSignOut /> Sign out

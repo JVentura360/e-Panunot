@@ -9,6 +9,7 @@ import { toConcern, toMessage } from './concernMapper.js';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { useTasks } from '../../context/TaskContext.jsx';
 import { canReplyToConcern, concernActions } from './concernVisibility.js';
+import SkeletonList from '../../components/Skeleton.jsx';
 
 // Single-file Concerns feature (prototype). Sections, in order:
 // helpers, StatusTag, ConcernList, ConcernThread, NewConcernModal, Concerns (page).
@@ -622,7 +623,7 @@ return (
     <div className={`${styles.shell} ${selectedId ? styles.hasSelection : ''}`}>
         <section className={styles.listPane} aria-label="Concerns list">
         {concernsQuery.isPending ? (
-            <p>Loading...</p>
+            <SkeletonList rows={4} label="Loading concerns" />
         ) : (
             <ConcernList concerns={concerns} selectedId={selectedId} viewerRole={viewerRole} />
         )}

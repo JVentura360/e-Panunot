@@ -1,0 +1,24 @@
+.list { display: grid; gap: 10px; }
+.row { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+
+.bar {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg,
+    var(--sand) 0%,
+    color-mix(in srgb, var(--mist) 45%, var(--sand)) 50%,
+    var(--sand) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+.title { height: 16px; width: 60%; }
+.line { width: 90%; }
+.short { width: 35%; }
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
