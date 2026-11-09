@@ -20,7 +20,7 @@ Checked against [GitHub main at e0e3455](https://github.com/JVentura360/e-Panuno
 | Concerns backend | Concern creation/listing, conversation routes, status changes and attachment download implementation exist, with policies/resources | Replace localStorage concern UI with API queries, uploads, read tracking and verified status rules |
 | Calendar events and personal to-dos backend | Models, migrations, resources and CRUD routes exist; combined calendar endpoint added | Connect Calendar UI; its events remain component state and tasks remain localStorage |
 | Google Calendar integration | Service, block calendar endpoint, sync/delete/access jobs and test command exist; task/event/member workflows dispatch jobs | Configure credentials/calendars, run queue workers and verify remote synchronization |
-| Notifications foundation | Task reminder, announcement and concern reply notification classes; policies added | Wire delivery and reminder scheduling; notification list/read APIs, UI and push flow remain unfinished; `routes/console.php` only contains inspire |
+| Notifications and deadline reminders | Authenticated in-app notification list/read APIs and UI; every-minute scheduler covers assigned tasks and personal to-dos; per-device Web Push subscription endpoints and service-worker notifications are implemented | Configure stable VAPID keys and HTTPS in each deployment; verify browser delivery on supported devices and monitor scheduler/queue processes |
 | Database and test foundation | Domain migrations now cover core tables plus calendar events/personal to-dos; custom factories/seeders and task/deadline/concern/application/factory tests exist | Verify fresh migration/seeding and execute backend suite with a compatible PHP runtime |
 
 Source anchors: `frontend/epanunot-app/src/context/TaskContext.jsx`, `src/components/taskListUtils.js`, `src/theme.js`, `src/api/client.js`, `src/context/BlockContext.jsx`, `src/features/navigation/ApplyMayorModal.jsx`, `src/features/profile/Profile.jsx`; `backend/routes/api.php`, `app/Services/MayorApprovalService.php`, `app/Services/GoogleCalendarService.php`, `app/Jobs/`, `app/Notifications/`, `database/migrations/`, `tests/Feature/`.
@@ -239,7 +239,7 @@ Use authenticated route groups, Form Requests, policies and JSON resources. Scop
 5. **Connect announcements and tasks:** persistence, assignments, personal ownership and completion; dashboard/calendar share the same data.
 6. **Connect concerns:** identity isolation, status transitions, conversations, read tracking and attachments.
 7. **Complete calendar persistence:** decide event/to-do scope, timezone rules and optional Google Calendar synchronization.
-8. **Complete notifications/reminders:** subscriptions, service worker, VAPID configuration, scheduled reminder jobs, queue worker, retry/deduplication and notification read state. Push subscription migrations alone do not implement this.
+8. **Complete notifications/reminders:** configure stable VAPID keys, HTTPS and the minute scheduler; validate browser delivery, retries and reminder deduplication in deployment. In-app notifications work without push configuration.
 9. **Prepare deployment:** real environment documentation, HTTPS/session settings, production frontend/backend routing, scheduler/queue processes, backup/restore, and workflow tests.
 
 ## 6. Verification and limits

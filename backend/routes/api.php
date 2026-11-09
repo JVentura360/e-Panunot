@@ -95,6 +95,9 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\TrackClientChanges::clas
     Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index']);
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'readAll']);
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'read']);
+    Route::get('/notifications/push/public-key', [\App\Http\Controllers\PushSubscriptionController::class, 'publicKey']);
+    Route::post('/notifications/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'store']);
+    Route::delete('/notifications/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy']);
 
     // Mayor only
     Route::middleware('role:mayor')->group(function () {

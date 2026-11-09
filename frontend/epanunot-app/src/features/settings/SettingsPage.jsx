@@ -1,7 +1,8 @@
-import { useState, useSyncExternalStore } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { applyTheme } from '../../theme.js';
 import { applyUpdate, checkForUpdate, getUpdateState, subscribeUpdates } from '../../pwa/updates.js';
 import { getInstallState, isInstalled, isIos, promptInstall, subscribeInstall } from '../../pwa/install.js';
+import { disablePushNotifications, enablePushNotifications, getPushState } from '../../pwa/push.js';
 import { finishOfflineUpdate, prepareOfflineUpdate, reconnectOffline } from '../../offline/runtime.js';
 import { useOffline } from '../../offline/useOffline.js';
 import styles from './SettingsPage.module.css';
@@ -27,7 +28,18 @@ export default function SettingsPage({ user, onLogout }) {
   const [theme, setTheme] = useState(() => (document.documentElement.dataset.theme === 'light' ? 'light' : 'dark'));
   const [busy, setBusy] = useState(false);
   const [updateError, setUpdateError] = useState('');
+  const [pushState, setPushState] = useState({ supported: false, enabled: false, hint: '' });
+  const [pushError, setPushError] = useState('');
   const isMember = ['student', 'mayor'].includes(user.role);
+
+  useEffect(() => {
+    let active = true;
+    getPushState()
+      .then((state) => { if (active) setPushState(state); })
+      .catch((error) => { if (active) setPushError(error.message || 'Could not check notification settings.'); });
+
+    return () => { active = false; };
+  }, []);
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
@@ -58,6 +70,21 @@ export default function SettingsPage({ user, onLogout }) {
       ? `${offline.pending} saved change${offline.pending === 1 ? '' : 's'} waiting to sync.`
       : 'All changes are synced.';
 
+  const togglePush = async () => {
+    setBusy(true);
+    setPushError('');
+    try {
+      const state = pushState.enabled
+        ? await disablePushNotifications()
+        : await enablePushNotifications();
+      setPushState(state);
+    } catch (error) {
+      setPushError(error.message || 'Could not update notification settings.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
       <header><h1>Settings</h1></header>
@@ -83,6 +110,15 @@ export default function SettingsPage({ user, onLogout }) {
               ? 'On iPhone or iPad: tap the Share button in Safari, then “Add to Home Screen”.'
               : 'Open your browser menu and choose “Install app” or “Add to Home screen”.'}
           </p>
+        )}
+        {isMember && (
+          <Row title="Deadline alerts" hint={pushError || pushState.hint || 'Checking notification support…'}>
+            {pushState.supported && (
+              <button type="button" role="switch" aria-checked={pushState.enabled} aria-label="Deadline alerts"
+                className={styles.switch} data-on={pushState.enabled} disabled={busy || offline.online === false}
+                onClick={() => void togglePush()} />
+            )}
+          </Row>
         )}
         {update.supported && (
           <>
