@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use NotificationChannels\WebPush\PushSubscription;
 
 class PushSubscriptionController extends Controller
 {
@@ -23,7 +24,7 @@ class PushSubscriptionController extends Controller
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'endpoint' => ['required', 'string', 'url', 'max:2048'],
+            'endpoint' => ['required', 'string', 'url', 'max:'.PushSubscription::ENDPOINT_MAX_LENGTH],
             'keys' => ['required', 'array'],
             'keys.p256dh' => ['required', 'string', 'max:255'],
             'keys.auth' => ['required', 'string', 'max:255'],
@@ -49,7 +50,7 @@ class PushSubscriptionController extends Controller
     public function destroy(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'endpoint' => ['required', 'string', 'url', 'max:2048'],
+            'endpoint' => ['required', 'string', 'url', 'max:'.PushSubscription::ENDPOINT_MAX_LENGTH],
         ]);
 
         $request->user()->deletePushSubscription($data['endpoint']);
