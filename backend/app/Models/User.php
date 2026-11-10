@@ -11,6 +11,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Enums\Role;
+use NotificationChannels\WebPush\HasPushSubscriptions;
 
 #[Fillable([
     'google_id',
@@ -21,7 +22,7 @@ use App\Enums\Role;
 ])]
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable;
 
     protected function casts(): array
     {

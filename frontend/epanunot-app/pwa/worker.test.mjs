@@ -39,3 +39,42 @@ test('a waiting worker activates only after explicit message', () => {
   instance.handlers.message({ data: { type: 'SKIP_WAITING' } })
   assert.equal(instance.skipped(), 1)
 })
+
+test('push worker displays a notification and opens only same-origin links', async () => {
+  const fs = await import('node:fs/promises')
+  const source = await fs.readFile(new URL('../public/push/sw.js', import.meta.url), 'utf8')
+  const handlers = {}
+  const displayed = []
+  const opened = []
+  const context = {
+    URL,
+    self: {
+      location: { origin: 'https://app.test' },
+      registration: {
+        scope: 'https://app.test/push/',
+        showNotification: async (...args) => displayed.push(args),
+      },
+      clients: {
+        matchAll: async () => [],
+        openWindow: async url => opened.push(url),
+      },
+      addEventListener: (type, callback) => { handlers[type] = callback },
+    },
+  }
+
+  vm.runInNewContext(source, context)
+  let pushWait
+  handlers.push({ data: { json: () => ({ title: 'Deadline approaching', body: 'Lab is due soon', data: { url: '/calendar' } }) },
+    waitUntil: promise => { pushWait = promise } })
+  await pushWait
+  assert.equal(displayed[0][0], 'Deadline approaching')
+  assert.equal(displayed[0][1].body, 'Lab is due soon')
+
+  let clickWait
+  handlers.notificationclick({
+    notification: { data: { url: '/calendar' }, close() {} },
+    waitUntil: promise => { clickWait = promise },
+  })
+  await clickWait
+  assert.deepEqual(opened, ['https://app.test/calendar'])
+})

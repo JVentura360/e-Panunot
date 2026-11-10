@@ -1,4 +1,4 @@
-# Testing the authentication update locally
+# Local development setup
 
 Use PHP 8.4.1+ (tested with 8.4.27), Composer, Node.js 24/npm, and MySQL/MariaDB. XAMPP can supply MySQL; its PHP 8.2 cannot run this backend.
 
@@ -43,19 +43,34 @@ Use your actual database credentials if they differ. Then:
 php artisan config:clear
 php artisan migrate
 php artisan db:seed --class=DevelopmentAccountSeeder
-php artisan serve --host=localhost --port=8000
 ```
 
 The development seeder adds five accounts and a shared test block without resetting the database or overwriting existing users. It reuses an active term, or creates an active development term when none exists. Do not run `migrate:fresh` on an existing database.
+
+For browser notifications while the app is in the background or closed, configure Web Push before starting the backend. From `backend/`, run `php artisan webpush:vapid`, then set a valid `VAPID_SUBJECT` (a production URL or `mailto:` address) in `.env` and run `php artisan config:clear`. Keep the private key secret and stable; never regenerate it after browsers subscribe. Production instances must share the same VAPID key pair. Browser push requires HTTPS in production; localhost is accepted for local testing. Each student/mayor can enable or disable **Settings → Deadline alerts** on each device. If VAPID is not configured, in-app notifications still work, but browser push is unavailable. Restart the backend after changing its environment.
+
+Run the backend HTTP server and Laravel scheduler in separate terminals, both from `backend/`:
+
+```powershell
+php artisan serve --host=localhost --port=8000
+```
+
+```powershell
+php artisan schedule:work
+```
+
+`routes/console.php` schedules `tasks:send-reminders` every minute. It sends reminders for unfinished assigned tasks due within the next 24 hours and personal to-dos due today or tomorrow. Assigned-task reminders honor each task's reminder interval; personal-to-do reminders are limited to once per 24 hours. Both stop after three reminders or when the item is completed/overdue. The schedule command prints errors in its terminal; keep it running while testing reminders.
+
+In production, run `php artisan schedule:run` from the platform scheduler once per minute (for example, a cron entry invoking the production PHP binary and `artisan schedule:run`). Run a queue worker separately when `QUEUE_CONNECTION=database` so existing queued integrations such as Google Calendar synchronization are processed: `php artisan queue:work --tries=3`. The deadline reminder notification itself is delivered synchronously by the scheduled command. Configure monitoring/restart policies for both long-running processes; the development-only `schedule:work` should not replace a production scheduler.
 
 ## Frontend setup
 
 In another PowerShell terminal, from the repository root:
 
 ```powershell
-cd frontend/epanunot-app
-npm ci
-npm run dev -- --host localhost --port 5173 --strictPort
+cd frontend\epanunot-app
+npm.cmd ci
+npm.cmd run dev -- --host localhost --port 5173 --strictPort
 ```
 
 The frontend `.env` should contain `VITE_API_URL=http://localhost:8000/api`. Open http://localhost:5173 consistently; do not alternate between localhost and 127.0.0.1.
@@ -91,7 +106,7 @@ Register that exact callback URI in a Google OAuth Web application client. Sign 
 Automated authentication checks (backend terminal, PHP 8.4 on PATH):
 
 ```powershell
-php artisan test --filter="DevelopmentLoginTest|GoogleAuthTest"
+php artisan test --filter="DevelopmentLoginTest|GoogleAuthTest|TaskReminderTest|PushSubscriptionTest"
 ```
 
 Frontend checks:
