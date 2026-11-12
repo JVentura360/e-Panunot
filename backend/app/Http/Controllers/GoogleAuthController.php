@@ -82,6 +82,13 @@ class GoogleAuthController extends Controller
 
     public function logout(Request $request): Response
     {
+        $data = $request->validate([
+            'push_endpoint' => ['nullable', 'string', 'url', 'max:'.\NotificationChannels\WebPush\PushSubscription::ENDPOINT_MAX_LENGTH],
+        ]);
+        if (! empty($data['push_endpoint'])) {
+            Auth::guard('web')->user()?->deletePushSubscription($data['push_endpoint']);
+        }
+
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

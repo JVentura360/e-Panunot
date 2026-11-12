@@ -1,0 +1,15 @@
+.prompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid currentColor;
+  border-radius: 1rem;
+}
+
+.prompt h2 { margin: 0 0 .5rem; font-size: 1.125rem; }
+.prompt p { margin: .25rem 0; max-width: 60ch; }
+.actions { display: flex; flex-wrap: wrap; gap: .5rem; }

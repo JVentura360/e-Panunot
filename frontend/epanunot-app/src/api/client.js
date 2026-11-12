@@ -1,6 +1,7 @@
 // src/api/client.js
 // One place that talks to the Laravel API. Every screen imports { api } from here.
 import { QueryClient } from '@tanstack/react-query';
+import { detachPushForLogout } from '../pwa/push.js';
 import { syncPaths } from './clientSync.js';
 import { getOfflineState, offlineView, offlineRecord, cacheOfflineRead, setOfflineConnectivity, configureOfflineTransport,
   forgetOfflineIdentity, requireOnline, logoutOfflineAccount, purgeOfflineAccount, restoreOfflineFallback, finishOfflineLogout } from '../offline/runtime.js';
@@ -109,7 +110,8 @@ export async function logout() {
   requireOnline();
   await logoutOfflineAccount();
   try {
-    const result = await request(`${SERVER}/logout`, { method: 'POST' });
+    const endpoint = await detachPushForLogout();
+    const result = await request(`${SERVER}/logout`, { method: 'POST', body: endpoint ? { push_endpoint: endpoint } : undefined });
     await purgeOfflineAccount();
     clearApiCache();
     return result;

@@ -9,6 +9,17 @@ use NotificationChannels\WebPush\PushSubscription;
 
 class PushSubscriptionController extends Controller
 {
+    public function status(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'endpoint' => ['required', 'string', 'url', 'max:'.PushSubscription::ENDPOINT_MAX_LENGTH],
+        ]);
+
+        return response()->json([
+            'subscribed' => $request->user()->pushSubscriptions()->where('endpoint', $data['endpoint'])->exists(),
+        ]);
+    }
+
     public function publicKey(): JsonResponse
     {
         $publicKey = config('webpush.vapid.public_key');

@@ -25,7 +25,7 @@ const [tab, setTab] = useState('all');
 const [error, setError] = useState('');
 const [readIds, setReadIds] = useState(() => new Set());
 
-const query = useApiQuery('/notifications', { refetchInterval: online ? 30000 : false });
+const query = useApiQuery('/notifications', { refetchInterval: online ? 30000 : false, refetchOnMount: 'always' });
 const all = useMemo(
     () => (query.data?.data ?? []).map((n) => ({ ...n, read: n.read || readIds.has(n.id) })),
     [query.data, readIds]

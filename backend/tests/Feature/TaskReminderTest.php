@@ -82,28 +82,61 @@ class TaskReminderTest extends TestCase
         $this->assertDatabaseCount('notifications', 0);
     }
 
-    public function test_it_honors_the_task_interval_and_reminder_limit(): void
+    public function test_it_sends_once_at_each_deadline_milestone(): void
     {
         $this->travelTo(Carbon::parse('2026-11-10 09:00:00'));
 
         $user = User::factory()->create();
         $task = Task::factory()->create([
-            'due_date' => now()->addHours(6),
+            'due_date' => now()->addHours(24),
             'reminder_interval_minutes' => 60,
         ]);
         $assignment = TaskAssignment::create([
             'task_id' => $task->id,
             'user_id' => $user->id,
-            'last_reminded_at' => now()->subMinutes(30),
         ]);
 
-        $this->artisan('tasks:send-reminders')->expectsOutput('Sent 0 reminder(s).')->assertSuccessful();
-        $assignment->update(['last_reminded_at' => now()->subMinutes(61)]);
+        foreach ([1440, 720, 360, 180, 60, 30] as $minutes) {
+            $this->travelTo($task->due_date->copy()->subMinutes($minutes));
+            $this->artisan('tasks:send-reminders')->expectsOutput('Sent 1 reminder(s).')->assertSuccessful();
+            $this->artisan('tasks:send-reminders')->expectsOutput('Sent 0 reminder(s).')->assertSuccessful();
+        }
+        $this->assertDatabaseCount('notifications', 6);
+        $this->assertSame(6, $assignment->fresh()->reminders_sent);
+    }
 
+    public function test_completion_stops_remaining_milestones(): void
+    {
+        $task = Task::factory()->create(['due_date' => now()->addHours(24)]);
+        $assignment = TaskAssignment::create(['task_id' => $task->id, 'user_id' => User::factory()->create()->id]);
         $this->artisan('tasks:send-reminders')->expectsOutput('Sent 1 reminder(s).')->assertSuccessful();
-        $assignment->update(['reminders_sent' => 3, 'last_reminded_at' => now()->subDay()]);
-
+        $assignment->update(['completed_at' => now()]);
+        $this->travelTo($task->due_date->copy()->subHours(12));
         $this->artisan('tasks:send-reminders')->expectsOutput('Sent 0 reminder(s).')->assertSuccessful();
+    }
+
+    public function test_manual_reminders_are_scoped_and_do_not_change_automatic_timing(): void
+    {
+        $term = \App\Models\Term::factory()->active()->create();
+        $mayor = User::factory()->create(['role' => 'mayor']);
+        $block = \App\Models\Block::factory()->create(['term_id' => $term->id, 'mayor_id' => $mayor->id]);
+        $student = User::factory()->create(['block_id' => $block->id]);
+        $task = Task::factory()->create(['block_id' => $block->id, 'due_date' => now()->addHours(5)]);
+        $assignment = TaskAssignment::create(['task_id' => $task->id, 'user_id' => $student->id]);
+        $completed = Task::factory()->create(['block_id' => $block->id, 'due_date' => now()->addHours(5)]);
+        TaskAssignment::create(['task_id' => $completed->id, 'user_id' => $student->id, 'completed_at' => now()]);
+        $otherTask = Task::factory()->create(['due_date' => now()->addHours(2)]);
+        TaskAssignment::create(['task_id' => $otherTask->id, 'user_id' => $student->id]);
+        $url = '/api/blocks/'.$block->id.'/deadline-reminders';
+        $this->actingAs($student)->postJson($url)->assertForbidden();
+        $this->actingAs(User::factory()->create(['role' => 'mayor']))->postJson($url)->assertForbidden();
+        $this->actingAs($mayor)->postJson($url)->assertOk()->assertJson(['sent' => 1, 'students' => 1, 'failed' => 0, 'push_enabled_students' => 0, 'push_unregistered_students' => 1]);
         $this->assertDatabaseCount('notifications', 1);
+        $this->assertNull($assignment->fresh()->last_reminded_at);
+        $this->actingAs($mayor)->postJson($url)->assertStatus(429);
+        $this->travel(61)->seconds();
+        $this->actingAs($mayor)->postJson($url)->assertOk()->assertJson(['sent' => 1]);
+        $this->assertDatabaseCount('notifications', 2);
+        $this->actingAs($student)->getJson('/api/notifications')->assertOk()->assertJsonCount(2, 'data');
     }
 }

@@ -5,6 +5,8 @@ namespace App\Console\Commands;
 use App\Models\PersonalTodo;
 use App\Models\TaskAssignment;
 use App\Notifications\TaskReminderNotification;
+use App\Services\ReminderSchedule;
+use Illuminate\Support\Carbon;
 use Illuminate\Console\Command;
 
 class SendTaskReminders extends Command
@@ -17,22 +19,22 @@ class SendTaskReminders extends Command
     {
         $now = now();
         $windowEnd = $now->copy()->addHours(24);
-        $max = 3;
         $sent = 0;
 
         TaskAssignment::query()
             ->whereNull('completed_at')
-            ->where('reminders_sent', '<', $max)
             ->whereHas('task', fn ($query) => $query
                 ->where('due_date', '>', $now)
                 ->where('due_date', '<=', $windowEnd))
             ->with(['task', 'user'])
             ->chunkById(200, function ($assignments) use (&$sent, $now): void {
                 foreach ($assignments as $assignment) {
+                    $assignment = TaskAssignment::with(['task', 'user'])->find($assignment->id);
+                    if (! $assignment || $assignment->completed_at || ! $assignment->task) {
+                        continue;
+                    }
                     $task = $assignment->task;
-                    $interval = max(1, (int) $task->reminder_interval_minutes);
-
-                    if ($assignment->last_reminded_at?->gt($now->copy()->subMinutes($interval))) {
+                    if (! ReminderSchedule::isDue($task->due_date, $assignment->last_reminded_at, $now)) {
                         continue;
                     }
 
@@ -54,11 +56,14 @@ class SendTaskReminders extends Command
             ->whereNotNull('due_date')
             ->whereDate('due_date', '>=', $now->toDateString())
             ->whereDate('due_date', '<=', $windowEnd->toDateString())
-            ->where('reminders_sent', '<', $max)
             ->with('user')
             ->chunkById(200, function ($todos) use (&$sent, $now): void {
                 foreach ($todos as $todo) {
-                    if ($todo->last_reminded_at?->gt($now->copy()->subDay())) {
+                    $todo = PersonalTodo::with('user')->find($todo->id);
+                    if (! $todo || $todo->is_done || ! $todo->due_date) {
+                        continue;
+                    }
+                    if (! ReminderSchedule::isDue(Carbon::parse($todo->due_date)->endOfDay(), $todo->last_reminded_at, $now)) {
                         continue;
                     }
 

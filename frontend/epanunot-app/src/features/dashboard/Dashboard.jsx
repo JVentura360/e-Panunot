@@ -11,6 +11,7 @@ import { useApiQuery } from '../../api/useApiQuery.js';
 import { api } from '../../api/client.js';
 import { useTasks } from '../../context/TaskContext.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import MessageDialog from '../../components/MessageDialog.jsx';
 import styles from './Dashboard.module.css';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { applicationEligibility } from '../block/enrollmentRules.js';
@@ -32,10 +33,11 @@ export default function Dashboard({ user }) {
   const [seenAnns, setSeenAnns] = useState(() => readSeen(user.id));
   const [editingTask, setEditingTask] = useState(null);
   const [deletingTask, setDeletingTask] = useState(null);
+  const [reminderResult, setReminderResult] = useState(null);
   const isMayor = user.role === 'mayor';
   // Announcements this user hasn't seen yet (excluding their own) pop up one at a time.
   const nextNewAnn = anns.find((a) => !seenAnns.has(a.id) && !(a.created_by?.id != null && a.created_by.id === user.id));
-  const noOtherDialog = !modal && !editingAnn && !deletingAnn && !editingTask && !deletingTask;
+  const noOtherDialog = !modal && !reminderResult && !editingAnn && !deletingAnn && !editingTask && !deletingTask;
   const dialogAnn = viewingAnn ?? (noOtherDialog ? nextNewAnn : null);
   const closeAnnDialog = () => {
     if (dialogAnn) {
@@ -77,6 +79,15 @@ export default function Dashboard({ user }) {
 
   return (
     <div className={styles.page}>
+      {modal === 'remind' && <ConfirmDialog title="Send deadline reminders?"
+        message="Remind students about their unfinished class tasks due within the next 24 hours."
+        confirmLabel="Send reminders" onCancel={() => setModal(null)}
+        onConfirm={async () => {
+          const result = await api(`/blocks/${user.block_id}/deadline-reminders`, { method: 'POST' });
+          setModal(null);
+            setReminderResult(`${result.sent} in-app reminder(s) sent to ${result.students} student(s).${result.failed ? ` ${result.failed} failed.` : ''} ${result.push_enabled_students ?? 0} student(s) have push enabled.${result.push_unregistered_students ? ` ${result.push_unregistered_students} need to enable Deadline alerts in Settings on this device and website address.` : ''}${result.push_configured === false ? ' Server push is not configured.' : ''}`);
+        }} />}
+      {reminderResult && <MessageDialog title="Deadline reminders" message={reminderResult} onClose={() => setReminderResult(null)} />}
       {modal === 'apply' && <ApplyMayorModal user={user} onClose={() => setModal(null)} />}
       <header className={styles.top}>
         <div>
@@ -84,6 +95,7 @@ export default function Dashboard({ user }) {
           <DailyQuote userId={user.id} heading />
         </div>
         <div className={styles.headerActions}>
+          {isMayor && user.block_id && <button type="button" data-online-only className="btn alt" onClick={() => setModal('remind')}>Remind students</button>}
           {isMayor && <button data-online-only className="btn alt" onClick={() => setModal('ann')}>New Announcement</button>}
           <button className="btn" onClick={() => setModal(isMayor && online ? 'task' : 'mine')}>{isMayor && online ? 'Assign a Task' : 'Add personal task'}</button>
         </div>

@@ -10,6 +10,47 @@ class PushSubscriptionTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_subscription_status_is_scoped_to_the_signed_in_account(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $endpoint = 'https://fcm.googleapis.com/fcm/send/device';
+        $owner->updatePushSubscription($endpoint, 'key', 'auth');
+
+        $this->actingAs($owner)->postJson('/api/notifications/push-subscriptions/status', ['endpoint' => $endpoint])
+            ->assertOk()->assertJson(['subscribed' => true]);
+        $this->actingAs($other)->postJson('/api/notifications/push-subscriptions/status', ['endpoint' => $endpoint])
+            ->assertOk()->assertJson(['subscribed' => false]);
+    }
+
+    public function test_logout_removes_only_this_devices_subscription(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $endpoint = 'https://fcm.googleapis.com/fcm/send/device';
+        $user->updatePushSubscription($endpoint, 'key', 'auth');
+        $user->updatePushSubscription($endpoint.'-second', 'key', 'auth');
+        $other->updatePushSubscription($endpoint.'-other', 'key', 'auth');
+
+        $this->actingAs($user, 'web')->postJson('/logout', ['push_endpoint' => $endpoint])->assertNoContent();
+
+        $this->assertDatabaseMissing('push_subscriptions', ['endpoint' => $endpoint]);
+        $this->assertDatabaseHas('push_subscriptions', ['endpoint' => $endpoint.'-second']);
+        $this->assertDatabaseHas('push_subscriptions', ['endpoint' => $endpoint.'-other']);
+        $this->assertGuest('web');
+    }
+
+    public function test_logout_cannot_remove_another_accounts_subscription(): void
+    {
+        $user = User::factory()->create();
+        $other = User::factory()->create();
+        $endpoint = 'https://fcm.googleapis.com/fcm/send/other';
+        $other->updatePushSubscription($endpoint, 'key', 'auth');
+
+        $this->actingAs($user, 'web')->postJson('/logout', ['push_endpoint' => $endpoint])->assertNoContent();
+        $this->assertDatabaseHas('push_subscriptions', ['endpoint' => $endpoint]);
+    }
+
     public function test_a_user_can_subscribe_and_unsubscribe_a_supported_push_endpoint(): void
     {
         $user = User::factory()->create();

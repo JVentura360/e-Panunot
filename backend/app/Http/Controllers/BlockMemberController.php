@@ -11,6 +11,30 @@ use Illuminate\Validation\ValidationException;
 
 class BlockMemberController extends Controller
 {
+    public function unfinishedTasks(int $blockId, int $memberId): \Illuminate\Http\JsonResponse
+    {
+        $actor = $this->requireUser();
+        $block = $this->findBlock($blockId);
+        $this->authorizeBlockManager($actor, $block);
+        $member = \App\Models\User::findOrFail($memberId);
+        abort_unless((int) $member->block_id === $blockId || DB::table('subject_enrollments')
+            ->where('user_id', $memberId)->where('block_id', $blockId)->exists(), 404);
+
+        $tasks = \App\Services\SubjectAccess::scope(\App\Models\Task::query(), $member, 'tasks')
+            ->where('block_id', $blockId)
+            ->whereDoesntHave('assignments', fn ($query) => $query->where('user_id', $memberId)->whereNotNull('completed_at'))
+            ->with('subject')->orderBy('due_date')->orderBy('id')->get()
+            ->map(fn ($task): array => [
+                'id' => $task->id,
+                'title' => $task->title,
+                'due_date' => $task->due_date?->toIso8601String(),
+                'subject' => $task->subject?->name,
+                'subject_code' => $task->subject?->code,
+            ]);
+
+        return response()->json(['data' => $tasks]);
+    }
+
     /**
      * GET /api/blocks/{blockId}/members
      * Admins and the block's mayor can view the member list.

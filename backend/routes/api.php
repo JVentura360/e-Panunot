@@ -40,6 +40,8 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\TrackClientChanges::clas
     Route::get('/blocks/lookup', [BlockController::class, 'lookup'])->middleware('throttle:30,1'); // must come before '{id}'
     Route::get('/blocks/{id}', [BlockController::class, 'show']);
     Route::get('/blocks/{blockId}/members', [BlockMemberController::class, 'index']);
+    Route::post('/blocks/{blockId}/deadline-reminders', [\App\Http\Controllers\MayorReminderController::class, 'store'])->middleware('throttle:5,1');
+    Route::get('/blocks/{blockId}/members/{memberId}/unfinished-tasks', [BlockMemberController::class, 'unfinishedTasks']);
     Route::post('/blocks/{blockId}/join-requests', [BlockMemberController::class, 'store']);
     Route::get('/blocks/{blockId}/join-requests', [BlockMemberController::class, 'requests']);
     Route::post('/blocks/{blockId}/join-requests/{requestId}/approve', [BlockMemberController::class, 'approve']);
@@ -96,6 +98,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\TrackClientChanges::clas
     Route::post('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'readAll']);
     Route::post('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'read']);
     Route::get('/notifications/push/public-key', [\App\Http\Controllers\PushSubscriptionController::class, 'publicKey']);
+    Route::post('/notifications/push-subscriptions/status', [\App\Http\Controllers\PushSubscriptionController::class, 'status']);
     Route::post('/notifications/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'store']);
     Route::delete('/notifications/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy']);
 

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import MemberTasksDialog from './MemberTasksDialog.jsx';
 import { useApiQuery } from '../../api/useApiQuery.js';
 import { api, errorMessage } from '../../api/client.js';
 import styles from './BlockManagement.module.css';
@@ -25,6 +26,10 @@ export default function BlockManagement({ user }) {
   const [busyId, setBusyId] = useState(null);
   const [editingMembers, setEditingMembers] = useState(false);
   const [removingMember, setRemovingMember] = useState(null);
+  const [viewingMember, setViewingMember] = useState(null);
+  const pressTimer = useRef(null);
+  const cancelPress = () => clearTimeout(pressTimer.current);
+  useEffect(() => () => clearTimeout(pressTimer.current), []);
   const review = async (request, action) => {
     setBusyId(`request-${request.id}`);
     setError('');
@@ -69,6 +74,7 @@ export default function BlockManagement({ user }) {
 
   return (
     <div className={styles.page}>
+      {viewingMember && <MemberTasksDialog key={viewingMember.id} blockId={blockId} member={viewingMember} onClose={() => setViewingMember(null)} />}
       {removingMember && <ConfirmDialog
         title={`Remove ${removingMember.name}?`}
         message={`Remove ${removingMember.name}? Block enrollments and assigned-task access will be removed. Concerns will be resolved; personal tasks kept.`}
@@ -137,7 +143,16 @@ export default function BlockManagement({ user }) {
                   onClick={() => setRemovingMember(m)} aria-label={`Remove ${m.name} from your block`}>Remove</button>}
                 <div className={styles.grow}>
                   <div className={styles.name}>
-                    {m.name}
+                    {m.is_mayor ? m.name : <button type="button" className={styles.memberName}
+                      aria-label={`View unfinished tasks for ${m.name}`} aria-haspopup="dialog"
+                      onClick={() => setViewingMember(m)}
+                      onPointerDown={event => {
+                        if (event.button !== 0) return;
+                        cancelPress();
+                        pressTimer.current = setTimeout(() => setViewingMember(m), 500);
+                      }}
+                      onPointerUp={cancelPress} onPointerCancel={cancelPress} onPointerLeave={cancelPress}
+                      onPointerMove={cancelPress} onContextMenu={event => event.preventDefault()}>{m.name}</button>}
                     {m.is_mayor && <span className={styles.badge}>Mayor</span>}
                   </div>
                   <div className={styles.meta}>{m.email}</div>

@@ -182,3 +182,21 @@
 .loading { color: var(--muted); }
 
 .acceptBtn:disabled, .rejectBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+.memberName {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: inherit;
+  text-align: left;
+  padding: 0;
+  cursor: pointer;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.memberName:hover { text-decoration: underline; }
+.memberName:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.memberTasks { list-style: none; padding: 0; max-height: 50dvh; overflow-y: auto; }
+.memberTasks li { display: grid; gap: .35rem; padding: .85rem 0; border-bottom: 1px solid currentColor; overflow-wrap: anywhere; }
+.memberTasks span { font-size: .9rem; }

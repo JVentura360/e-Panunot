@@ -69,6 +69,7 @@ export default function NotificationBell({ user }) {
     });
 
     const toggle = () => {
+        if (online && !open) query.refetch();
         if (window.matchMedia('(max-width: 760px)').matches) {
             navigate('/notifications');
             return;

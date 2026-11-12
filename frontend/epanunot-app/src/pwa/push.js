@@ -1,7 +1,7 @@
 import { api } from '../api/client.js';
 
 function pushWorkerUrl() {
-  return new URL('push/sw.js', new URL(import.meta.env.BASE_URL, window.location.href));
+  return new URL('push/sw.js', new URL(import.meta.env?.BASE_URL ?? '/', window.location.href));
 }
 
 function isSupported() {
@@ -31,11 +31,14 @@ export async function getPushState() {
 
   const registration = await navigator.serviceWorker.getRegistration(pushWorkerUrl().href);
   const subscription = await registration?.pushManager.getSubscription();
+  const enabled = subscription ? (await api('/notifications/push-subscriptions/status', {
+    method: 'POST', body: { endpoint: subscription.endpoint },
+  })).subscribed === true : false;
 
   return {
     supported: true,
-    enabled: Boolean(subscription),
-    hint: subscription ? 'Deadline alerts are enabled on this device.' : 'Get deadline alerts when e-Panunot is closed.',
+    enabled,
+    hint: enabled ? 'Deadline alerts are enabled on this device.' : 'Get deadline alerts when e-Panunot is closed.',
   };
 }
 
@@ -56,6 +59,7 @@ export async function enablePushNotifications() {
 
   const url = pushWorkerUrl();
   const registration = await navigator.serviceWorker.register(url, { scope: new URL('.', url).pathname });
+  await waitForPushWorker(registration);
   const existing = await registration.pushManager.getSubscription();
   const subscription = existing ?? await registration.pushManager.subscribe({
     userVisibleOnly: true,
@@ -77,6 +81,40 @@ export async function enablePushNotifications() {
     enabled: true,
     hint: 'Deadline alerts are enabled on this device.',
   };
+}
+
+function waitForPushWorker(registration) {
+  if (registration.active?.state === 'activated') return Promise.resolve();
+  const worker = registration.installing ?? registration.waiting ?? registration.active;
+  if (!worker) return Promise.reject(new Error('The notification worker could not start. Please try again.'));
+  return new Promise((resolve, reject) => {
+    const finish = (error) => {
+      clearTimeout(timeout);
+      worker.removeEventListener('statechange', changed);
+      if (error) reject(error);
+      else resolve();
+    };
+    const changed = () => {
+      if (worker.state === 'activated') finish();
+      else if (worker.state === 'redundant') finish(new Error('The notification worker could not start. Please try again.'));
+    };
+    const timeout = setTimeout(() => finish(new Error('Starting notifications took too long. Please try again.')), 15000);
+    worker.addEventListener('statechange', changed);
+    changed();
+  });
+}
+
+export async function detachPushForLogout() {
+  if (!isSupported()) return null;
+  const registration = await navigator.serviceWorker.getRegistration(pushWorkerUrl().href);
+  const subscription = await registration?.pushManager.getSubscription();
+  if (!subscription) return null;
+  try {
+    await subscription.unsubscribe();
+  } catch {
+    // The logout endpoint also removes this subscription from the account.
+  }
+  return subscription.endpoint;
 }
 
 export async function disablePushNotifications() {
