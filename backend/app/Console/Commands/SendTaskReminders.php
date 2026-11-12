@@ -41,6 +41,14 @@ class SendTaskReminders extends Command
                     if (! $assignment->user) {
                         continue;
                     }
+                    if ($task->subject_id !== null && ! \Illuminate\Support\Facades\DB::table('subject_enrollments')
+                        ->join('blocks', 'blocks.id', '=', 'subject_enrollments.block_id')
+                        ->join('terms', 'terms.id', '=', 'blocks.term_id')
+                        ->where('terms.is_active', true)->whereColumn('subject_enrollments.term_id', 'blocks.term_id')
+                        ->where('user_id', $assignment->user_id)->where('subject_enrollments.block_id', $task->block_id)
+                        ->where('subject_id', $task->subject_id)->exists()) {
+                        continue;
+                    }
 
                     $assignment->user->notify(new TaskReminderNotification($task));
                     $assignment->update([

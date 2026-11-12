@@ -1,7 +1,33 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { enablePushNotifications, getPushState } from './push.js';
 import { useOffline } from '../offline/useOffline.js';
-import styles from './PushPrompt.module.css';
+import styles from '../components/Modal.module.css';
+
+function PromptDialog({ busy, error, onDismiss, onEnable }) {
+  const ref = useRef(null);
+  useEffect(() => {
+    const previous = document.activeElement;
+    const dialog = ref.current;
+    // Let an existing first-run tutorial finish before requesting permission.
+    const show = () => {
+      if (!document.querySelector('dialog:modal')) dialog.showModal();
+    };
+    show();
+    const timer = setInterval(() => { if (!dialog.open) show(); }, 500);
+    return () => { clearInterval(timer); dialog.close(); previous?.focus?.(); };
+  }, []);
+  return <dialog ref={ref} className={styles.modal} aria-labelledby="push-prompt-title"
+    onCancel={(event) => { event.preventDefault(); if (!busy) onDismiss(); }}>
+    <header className={styles.header}><h2 id="push-prompt-title" tabIndex={-1} autoFocus>Stay ahead of deadlines</h2></header>
+    <p className={styles.description}>Enable notifications on this device to receive task reminders, even when the app is closed.</p>
+    <p className={styles.description}>You can change this later in Settings → Deadline alerts.</p>
+    {error && <p role="alert" className={styles.error}>{error}</p>}
+    <footer className={styles.actions}>
+      <button type="button" className="btn ghost" disabled={busy} onClick={onDismiss}>Later</button>
+      <button type="button" className="btn" disabled={busy} onClick={() => void onEnable()}>{busy ? 'Enabling…' : 'Enable notifications'}</button>
+    </footer>
+  </dialog>;
+}
 
 export default function PushPrompt({ user }) {
   const { online } = useOffline();
@@ -41,20 +67,5 @@ export default function PushPrompt({ user }) {
   };
 
   if (!member || !online || !visible) return null;
-  return (
-    <section className={styles.prompt} aria-labelledby="push-prompt-title">
-      <div>
-        <h2 id="push-prompt-title">Stay ahead of deadlines</h2>
-        <p>Enable notifications on this device to receive task reminders, even when the app is closed.</p>
-        <p>You can change this later in Settings → Deadline alerts.</p>
-        {error && <p role="alert">{error}</p>}
-      </div>
-      <div className={styles.actions}>
-        <button type="button" className="btn ghost" disabled={busy} onClick={dismiss}>Later</button>
-        <button type="button" className="btn" disabled={busy} onClick={() => void enable()}>
-          {busy ? 'Enabling…' : 'Enable notifications'}
-        </button>
-      </div>
-    </section>
-  );
+  return <PromptDialog busy={busy} error={error} onDismiss={dismiss} onEnable={enable} />;
 }

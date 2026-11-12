@@ -144,7 +144,16 @@ export default function Navigation({ user, onLogout }) {
   useEffect(() => {
     if (!profileOpen) return;
     const dismissOutside = (event) => {
-      if (!profileRef.current?.contains(event.target)) setProfileOpen(false);
+      if (!profileRef.current?.contains(event.target)) {
+        if (event.type === 'click') {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+        }
+        setProfileOpen(false);
+      }
+    };
+    const blockOutsidePointer = (event) => {
+      if (!profileRef.current?.contains(event.target)) event.preventDefault();
     };
     const dismissOnEscape = (event) => {
       if (event.key === 'Escape') {
@@ -152,11 +161,13 @@ export default function Navigation({ user, onLogout }) {
         profileButtonRef.current?.focus();
       }
     };
-    document.addEventListener('pointerdown', dismissOutside, true);
+    document.addEventListener('pointerdown', blockOutsidePointer, true);
+    document.addEventListener('click', dismissOutside, true);
     document.addEventListener('focusin', dismissOutside);
     document.addEventListener('keydown', dismissOnEscape);
     return () => {
-      document.removeEventListener('pointerdown', dismissOutside, true);
+      document.removeEventListener('pointerdown', blockOutsidePointer, true);
+      document.removeEventListener('click', dismissOutside, true);
       document.removeEventListener('focusin', dismissOutside);
       document.removeEventListener('keydown', dismissOnEscape);
     };

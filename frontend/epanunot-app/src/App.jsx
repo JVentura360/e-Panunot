@@ -22,8 +22,10 @@ import { canUseConcerns } from './features/block/enrollmentRules.js';
 import { activateOfflineAccount, getOfflineState, syncOffline } from './offline/runtime.js';
 import NotificationsPage from './features/notifications/NotificationsPage.jsx';
 import SettingsPage from './features/settings/SettingsPage.jsx';
+import { useDialogDismiss } from './components/useDialogDismiss.js';
 
 export default function App() {
+    useDialogDismiss();
     const [loggedOut, setLoggedOut] = useState(false);
     const [logoutError, setLogoutError] = useState('');
     const [, renderSession] = useState(0);

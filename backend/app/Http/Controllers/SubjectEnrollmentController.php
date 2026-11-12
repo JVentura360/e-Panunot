@@ -61,6 +61,7 @@ class SubjectEnrollmentController extends Controller
             $id = DB::table('subject_enrollments')->insertGetId($data + [
                 'user_id' => $user->id, 'term_id' => $term->id, 'created_at' => now(), 'updated_at' => now(),
             ]);
+            app(\App\Services\StudentEnrollmentService::class)->assignExistingTasks((int) $user->id, (int) $data['block_id'], (int) $data['subject_id']);
 
             return $this->format($this->ledger($user->id)->where('e.id', $id)->first());
         });

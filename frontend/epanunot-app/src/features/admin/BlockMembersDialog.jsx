@@ -15,11 +15,12 @@ export default function BlockMembersDialog({ block, onClose }) {
     const previous = document.activeElement;
     const dialog = ref.current;
     dialog.showModal();
+    dialog.querySelector('h2')?.focus();
     return () => { dialog.close(); previous?.focus?.(); };
   }, []);
   return <dialog ref={ref} className={`${modal.modal} ${styles.membersDialog}`} aria-labelledby={`${id}-title`}
     onCancel={event => { event.preventDefault(); onClose(); }}>
-    <header className={modal.header}><div><h2 id={`${id}-title`}>{block.name} members</h2>
+    <header className={modal.header}><div><h2 tabIndex={-1} autoFocus id={`${id}-title`}>{block.name} members</h2>
       <p className={modal.description}>{members.length} member{members.length === 1 ? '' : 's'} · Includes students enrolled in this block’s subjects.</p></div></header>
     <label className={styles.memberSearch} htmlFor={`${id}-search`}>Find a member
       <input id={`${id}-search`} type="search" value={search} onChange={event => setSearch(event.target.value)} placeholder="Search name or email" />

@@ -34,12 +34,8 @@ class SubjectTaskService
             $tasks = collect();
             foreach ($selected as $subjectId) {
                 $task = Task::create($values + ['block_id' => $block->id, 'created_by' => $mayor->id, 'subject_id' => $subjectId]);
-                $recipients = DB::table('users as u')->where(function ($query) use ($block, $subjectId, $term): void {
-                    $query->whereIn('u.id', DB::table('subject_enrollments')->where('block_id', $block->id)->where('subject_id', $subjectId)->select('user_id'))
-                        ->orWhere(function ($legacy) use ($block, $term): void {
-                            $legacy->where('u.block_id', $block->id)->whereNotIn('u.id', DB::table('student_term_profiles')->where('term_id', $term->id)->select('user_id'));
-                        });
-                })->pluck('u.id');
+                $recipients = DB::table('subject_enrollments')->where('block_id', $block->id)
+                    ->where('term_id', $term->id)->where('subject_id', $subjectId)->distinct()->pluck('user_id');
                 foreach ($recipients as $userId) {
                     DB::table('task_assignments')->insert(['task_id' => $task->id, 'user_id' => $userId, 'created_at' => now(), 'updated_at' => now()]);
                 }

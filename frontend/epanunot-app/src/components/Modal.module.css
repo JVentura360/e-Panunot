@@ -1,5 +1,6 @@
 .modal { position: fixed; inset: 0; margin: auto; width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; border: 1px solid var(--mist); border-radius: 20px; padding: 28px; background: var(--paper); color: var(--ink); box-shadow: 0 24px 80px rgb(var(--shadow-rgb) / 20%); }
 .modal::backdrop { background: rgb(var(--shadow-rgb) / 55%); }
+.modal { height: fit-content; }
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .header h2 { font-size: 1.6rem; line-height: 1.2; margin-top: 6px; }
 .eyebrow { color: var(--forest); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; }

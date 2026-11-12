@@ -28,7 +28,7 @@ class UpdateTaskRequest extends FormRequest
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'subject_id' => [
-                'nullable',
+                'sometimes', 'required',
                 Rule::exists('block_subjects', 'subject_id')
                     ->where('block_id', $this->user()->block_id),
             ],

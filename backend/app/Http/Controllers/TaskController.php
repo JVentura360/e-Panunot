@@ -60,7 +60,26 @@ class TaskController extends Controller
     {
         Gate::authorize('update', $task);
 
-        $task->update($request->validated());
+        DB::transaction(function () use ($request, $task): void {
+            $candidate = DB::table('blocks')->where('id', $task->block_id)->first();
+            $term = DB::table('terms')->where('id', $candidate->term_id)->lockForUpdate()->first();
+            DB::table('blocks')->where('id', $task->block_id)->lockForUpdate()->first();
+            $locked = Task::whereKey($task->id)->lockForUpdate()->firstOrFail();
+            $locked->fill($request->validated());
+            $subjectChanged = $locked->isDirty('subject_id');
+            if ($subjectChanged) {
+                abort_unless($term?->is_active, 422, 'This term is no longer active.');
+            }
+            $locked->save();
+            if ($subjectChanged) {
+                $locked->assignments()->delete();
+                foreach (DB::table('subject_enrollments')->where('block_id', $locked->block_id)
+                    ->where('term_id', $term->id)->where('subject_id', $locked->subject_id)->pluck('user_id') as $userId) {
+                    TaskAssignment::create(['task_id' => $locked->id, 'user_id' => $userId]);
+                }
+            }
+        }, 3);
+        $task->refresh();
         SyncTaskToGoogle::dispatch($task->id);
         return new TaskResource($task->load('subject'));
     }

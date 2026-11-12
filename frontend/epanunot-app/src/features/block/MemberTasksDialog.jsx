@@ -18,7 +18,6 @@ export default function MemberTasksDialog({ blockId, member, onClose }) {
   return <dialog ref={dialogRef} className={modal.modal} aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); onClose(); }}>
     <header className={modal.header}><h2 id={titleId}>{member.name}</h2></header>
-    <h3>Unfinished class tasks</h3>
     {query.isPending ? <p role="status">Loading tasks…</p> : query.error ?
       <div role="alert"><p>{errorMessage(query.error)}</p><button className="btn ghost" onClick={() => query.refetch()}>Retry</button></div> :
       query.data?.data?.length ? <ul className={styles.memberTasks}>

@@ -68,7 +68,8 @@ export function apiQueryOptions(path, { query } = {}) {
       }
       const owner = getOfflineState().accountId;
       try {
-        const data = await request(BASE + path, { query });
+        const background = queryClient.getQueryData(['api', generation, path, query ?? {}]) !== undefined;
+        const data = await request(BASE + path, { query, background });
         return generation === cacheGeneration ? await cacheOfflineRead(path, data, owner) : data;
       } catch (error) {
         if (error.status === 0 && generation === cacheGeneration) await restoreOfflineFallback();
@@ -133,7 +134,7 @@ export async function loginAsDevelopmentAccount(account) {
   return result;
 }
 
-async function request(address, { method = 'GET', body, query } = {}) {
+async function request(address, { method = 'GET', body, query, background = false } = {}) {
   const url = new URL(address, window.location.origin);
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value !== undefined && value !== null && value !== '') url.searchParams.set(key, value);
@@ -141,7 +142,7 @@ async function request(address, { method = 'GET', body, query } = {}) {
 
   const controller = new AbortController();
   requestControllers.add(controller);
-  const visibleRequest = !url.pathname.endsWith('/api/sync');
+  const visibleRequest = !background && !url.pathname.endsWith('/api/sync');
   if (visibleRequest) {
     pendingCount++;
     notifyRequests();

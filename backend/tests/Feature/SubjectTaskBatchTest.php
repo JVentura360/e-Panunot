@@ -80,4 +80,55 @@ class SubjectTaskBatchTest extends TestCase
             'due_date' => now()->addDay()->toDateTimeString()])->assertUnprocessable();
         $this->assertDatabaseCount('tasks', 0);
     }
+
+    public function test_exact_block_and_subject_control_assignments_visibility_completion_and_reminders(): void
+    {
+        [$block, $mayor, $subjects] = $this->setupBlock();
+        $other = Block::factory()->create(['term_id' => $block->term_id]);
+        DB::table('block_subjects')->insert(['block_id' => $other->id, 'subject_id' => $subjects[1]->id]);
+        $student = User::factory()->student($block)->create();
+        $legacy = User::factory()->student($block)->create();
+        foreach ([[$block->id, $subjects[0]->id], [$other->id, $subjects[1]->id]] as [$blockId, $subjectId]) {
+            DB::table('subject_enrollments')->insert(['user_id' => $student->id, 'term_id' => $block->term_id,
+                'block_id' => $blockId, 'subject_id' => $subjectId, 'created_at' => now(), 'updated_at' => now()]);
+        }
+        $tasks = $this->actingAs($mayor)->postJson('/api/tasks', ['title' => 'Exact enrollment', 'all_subjects' => true,
+            'due_date' => now()->addHours(5)->toDateTimeString()])->assertCreated()->json('data');
+        $this->assertSame(1, DB::table('task_assignments')->where('user_id', $student->id)->count());
+        $this->assertSame(0, DB::table('task_assignments')->where('user_id', $legacy->id)->count());
+        $this->actingAs($student)->getJson('/api/tasks')->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $tasks[0]['id']);
+        $this->getJson('/api/calendar?'.http_build_query(['from' => now()->toIso8601String(), 'to' => now()->addDay()->toIso8601String()]))
+            ->assertOk()->assertJsonCount(1, 'data');
+        $this->postJson('/api/tasks/'.$tasks[1]['id'].'/complete')->assertForbidden();
+        $this->actingAs($legacy)->getJson('/api/tasks')->assertOk()->assertJsonCount(0, 'data');
+        // Even a stale assignment must not deliver a reminder for a different offering.
+        DB::table('task_assignments')->insert(['user_id' => $student->id, 'task_id' => $tasks[1]['id'], 'created_at' => now(), 'updated_at' => now()]);
+        $this->actingAs($mayor)->postJson('/api/blocks/'.$block->id.'/deadline-reminders')
+            ->assertOk()->assertJson(['sent' => 1, 'students' => 1, 'failed' => 0]);
+        DB::table('notifications')->delete();
+        $this->artisan('tasks:send-reminders')->assertSuccessful();
+        $this->assertSame(1, DB::table('notifications')->where('notifiable_id', $student->id)->count());
+        $this->assertSame(0, DB::table('notifications')->where('notifiable_id', $legacy->id)->count());
+    }
+
+    public function test_late_enrollment_and_subject_edits_keep_the_exact_recipient_set(): void
+    {
+        [$block, $mayor, $subjects] = $this->setupBlock();
+        $student = User::factory()->create();
+        $this->actingAs($student)->joinApprovedBlock($block->id, 'irregular');
+        $taskId = $this->actingAs($mayor)->postJson('/api/tasks', ['title' => 'Existing assignment',
+            'subject_id' => $subjects[0]->id, 'due_date' => now()->addHours(5)->toDateTimeString()])
+            ->assertCreated()->json('data.id');
+        $this->assertDatabaseMissing('task_assignments', ['user_id' => $student->id, 'task_id' => $taskId]);
+        $enrollmentId = $this->actingAs($student)->postJson('/api/subject-enrollments',
+            ['block_id' => $block->id, 'subject_id' => $subjects[0]->id])->assertCreated()->json('data.id');
+        $this->assertDatabaseHas('task_assignments', ['user_id' => $student->id, 'task_id' => $taskId]);
+        $this->postJson('/api/tasks/'.$taskId.'/complete')->assertOk();
+        $this->actingAs($mayor)->putJson('/api/tasks/'.$taskId, ['subject_id' => $subjects[1]->id])->assertOk();
+        $this->assertDatabaseMissing('task_assignments', ['user_id' => $student->id, 'task_id' => $taskId]);
+        $this->assertDatabaseHas('task_assignments', ['user_id' => $mayor->id, 'task_id' => $taskId, 'completed_at' => null]);
+        $this->actingAs($student)->postJson('/api/tasks/'.$taskId.'/complete')->assertForbidden();
+        $this->deleteJson('/api/subject-enrollments/'.$enrollmentId)->assertOk();
+        $this->getJson('/api/tasks')->assertOk()->assertJsonCount(0, 'data');
+    }
 }

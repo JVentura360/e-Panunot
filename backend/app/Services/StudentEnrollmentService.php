@@ -103,6 +103,7 @@ class StudentEnrollmentService
             foreach ($selected as $subjectId) {
                 DB::table('subject_enrollments')->insertOrIgnore(['user_id' => $userId, 'term_id' => $term->id, 'block_id' => $blockId,
                     'subject_id' => $subjectId, 'created_at' => now(), 'updated_at' => now()]);
+                $this->assignExistingTasks($userId, $blockId, (int) $subjectId);
             }
             if ($studentType === 'regular' || $joining) {
                 DB::table('users')->where('id', $userId)->update(['block_id' => $blockId, 'updated_at' => now()]);
@@ -131,9 +132,18 @@ class StudentEnrollmentService
                     foreach ($added as $subjectId) {
                         DB::table('subject_enrollments')->insertOrIgnore(['user_id' => $userId, 'term_id' => $block->term_id,
                             'block_id' => $blockId, 'subject_id' => $subjectId, 'created_at' => now(), 'updated_at' => now()]);
+                        $this->assignExistingTasks((int) $userId, (int) $blockId, (int) $subjectId);
                     }
                 }
             }
+        }
+    }
+
+    public function assignExistingTasks(int $userId, int $blockId, int $subjectId): void
+    {
+        foreach (DB::table('tasks')->where('block_id', $blockId)->where('subject_id', $subjectId)->pluck('id') as $taskId) {
+            DB::table('task_assignments')->insertOrIgnore(['user_id' => $userId, 'task_id' => $taskId,
+                'created_at' => now(), 'updated_at' => now()]);
         }
     }
 

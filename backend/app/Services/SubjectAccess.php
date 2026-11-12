@@ -28,7 +28,9 @@ class SubjectAccess
             ->where(function ($allowed) use ($user, $table, $classified): void {
                 $allowed->whereRaw('1 = 0');
                 if (! $classified) {
-                    $allowed->orWhere("$table.block_id", $user->block_id);
+                    $allowed->orWhere(function ($legacy) use ($table, $user): void {
+                        $legacy->where("$table.block_id", $user->block_id)->whereNull("$table.subject_id");
+                    });
                 }
                 $allowed->orWhereIn("$table.block_id", DB::table('blocks')->where('mayor_id', $user->id)->select('id'))
                     ->orWhereExists(function (QueryBuilder $enrollment) use ($user, $table): void {
@@ -49,7 +51,7 @@ class SubjectAccess
         }
         $termId = DB::table('blocks')->where('id', $blockId)->value('term_id');
         $classified = app(StudentEnrollmentService::class)->profile($user->id, $termId);
-        if ((! $classified && (int) $user->block_id === $blockId) || DB::table('blocks')->where('id', $blockId)->where('mayor_id', $user->id)->exists()) {
+        if ((! $classified && $subjectId === null && (int) $user->block_id === $blockId) || DB::table('blocks')->where('id', $blockId)->where('mayor_id', $user->id)->exists()) {
             return true;
         }
 

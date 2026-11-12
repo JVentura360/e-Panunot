@@ -7,6 +7,18 @@ globalThis.document = { cookie: 'XSRF-TOKEN=encoded%3Dcsrf' };
 const { api, logout, googleLoginUrl, developmentAccounts, loginAsDevelopmentAccount, getPendingRequestCount, subscribeRequests, clearApiCache, apiQueryOptions, queryClient, refreshSyncQueries } = await import('./client.js');
 queryClient.setDefaultOptions({ queries: { ...queryClient.getDefaultOptions().queries, gcTime: Infinity } });
 
+test('cached notification refresh stays quiet while first loads show progress', async () => {
+  const progress = [];
+  globalThis.fetch = async () => {
+    progress.push(getPendingRequestCount());
+    return new Response(JSON.stringify({ data: [] }));
+  };
+  await api('/notifications');
+  await api('/notifications', { force: true });
+  assert.deepEqual(progress, [1, 0]);
+  assert.equal(getPendingRequestCount(), 0);
+});
+
 test('sync checks do not show request loading, and changed domains refresh only active data', async () => {
   const reads = [];
   globalThis.fetch = async (url) => {
