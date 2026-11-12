@@ -6,6 +6,8 @@ import { disablePushNotifications, enablePushNotifications, getPushState } from 
 import { finishOfflineUpdate, prepareOfflineUpdate, reconnectOffline } from '../../offline/runtime.js';
 import { useOffline } from '../../offline/useOffline.js';
 import styles from './SettingsPage.module.css';
+import Tutorial from '../tutorial/Tutorial.jsx';
+import { tutorialRole } from '../tutorial/tutorialSeen.js';
 
 const savedFmt = new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
@@ -30,6 +32,8 @@ export default function SettingsPage({ user, onLogout }) {
   const [updateError, setUpdateError] = useState('');
   const [pushState, setPushState] = useState({ supported: false, enabled: false, hint: '' });
   const [pushError, setPushError] = useState('');
+  const [showTutorial, setShowTutorial] = useState(false);
+  const replayRole = tutorialRole(user);
   const isMember = ['student', 'mayor'].includes(user.role);
 
   useEffect(() => {
@@ -99,6 +103,11 @@ export default function SettingsPage({ user, onLogout }) {
 
       <section className={styles.card} aria-labelledby="set-app">
         <h2 id="set-app">App</h2>
+          {replayRole && (
+            <Row title="How it works" hint="Replay the quick tour.">
+              <button type="button" className="btn alt" onClick={() => setShowTutorial(true)}>Replay</button>
+            </Row>
+          )}
         <Row title="Install ePanunot" hint={isInstalled() ? 'Already installed on this device.' : undefined}>
           {isInstalled() ? null : install.canPrompt ? (
             <button type="button" className="btn alt" data-online-only onClick={() => void promptInstall()}>Install</button>
@@ -157,6 +166,10 @@ export default function SettingsPage({ user, onLogout }) {
           <button type="button" className={`btn ghost ${styles.danger}`} onClick={onLogout}>Sign out</button>
         </Row>
       </section>
+
+      {showTutorial && replayRole && (
+        <Tutorial role={replayRole} onDone={() => setShowTutorial(false)} />
+      )}
     </div>
   );
 }

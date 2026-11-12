@@ -10,7 +10,7 @@
 .panel { position: relative; width: 100%; max-width: 400px; }
 .card { width: 100%; }
 .brand {
-  margin-bottom: 36px;
+  margin-bottom: 12px;
   text-align: center;
   font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
   font-size: clamp(2.4rem, 8vw, 3rem);
@@ -20,6 +20,12 @@
   color: var(--clay);
 }
 .brand b { color: var(--forest); }
+.pitch { max-width: 30ch; margin: 0 auto 16px; text-align: center; color: var(--muted); font-size: 0.95rem; line-height: 1.5; }
+.features { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 0 0 28px; padding: 0; list-style: none; }
+.feature { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--forest); font-size: 0.75rem; font-weight: 600; }
+.install { margin-top: 20px; text-align: center; }
+.installBtn { width: 100%; }
+.installNote { color: var(--muted); font-size: 0.75rem; line-height: 1.6; }
 .gbtn {
   width: 100%;
   min-height: 56px;
@@ -80,5 +86,6 @@
 @media (max-height: 540px) {
   .illustration { --illustration-scale: 0.8; width: 128px; height: 96px; margin-bottom: 20px; transform-origin: center bottom; }
   .brand { margin-bottom: 24px; }
+  .pitch, .features { display: none; }
   .demo { margin-top: 24px; }
 }
