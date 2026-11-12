@@ -1,0 +1,61 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 600;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  background: radial-gradient(ellipse at 15% 5%, color-mix(in srgb, var(--aurora-green) 22%, transparent), transparent 55%), radial-gradient(ellipse at 95% 90%, color-mix(in srgb, var(--forest) 12%, transparent), transparent 55%), var(--paper);
+  color: var(--ink);
+  animation: fade 200ms ease-out both;
+}
+.top { display: flex; justify-content: flex-end; min-height: 56px; padding: 8px 12px; }
+.skip { min-height: 44px; padding: 8px 16px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-weight: 600; }
+.skip:hover { background: var(--sand); color: var(--forest); }
+
+.scroller {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.scroller::-webkit-scrollbar { display: none; }
+
+.card {
+  flex: 0 0 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: safe center;
+  gap: 16px;
+  padding: 16px 32px;
+  overflow-y: auto;
+  text-align: center;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+.icon { display: grid; place-items: center; flex-shrink: 0; width: 112px; height: 112px; margin-bottom: 12px; border: 1px solid var(--sage); border-radius: 50%; background: color-mix(in srgb, var(--sage) 40%, var(--paper)); color: var(--forest); }
+.title { font-size: clamp(1.5rem, 6vw, 1.9rem); line-height: 1.2; }
+.body { max-width: 32ch; color: var(--muted); font-size: 1rem; line-height: 1.6; }
+
+.footer { display: grid; justify-items: center; gap: 8px; width: 100%; max-width: 440px; margin: 0 auto; padding: 0 24px; }
+.dots { display: flex; justify-content: center; }
+.dot { width: 28px; height: 44px; display: grid; place-items: center; border: 0; background: none; }
+.dot::before { content: ''; width: 8px; height: 8px; border-radius: 999px; background: var(--mist); transition: width 200ms ease, background-color 200ms ease; }
+.dot[aria-current='true']::before { width: 24px; background: var(--forest); }
+.next { width: 100%; }
+
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+@media (max-height: 540px) {
+  .icon { width: 72px; height: 72px; margin-bottom: 0; }
+  .icon svg { width: 32px; height: 32px; }
+  .card { gap: 8px; }
+  .body { font-size: 0.9rem; }
+}

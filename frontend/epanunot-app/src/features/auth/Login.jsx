@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { api, developmentAccounts, errorMessage, googleLoginUrl, loginAsDevelopmentAccount } from '../../api/client.js';
+import { getInstallState, isInstalled, isIos, promptInstall, subscribeInstall } from '../../pwa/install.js';
 import styles from './Login.module.css';
 import LoadingScreen from '../../components/LoadingScreen.jsx';
 
@@ -16,6 +17,8 @@ export default function Login({ error: sessionError = '', onLogin }) {
     const [loading, setLoading] = useState(false);
     const [accounts, setAccounts] = useState([]);
     const [developmentError, setDevelopmentError] = useState('');
+    const install = useSyncExternalStore(subscribeInstall, getInstallState, getInstallState);
+    const showInstall = !isInstalled() && (install.canPrompt || isIos());
     useEffect(() => {
         if (!import.meta.env.DEV && import.meta.env.VITE_LOCAL_ACCOUNTS !== 'true') return;
         let active = true;
@@ -76,7 +79,15 @@ export default function Login({ error: sessionError = '', onLogin }) {
                         <span className={styles.noteDot} />
                     </div>
 
-                    <h1 className={styles.brand}>e<b>Panunot</b></h1>
+                                        <h1 className={styles.brand}>e<b>Panunot</b></h1>
+                    <p className={styles.pitch}>
+                        Your block’s tasks, announcements and concerns in one place.
+                    </p>
+                    <ul className={styles.features} aria-label="What you can do">
+                        <li className={styles.feature}>Tasks &amp; calendar</li>
+                        <li className={styles.feature}>Announcements</li>
+                        <li className={styles.feature}>Concerns</li>
+                    </ul>
 
                     <button
                         className={styles.gbtn}
@@ -95,6 +106,21 @@ export default function Login({ error: sessionError = '', onLogin }) {
                     {error && (
                         <div className={styles.error} role="alert">
                             {error}
+                        </div>
+                    )}
+
+                    {showInstall && (
+                        <div className={styles.install}>
+                            {install.canPrompt ? (
+                                <button type="button" className={`btn ghost ${styles.installBtn}`}
+                                    onClick={() => void promptInstall()}>
+                                    Install app
+                                </button>
+                            ) : (
+                                <p className={styles.installNote}>
+                                    Install ePanunot: tap the Share button in Safari, then “Add to Home Screen”.
+                                </p>
+                            )}
                         </div>
                     )}
 
