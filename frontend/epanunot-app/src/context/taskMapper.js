@@ -1,9 +1,11 @@
-// "2026-11-05T15:59:00.000000Z" or "2026-11-05 23:59:00" -> "2026-11-05"
+// Keep exact UTC deadlines while deriving display dates and times in the device timezone.
+import { deadlineDate, deadlineInput } from '../components/deadline.js';
 const dateKey = (value) => String(value).slice(0, 10);
 const endOfDay = (key) => new Date(`${key}T23:59:00`);
 
 export const toClassTask = (row) => {
-const date = dateKey(row.due_date);
+    const localDeadline = deadlineInput(row.due_date);
+    const date = localDeadline.slice(0, 10);
     return {
         id: `t-${row.id}`,
         rawId: row.id,
@@ -14,7 +16,8 @@ const date = dateKey(row.due_date);
         subjectId: row.subject_id,
         by: row.created_by?.name ?? 'your mayor',
         date,
-        due: endOfDay(date),
+        time: localDeadline.slice(11),
+        due: deadlineDate(row.due_date),
         calendarDeadline: row.due_date,
         done: Boolean(row.completed_at),
         pendingSync: Boolean(row._offline_pending),
@@ -22,7 +25,7 @@ const date = dateKey(row.due_date);
 };
 
 export const toPersonalTask = (row) => {
-    const date = dateKey(row.due_date ?? row.created_at);
+    const date = row.due_at ? deadlineInput(row.due_at).slice(0, 10) : dateKey(row.due_date ?? row.created_at);
     return {
         id: `p-${row.id}`,
         rawId: row.id,
@@ -32,7 +35,9 @@ export const toPersonalTask = (row) => {
         subject: '',
         by: '',
         date,
-        due: endOfDay(date),
+        time: row.due_at ? deadlineInput(row.due_at).slice(11) : '23:59',
+        due: row.due_at ? deadlineDate(row.due_at) : endOfDay(date),
+        calendarDeadline: row.due_at ?? null,
         done: Boolean(row.is_done),
         pendingSync: Boolean(row._offline_pending),
     };

@@ -56,7 +56,7 @@ export function createOfflineEngine({ storage, uuid = () => crypto.randomUUID(),
           const existing = rows.find((row) => row.client_id === operation.client_id);
           if (existing) { existing.is_done = operation.done; existing._offline_pending = true; }
           else rows.unshift({ id: 'offline:'+operation.client_id, client_id: operation.client_id, title: operation.title,
-            due_date: operation.due_date, is_done: operation.done, created_at: operation.created_at, revision: 0, _offline_pending: true });
+            due_date: operation.due_date, due_at: operation.due_at, is_done: operation.done, created_at: operation.created_at, revision: 0, _offline_pending: true });
         }
         const personal = operation.kind === 'complete_personal';
         if (operation.kind === 'complete_task' && path === '/tasks' || personal && path === '/personal-todos') {
@@ -70,12 +70,12 @@ export function createOfflineEngine({ storage, uuid = () => crypto.randomUUID(),
       }
       return { ...source, data: rows };
     },
-    async createPersonal({ title, due_date }) {
+    async createPersonal({ title, due_date, due_at }) {
       editable();
       if (!title?.trim()) throw new Error('Please add a title.');
       const clientId = uuid();
       return update((old) => ({ ...old, outbox: [...old.outbox, { operation_id: uuid(), kind: 'create_personal',
-        client_id: clientId, title: title.trim(), due_date, done: false, created_at: now() }] }));
+        client_id: clientId, title: title.trim(), due_date, ...(due_at ? { due_at } : {}), done: false, created_at: now() }] }));
     },
     async complete(id, personal, done) {
       editable();

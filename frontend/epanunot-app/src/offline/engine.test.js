@@ -34,8 +34,10 @@ test('offline personal creation and completion share one durable create with a s
   const { create } = setup();
   const engine = create();
   await engine.activate({ id: 4, role: 'mayor' });
-  await engine.createPersonal({ title: 'Read notes', due_date: '2026-11-04' });
+  await engine.createPersonal({ title: 'Read notes', due_date: '2026-11-04', due_at: '2026-11-04T06:30:00Z' });
   const row = engine.view('/personal-todos').data[0];
+  assert.equal(row.due_at, '2026-11-04T06:30:00Z');
+  assert.equal(engine.record().outbox[0].due_at, row.due_at);
   await engine.complete(row.id, true, true);
   assert.equal(engine.record().outbox.length, 1);
   assert.equal(engine.record().outbox[0].client_id, row.client_id);

@@ -4,6 +4,7 @@ import TaskCalendarLink from '../calendar/TaskCalendarLink.jsx';
 
 export default function TaskItem({ t, onToggle, onEdit, onDelete, calendarEmail }) {
   const left = daysLeft(t.due);
+  const time = t.time ? new Intl.DateTimeFormat('en-PH', { hour: 'numeric', minute: '2-digit' }).format(t.due) : '';
   return (
     <li data-sort-id={t.id} className={`${styles.item} ${left <= 1 && !t.done ? styles.urgent : ''} ${t.done ? styles.done : ''}`}>
       {onToggle && (
@@ -17,7 +18,7 @@ export default function TaskItem({ t, onToggle, onEdit, onDelete, calendarEmail 
       <div className={styles.grow}>
         <div className={styles.taskHeading}>
           <div className={styles.itemTitle}>{t.title}</div>
-          <span className={styles.due}>{t.done ? 'Completed' : left < 0 ? `${Math.abs(left)}d overdue` : left === 0 ? 'Due today' : left === 1 ? 'Tomorrow' : fmt(t.due)}</span>
+          <span className={styles.due}>{t.done ? 'Completed' : left < 0 ? `${Math.abs(left)}d overdue` : t.due < new Date() ? 'Overdue' : left === 0 ? 'Due today' : left === 1 ? 'Tomorrow' : fmt(t.due)}{!t.done && time ? ` · ${time}` : ''}</span>
         </div>
         <div className={styles.itemMeta}>{t.personal ? 'Personal' : `${t.subject ? `${t.subject} · ` : ''}Assigned by ${t.by}`}{t.pendingSync ? ' · Pending sync' : ''}</div>
       </div>

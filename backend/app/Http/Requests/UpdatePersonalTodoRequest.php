@@ -22,6 +22,7 @@ class UpdatePersonalTodoRequest extends FormRequest
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'due_date' => ['sometimes', 'nullable', 'date'],
+            'due_at' => ['sometimes', 'nullable', 'date', \App\Services\DeadlineValidation::futureTime()],
             'is_done' => ['sometimes', 'boolean'],
         ];
     }

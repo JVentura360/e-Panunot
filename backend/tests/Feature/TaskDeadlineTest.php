@@ -53,7 +53,7 @@ class TaskDeadlineTest extends TestCase
     {
         $cases = [];
         foreach (['POST', 'PUT'] as $method) {
-            foreach (['yesterday' => ['2026-10-29', false], 'today' => ['2026-10-30', true], 'tomorrow' => ['2026-10-31', true], 'earlier today' => ['2026-10-30 00:00:00', true], 'invalid' => ['not-a-date', false]] as $name => [$date, $valid]) {
+            foreach (['yesterday' => ['2026-10-29', false], 'today' => ['2026-10-30', true], 'tomorrow' => ['2026-10-31', true], 'earlier today' => ['2026-10-30 00:00:00', false], 'invalid' => ['not-a-date', false]] as $name => [$date, $valid]) {
                 $cases["{$method} {$name}"] = [$method, $date, $valid];
             }
         }

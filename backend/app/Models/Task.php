@@ -36,6 +36,12 @@ class Task extends Model
         return $this->belongsTo(Block::class, 'block_id');
     }
 
+    public function setDueDateAttribute(mixed $value): void
+    {
+        $this->attributes['due_date'] = $value === null ? null
+            : \Illuminate\Support\Carbon::parse($value)->utc()->format('Y-m-d H:i:s');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

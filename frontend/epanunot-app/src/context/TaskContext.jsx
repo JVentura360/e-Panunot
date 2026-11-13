@@ -1,6 +1,7 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { api, apiQueryOptions, errorMessage, queryClient } from '../api/client.js';
 import { useApiQuery } from '../api/useApiQuery.js';
+import { deadlinePayload } from '../components/deadline.js';
 import { unfinishedFirst, validDeadline } from '../components/taskListUtils.js';
 import { toClassTask, toPersonalTask } from './taskMapper.js';
 import { createOfflinePersonal, completeOfflineTask, getOfflineState, requireOnline } from '../offline/runtime.js';
@@ -53,14 +54,16 @@ export function TaskProvider({ user, children }) {
     const title = values.title.trim();
     if (!title) throw new Error('Please add a title.');
     if (!validDeadline(values.date, today())) throw new Error('Choose today or a future date for the deadline.');
+    const deadline = deadlinePayload(`${values.date}T${values.time || '23:59'}`);
+    if (new Date(deadline) <= new Date()) throw new Error('Choose a future deadline date and time.');
 
     if (values.personal) {
       if (canSaveOffline()) {
-        await createOfflinePersonal({ title, due_date: values.date });
+        await createOfflinePersonal({ title, due_date: values.date, due_at: deadline });
         return;
       }
       requireOnline();
-      await api('/personal-todos', { method: 'POST', body: { title, due_date: values.date } });
+      await api('/personal-todos', { method: 'POST', body: { title, due_date: values.date, due_at: deadline } });
       return;
     }
     requireOnline();
@@ -68,7 +71,7 @@ export function TaskProvider({ user, children }) {
       method: 'POST',
       body: {
         title,
-        due_date: `${values.date} 23:59:00`,
+        due_date: deadline,
         platform: values.platform || null,
         ...(values.allSubjects ? { all_subjects: true } : { subject_id: values.subjectId }),
       },
@@ -114,16 +117,18 @@ export function TaskProvider({ user, children }) {
     requireOnline();
     const title = values.title.trim();
     if (!title) throw new Error('Please add a title.');
-    const dateChanged = values.date !== task.date;
+    const dateChanged = values.date !== task.date || (values.time || task.time) !== task.time;
     if (dateChanged && !validDeadline(values.date, today())) {
       throw new Error('Choose today or a future date for the deadline.');
     }
+    const deadline = dateChanged ? deadlinePayload(`${values.date}T${values.time || task.time || '23:59'}`) : null;
+    if (deadline && new Date(deadline) <= new Date()) throw new Error('Choose a future deadline date and time.');
     await api(`/tasks/${task.rawId}`, {
       method: 'PUT',
       body: {
         title,
         platform: values.platform || null,
-        ...(dateChanged ? { due_date: `${values.date} 23:59:00` } : {}),
+        ...(dateChanged ? { due_date: deadline } : {}),
       },
     });
   };

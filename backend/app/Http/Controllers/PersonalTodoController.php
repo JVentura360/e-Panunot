@@ -41,6 +41,7 @@ class PersonalTodoController extends Controller
             'user_id' => $request->user()->id,
             'title' => $request->validated('title'),
             'due_date' => $request->validated('due_date'), 
+            'due_at' => $request->validated('due_at'),
             'is_done' => false,
         ]);
 
@@ -61,7 +62,7 @@ class PersonalTodoController extends Controller
             User::whereKey($request->user()->id)->lockForUpdate()->firstOrFail();
             $todo = PersonalTodo::whereKey($personalTodo->id)->lockForUpdate()->firstOrFail();
             $todo->fill($request->validated());
-            if ($todo->isDirty(['title', 'due_date', 'is_done'])) {
+            if ($todo->isDirty(['title', 'due_date', 'due_at', 'is_done'])) {
                 $todo->revision = (int) $todo->revision + 1;
                 $todo->save();
             }

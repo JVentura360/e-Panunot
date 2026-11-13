@@ -31,13 +31,13 @@ class TaskReminderNotification extends Notification
     {
         $isPersonalTodo = $this->item instanceof PersonalTodo;
         $dueDate = $isPersonalTodo
-            ? Carbon::parse($this->item->due_date)->endOfDay()
+            ? ($this->item->due_at ?? Carbon::parse($this->item->due_date)->endOfDay())
             : $this->item->due_date;
         $type = $isPersonalTodo ? 'personal_todo' : 'task';
 
         return [
             'title' => 'Deadline approaching',
-            'message' => $this->item->title.' is due '.$dueDate->format('M j, Y'.($isPersonalTodo ? '' : ' g:i A')),
+            'message' => $this->item->title.' is due '.$dueDate->copy()->timezone(config('services.google.timezone', 'Asia/Manila'))->format('M j, Y g:i A T'),
             'task_id' => $isPersonalTodo ? null : $this->item->id,
             'personal_todo_id' => $isPersonalTodo ? $this->item->id : null,
             'due_date' => $dueDate->toIso8601String(),

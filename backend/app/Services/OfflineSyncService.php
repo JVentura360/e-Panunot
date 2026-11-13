@@ -25,6 +25,7 @@ class OfflineSyncService
             'client_id' => ['required_if:kind,create_personal', 'uuid'],
             'title' => ['required_if:kind,create_personal', 'string', 'max:255'],
             'due_date' => ['required_if:kind,create_personal', 'nullable', 'date_format:Y-m-d'],
+            'due_at' => ['nullable', 'date'],
         ]);
         if ($validator->fails()) {
             return ['operation_id' => $operation['operation_id'], 'status' => 'rejected', 'message' => $validator->errors()->first()];
@@ -68,7 +69,7 @@ class OfflineSyncService
             return ['status' => 'rejected', 'message' => 'This personal task was deleted online and was not restored.'];
         }
         $todo = PersonalTodo::create(['user_id' => $user->id, 'client_id' => $values['client_id'], 'title' => trim($values['title']),
-            'due_date' => $values['due_date'] ?? null, 'is_done' => (bool) $values['done']]);
+            'due_date' => $values['due_date'] ?? null, 'due_at' => $values['due_at'] ?? null, 'is_done' => (bool) $values['done']]);
         return ['status' => 'applied', 'todo_id' => $todo->id, 'revision' => 0, 'client_id' => $todo->client_id];
     }
 

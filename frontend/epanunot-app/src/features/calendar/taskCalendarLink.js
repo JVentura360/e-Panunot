@@ -1,3 +1,4 @@
+import { deadlineDate } from '../../components/deadline.js';
 const calendarDay = (date) => date.toISOString().slice(0, 10).replace(/-/g, '');
 const calendarTime = (date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
 
@@ -16,6 +17,17 @@ export function eventCalendarLink(event, email) {
 }
 
 export function taskCalendarLink(task, email) {
+  if (task.calendarDeadline && !/^\d{4}-\d{2}-\d{2}$/.test(task.calendarDeadline)) {
+    const deadline = deadlineDate(task.calendarDeadline);
+    if (!Number.isFinite(deadline.getTime())) return null;
+    const url = new URL('https://calendar.google.com/calendar/r/eventedit');
+    url.searchParams.set('action', 'TEMPLATE');
+    url.searchParams.set('text', task.title);
+    url.searchParams.set('dates', `${calendarTime(deadline)}/${calendarTime(new Date(deadline.getTime() + 1800000))}`);
+    url.searchParams.set('details', [task.subject, task.by ? `Assigned by ${task.by}` : '', task.platform ? `Platform: ${task.platform}` : '', 'Task deadline from ePanunot.'].filter(Boolean).join('\n'));
+    if (email && !email.endsWith('.test')) url.searchParams.set('authuser', email);
+    return url.toString();
+  }
   const day = task.date ?? (typeof task.calendarDeadline === 'string' ? task.calendarDeadline.slice(0, 10) : null);
   const fallback = new Date(task.due);
   const start = day ? new Date(`${day}T00:00:00Z`) : new Date(Date.UTC(fallback.getFullYear(), fallback.getMonth(), fallback.getDate()));

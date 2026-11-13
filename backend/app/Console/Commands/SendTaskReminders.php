@@ -61,17 +61,21 @@ class SendTaskReminders extends Command
 
         PersonalTodo::query()
             ->where('is_done', false)
-            ->whereNotNull('due_date')
-            ->whereDate('due_date', '>=', $now->toDateString())
-            ->whereDate('due_date', '<=', $windowEnd->toDateString())
+            ->where(function ($query) use ($now, $windowEnd): void {
+                $query->whereBetween('due_at', [$now, $windowEnd])
+                    ->orWhere(function ($legacy) use ($now, $windowEnd): void {
+                        $legacy->whereNull('due_at')->whereDate('due_date', '>=', $now->toDateString())
+                            ->whereDate('due_date', '<=', $windowEnd->toDateString());
+                    });
+            })
             ->with('user')
             ->chunkById(200, function ($todos) use (&$sent, $now): void {
                 foreach ($todos as $todo) {
                     $todo = PersonalTodo::with('user')->find($todo->id);
-                    if (! $todo || $todo->is_done || ! $todo->due_date) {
+                    if (! $todo || $todo->is_done || (! $todo->due_date && ! $todo->due_at)) {
                         continue;
                     }
-                    if (! ReminderSchedule::isDue(Carbon::parse($todo->due_date)->endOfDay(), $todo->last_reminded_at, $now)) {
+                    if (! ReminderSchedule::isDue($todo->due_at ?? Carbon::parse($todo->due_date)->endOfDay(), $todo->last_reminded_at, $now)) {
                         continue;
                     }
 

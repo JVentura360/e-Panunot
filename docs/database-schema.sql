@@ -286,6 +286,7 @@ CREATE TABLE `personal_todos` (
   `user_id` bigint(20) unsigned NOT NULL,
   `title` varchar(255) NOT NULL,
   `due_date` date DEFAULT NULL,
+  `due_at` datetime DEFAULT NULL,
   `is_done` tinyint(1) NOT NULL DEFAULT 0,
   `google_task_id` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
@@ -297,6 +298,7 @@ CREATE TABLE `personal_todos` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `personal_todos_user_id_client_id_unique` (`user_id`,`client_id`),
   KEY `personal_todos_user_id_is_done_index` (`user_id`,`is_done`),
+  KEY `personal_todos_due_at_index` (`due_at`),
   CONSTRAINT `personal_todos_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -524,5 +526,7 @@ INSERT INTO `migrations` (`migration`, `batch`) VALUES ('2026_11_03_200000_add_o
 INSERT INTO `migrations` (`migration`, `batch`) VALUES ('2026_11_04_220000_add_student_type_to_block_join_requests', 1);
 
 INSERT INTO `migrations` (`migration`, `batch`) VALUES ('2026_11_10_000001_add_reminder_state_to_personal_todos', 1);
+
+INSERT INTO `migrations` (`migration`, `batch`) VALUES ('2026_11_13_100000_add_due_at_to_personal_todos', 1);
 
 SET FOREIGN_KEY_CHECKS=@EPANUNOT_OLD_FK_CHECKS;

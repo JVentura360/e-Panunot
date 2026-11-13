@@ -36,7 +36,7 @@ class StoreTaskRequest extends FormRequest
             ],
             'all_subjects' => ['sometimes', 'boolean'],
             'platform' => ['nullable', Rule::enum(TaskPlatform::class)],
-            'due_date' => ['required', 'date', 'after_or_equal:today'],
+            'due_date' => ['required', 'date', 'after_or_equal:today', \App\Services\DeadlineValidation::futureTime()],
             'reminder_interval_minutes' => ['nullable', 'integer', 'min:1']
         ];
     }

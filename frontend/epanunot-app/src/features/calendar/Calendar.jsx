@@ -49,7 +49,7 @@ const VIEWS = [
 { id: 'agenda', label: 'Agenda' },
 ];
 
-const EMPTY_FORM = { title: '', date: TODAY_KEY, start: '09:00', end: '10:00', subject: GENERAL_SUBJECT, platform: PLATFORMS[0], shareWithBlock: false, editingId: null };
+const EMPTY_FORM = { title: '', date: TODAY_KEY, time: '23:59', start: '09:00', end: '10:00', subject: GENERAL_SUBJECT, platform: PLATFORMS[0], shareWithBlock: false, editingId: null };
 
 function chipClass(item) {
 if (item.kind === 'task') return item.personal ? styles.chipPersonal : styles.chipTask;
@@ -222,6 +222,7 @@ const submitTask = async (e) => {
         allSubjects: form.subject === GENERAL_SUBJECT,
         date: form.date,
         personal: false,
+        time: form.time,
         });
     } catch (err) {
         setError(errorMessage(err));
@@ -267,7 +268,7 @@ const renderRow = (item) => (
         <span className={styles.rowTitle}>{item.title}</span>
         <span className={styles.rowMeta}>
         {item.kind === 'task'
-            ? `Due${item.subject ? ` · ${item.subject}` : ''}${item.platform ? ` · ${item.platform}` : ''}`
+              ? `Due${item.time ? ` ${fmtTime(item.time)}` : ''}${item.subject ? ` · ${item.subject}` : ''}${item.platform ? ` · ${item.platform}` : ''}`
             : `${fmtTime(item.start)} – ${fmtTime(item.end)}${item.subject ? ` · ${item.subject}` : ''}`}
         </span>
     </div>
@@ -542,6 +543,9 @@ return (
                 <label htmlFor="calendar-task-date">Due date</label>
                 <DatePicker id="calendar-task-date" value={form.date} min={today} required onChange={setField('date')} />
                 </div>
+                <label className={styles.field}>Deadline time
+                  <input type="time" value={form.time} required onChange={setField('time')} />
+                </label>
                 {error && <p className={styles.error}>{error}</p>}
                 <div className={styles.formBtns}>
                 <button type="submit" className="btn">Create task</button>
@@ -568,7 +572,7 @@ return (
             <AnimatedList className={styles.list}>
                 {sortedTasks.map((t) => {
                 const done = t.done;
-                const overdue = !done && t.date < TODAY_KEY;
+                const overdue = !done && t.due < new Date();
                 return (
                     <li key={t.id} data-sort-id={t.id} className={`${styles.todo} ${done ? styles.rowDone : ''}`}>
                     <input
@@ -580,7 +584,7 @@ return (
                     <div className={styles.rowBody}>
                         <span className={styles.rowTitle}>{t.title}</span>
                         <span className={`${styles.rowMeta} ${overdue ? styles.overdue : ''}`}>
-                        {t.subject ? `${t.subject} · ` : ''}{t.platform ? `${t.platform} · ` : ''}{overdue ? 'Overdue, ' : 'Due '}{fmtShort(t.date)}
+                        {t.subject ? `${t.subject} · ` : ''}{t.platform ? `${t.platform} · ` : ''}{overdue ? 'Overdue, ' : 'Due '}{fmtShort(t.date)}{t.time ? ` · ${t.time}` : ''}
                         </span>
                     </div>
                     {isMayor && (
@@ -650,12 +654,13 @@ return (
                 submitLabel="Save changes"
                 fields={[
                 { key: 'title', label: 'Task title', required: true },
-                { key: 'due', label: 'Deadline', type: 'date', required: true },
+                { key: 'due', label: 'Deadline date', type: 'date', required: true },
+    { key: 'time', label: 'Deadline time', type: 'time', required: true },
                 { key: 'platform', label: 'Platform or location', type: 'select', options: PLATFORMS },
                 ]}
-                initialValues={{ title: editingTask.title, due: editingTask.date, platform: editingTask.platform || PLATFORMS[0] }}
+                initialValues={{ title: editingTask.title, due: editingTask.date, time: editingTask.time, platform: editingTask.platform || PLATFORMS[0] }}
                 onSave={async (values) => {
-                await updateTask(editingTask.id, { title: values.title, date: values.due, platform: values.platform });
+                await updateTask(editingTask.id, { title: values.title, date: values.due, time: values.time, platform: values.platform });
                 setEditingTask(null);
                 }}
                 onClose={() => setEditingTask(null)}

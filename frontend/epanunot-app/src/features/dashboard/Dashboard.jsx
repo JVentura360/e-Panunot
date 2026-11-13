@@ -62,7 +62,7 @@ export default function Dashboard({ user }) {
 
   const addTask = async (values, personalTask) => {
     await saveTask({
-      title: values.title, date: values.due, platform: values.platform,
+      title: values.title, date: values.due, time: values.time, platform: values.platform,
       personal: personalTask,
       subjectId: offered.find((choice) => choice.label === values.subject)?.subjectId,
       allSubjects: !personalTask && values.subject === 'All block subjects',
@@ -72,7 +72,8 @@ export default function Dashboard({ user }) {
   };
   const taskFields = [
     { key: 'title', label: 'Task title', placeholder: 'e.g. Submit your laboratory report', required: true },
-    { key: 'due', label: 'Deadline', type: 'date', required: true, disallowPast: true },
+    { key: 'due', label: 'Deadline date', type: 'date', required: true, disallowPast: true },
+    { key: 'time', label: 'Deadline time', type: 'time', required: true },
     { key: 'platform', label: 'Platform or location', type: 'select', options: PLATFORMS },
     ...(isMayor && modal !== 'mine' ? [{ key: 'subject', label: 'Subject', type: 'select', options: ['All block subjects', ...offered.map((choice) => choice.label)] }] : []),
   ];
@@ -236,12 +237,13 @@ export default function Dashboard({ user }) {
           submitLabel="Save changes"
           fields={[
             { key: 'title', label: 'Task title', required: true },
-            { key: 'due', label: 'Deadline', type: 'date', required: true },
+            { key: 'due', label: 'Deadline date', type: 'date', required: true },
+    { key: 'time', label: 'Deadline time', type: 'time', required: true },
             { key: 'platform', label: 'Platform or location', type: 'select', options: PLATFORMS },
           ]}
-          initialValues={{ title: editingTask.title, due: editingTask.date, platform: editingTask.platform || PLATFORMS[0] }}
+          initialValues={{ title: editingTask.title, due: editingTask.date, time: editingTask.time, platform: editingTask.platform || PLATFORMS[0] }}
           onSave={async (values) => {
-            await updateTask(editingTask.id, { title: values.title, date: values.due, platform: values.platform });
+            await updateTask(editingTask.id, { title: values.title, date: values.due, time: values.time, platform: values.platform });
             setEditingTask(null);
           }}
           onClose={() => setEditingTask(null)}

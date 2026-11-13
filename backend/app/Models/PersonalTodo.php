@@ -12,6 +12,7 @@ class PersonalTodo extends Model
         'title',
         'is_done',
         'due_date',
+        'due_at',
         'last_reminded_at',
         'reminders_sent',
         'google_task_id',
@@ -23,6 +24,7 @@ class PersonalTodo extends Model
     {
         return [
             'is_done' => 'boolean',
+            'due_at' => 'datetime',
             'last_reminded_at' => 'datetime',
             'reminders_sent' => 'integer',
             'revision' => 'integer',
@@ -32,5 +34,11 @@ class PersonalTodo extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function setDueAtAttribute(mixed $value): void
+    {
+        $this->attributes['due_at'] = $value === null ? null
+            : \Illuminate\Support\Carbon::parse($value)->utc()->format('Y-m-d H:i:s');
     }
 }
