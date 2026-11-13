@@ -71,12 +71,19 @@ export default function Modal({ title, description, fields, onSave, onClose, sub
               onChange: (event) => { event.target.setCustomValidity(''); setVals({ ...vals, [field.key]: event.target.value }); },
               onInput: (event) => event.target.setCustomValidity(''),
             };
+            const hints = {
+              inputMode: field.inputMode,
+              enterKeyHint: field.enterKeyHint,
+              autoComplete: field.autoComplete ?? 'off',
+              autoCapitalize: field.autoCapitalize,
+              spellCheck: field.spellCheck,
+            };
             return <div className={styles.field} key={field.key}>
               <label htmlFor={common.id}>{field.label}{field.required && <span aria-hidden="true"> *</span>}</label>
               {field.type === 'select' ? <select {...common}>{field.options.map((option) => <option key={option} value={option}>{option}</option>)}</select>
                 : field.type === 'date' ? <DatePicker {...common} min={field.disallowPast ? dateKey(new Date()) : field.min} />
-                : field.type === 'textarea' ? <textarea {...common} placeholder={field.placeholder} rows={4} maxLength={5000} />
-                  : <input {...common} type={field.type || 'text'} placeholder={field.placeholder} maxLength={field.type === 'date' ? undefined : 255} />}
+                : field.type === 'textarea' ? <textarea {...common} {...hints} placeholder={field.placeholder} rows={4} maxLength={5000} />
+                  : <input {...common} {...hints} type={field.type || 'text'} placeholder={field.placeholder} maxLength={field.type === 'date' ? undefined : 255} />}
             </div>;
           })}
         </div>

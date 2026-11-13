@@ -27,12 +27,22 @@ function observeWorker(worker) {
   })
 }
 
+// Register the worker after the first screen has loaded, so its downloads don't compete with it.
+const afterLoad = () => new Promise(resolve => {
+  const go = () => (window.requestIdleCallback
+    ? window.requestIdleCallback(() => resolve(), { timeout: 3000 })
+    : setTimeout(resolve, 1500))
+  if (document.readyState === 'complete') go()
+  else window.addEventListener('load', go, { once: true })
+})
+
 export function initializePwa() {
   if (initialization) return initialization
   if (!import.meta.env?.PROD || typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return Promise.resolve(null)
   publish({ supported: true })
   initialization = (async () => {
     try {
+      await afterLoad()
       const base = new URL(import.meta.env.BASE_URL, window.location.href)
       registration = await navigator.serviceWorker.register(new URL('sw.js', base), { scope: base.pathname, updateViaCache: 'none' })
       publish({ ready: Boolean(registration.waiting) })

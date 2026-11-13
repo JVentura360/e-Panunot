@@ -10,6 +10,7 @@ import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { useTasks } from '../../context/TaskContext.jsx';
 import { canReplyToConcern, concernActions } from './concernVisibility.js';
 import SkeletonList from '../../components/Skeleton.jsx';
+import { fitImage, uniqueName } from './fitImage.js';
 
 // Single-file Concerns feature (prototype). Sections, in order:
 // helpers, StatusTag, ConcernList, ConcernThread, NewConcernModal, Concerns (page).
@@ -378,6 +379,9 @@ const [sending, setSending] = useState(false);
 const fileInput = useRef(null);
 const dialogRef = useRef(null);
 const [taskId, setTaskId] = useState('');
+const [preparing, setPreparing] = useState(false);
+const cameraInput = useRef(null);
+const touch = window.matchMedia('(pointer: coarse)').matches;
 const showSubject = category === 'Academic' || category === 'Schedule';
 const subjectRequired = category === 'Academic';
 const chosen = choices.find((c) => c.value === subject);
@@ -398,29 +402,37 @@ useEffect(() => {
     };
 }, []);
 
-const addFiles = (e) => {
+const addFiles = async (e) => {
     const picked = Array.from(e.target.files);
     e.target.value = '';
 
+    setPreparing(true);
     const problems = [];
     const accepted = [];
-    for (const f of picked) {
-        const ext = f.name.split('.').pop().toLowerCase();
-        if (!ALLOWED_EXT.includes(ext) || !['image/png', 'image/jpeg'].includes(f.type)) {
-            problems.push(`${f.name}: only PNG, JPG and JPEG images are allowed.`);
-        } else if (f.size > MAX_BYTES) {
-            problems.push(`${f.name}: larger than 5 MB.`);
-        } else if (!files.some((p) => p.name === f.name)) {
-            accepted.push(f);
+    const taken = new Set(files.map((p) => p.name));
+    for (const original of picked) {
+        const ext = original.name.split('.').pop().toLowerCase();
+        if (!ALLOWED_EXT.includes(ext) || !['image/png', 'image/jpeg'].includes(original.type)) {
+            problems.push(`${original.name}: only PNG, JPG and JPEG images are allowed.`);
+            continue;
         }
+        const fitted = await fitImage(original, MAX_BYTES);
+        if (fitted.size > MAX_BYTES) {
+            problems.push(`${original.name}: larger than 5 MB.`);
+            continue;
+        }
+        const named = uniqueName(fitted, taken);
+        taken.add(named.name);
+        accepted.push(named);
     }
     if (files.length + accepted.length > MAX_FILES) {
-        accepted.splice(MAX_FILES - files.length);
+        accepted.splice(Math.max(0, MAX_FILES - files.length));
         problems.push(`You can attach up to ${MAX_FILES} files.`);
     }
 
     setFiles((prev) => [...prev, ...accepted]);
     setError(problems.join(' '));
+    setPreparing(false);
 };
 
 const submit = async (e) => {
@@ -459,7 +471,8 @@ return (
         <div className={styles.field}>
         <label htmlFor="nc-title">Title</label>
         <input id="nc-title" className={styles.input} value={title} maxLength={100} required
-            placeholder="Short summary of the issue" onChange={(e) => setTitle(e.target.value)} />
+            placeholder="Short summary of the issue" onChange={(e) => setTitle(e.target.value)} 
+            autoCapitalize="sentences" enterKeyHint="next" autoComplete="off" />
         </div>
 
         <div className={styles.row2}>
@@ -496,7 +509,8 @@ return (
         <div className={styles.field}>
         <label htmlFor="nc-desc">Description</label>
         <textarea id="nc-desc" className={`${styles.input} ${styles.textarea}`} value={description} required
-            placeholder="What happened, and what would you like the mayor to do?" onChange={(e) => setDescription(e.target.value)} />
+            placeholder="What happened, and what would you like the mayor to do?" onChange={(e) => setDescription(e.target.value)} 
+            autoCapitalize="sentences" autoComplete="off" />
         </div>
 
         <div className={styles.field}>
@@ -513,9 +527,17 @@ return (
             ))}
             </ul>
         )}
-        <div>
-            <button type="button" className="btn ghost" onClick={() => fileInput.current?.click()}>Add attachment</button>
+        <div className={styles.attachButtons}>
+            <button type="button" className="btn ghost" disabled={preparing} onClick={() => fileInput.current?.click()}>
+                {preparing ? 'Preparing…' : 'Choose photos'}
+            </button>
+            {touch && (
+                <button type="button" className="btn ghost" disabled={preparing} onClick={() => cameraInput.current?.click()}>
+                    Take photo
+                </button>
+            )}
             <input ref={fileInput} type="file" accept="image/png,image/jpeg,.png,.jpg,.jpeg" multiple hidden onChange={addFiles} />
+            <input ref={cameraInput} type="file" accept="image/png,image/jpeg" capture="environment" hidden onChange={addFiles} />
         </div>
         </div>
 
@@ -523,7 +545,7 @@ return (
 
         <div className={styles.modalActions}>
         <button type="button" className="btn ghost" onClick={onClose} disabled={sending}>Cancel</button>
-        <button type="submit" className="btn" disabled={sending}>
+        <button type="submit" className="btn" disabled={sending || preparing}>
             {sending ? 'Sending...' : 'Send concern'}
         </button>
         </div>

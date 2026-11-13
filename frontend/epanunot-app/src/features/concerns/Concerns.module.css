@@ -279,6 +279,9 @@
 .messages { padding: 24px; }
 .msg { border-radius: 12px; }
 .modal { border: 1px solid var(--line); }
+
+.attachButtons { display: flex; flex-wrap: wrap; gap: 8px; }
+
 @media (max-width: 900px) {
   .shell { grid-template-columns: minmax(0, 1fr); gap: 16px; }
 }
