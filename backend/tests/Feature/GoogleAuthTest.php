@@ -52,6 +52,33 @@ class GoogleAuthTest extends TestCase
         return [['udd.edu.ph'], ['cdd.edu.ph']];
     }
 
+    public function test_explicitly_allowed_verified_gmail_creates_admin(): void
+    {
+        config(['services.google.admin_emails' => ['epanunot66@gmail.com']]);
+        $this->mockIdentity('epanunot66@gmail.com', true, null);
+        $this->get('/auth/google/callback')->assertRedirect('http://localhost:5173');
+        $this->assertSame('admin', User::where('google_id', 'google-123')->sole()->role->value);
+        $this->assertAuthenticated();
+    }
+
+    public function test_admin_email_exception_still_requires_verification(): void
+    {
+        config(['services.google.admin_emails' => ['epanunot66@gmail.com']]);
+        $this->mockIdentity('epanunot66@gmail.com', false, null);
+        $this->get('/auth/google/callback')->assertRedirect('http://localhost:5173?auth_error=school_account_required');
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_other_gmail_accounts_remain_blocked_when_admin_email_is_configured(): void
+    {
+        config(['services.google.admin_emails' => ['epanunot66@gmail.com']]);
+        $this->mockIdentity('other@gmail.com', true, null);
+        $this->get('/auth/google/callback')->assertRedirect('http://localhost:5173?auth_error=school_account_required');
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+    }
+
     #[DataProvider('invalidIdentities')]
     public function test_disallowed_identity_cannot_create_account(string $email, bool $verified, ?string $domain): void
     {

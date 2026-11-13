@@ -38,16 +38,16 @@ class GoogleAuthController extends Controller
         $domain = substr(strrchr($email, '@') ?: '', 1);
         $hostedDomain = strtolower((string) ($identity->user['hd'] ?? ''));
         $allowed = config('services.google.allowed_domains', []);
+        $adminEmail = in_array($email, config('services.google.admin_emails', []), true);
 
         if (! filter_var($email, FILTER_VALIDATE_EMAIL)
             || ($identity->user['email_verified'] ?? false) !== true
-            || ! in_array($domain, $allowed, true)
-            || ! in_array($hostedDomain, $allowed, true)
+            || (! $adminEmail && (! in_array($domain, $allowed, true) || ! in_array($hostedDomain, $allowed, true)))
             || ! $identity->getId()) {
             return $this->frontend('school_account_required');
         }
 
-        $user = DB::transaction(function () use ($identity, $email): ?User {
+        $user = DB::transaction(function () use ($identity, $email, $adminEmail): ?User {
             $user = User::where('google_id', $identity->getId())->lockForUpdate()->first();
             $emailOwner = User::where('email', $email)->lockForUpdate()->first();
 
@@ -58,7 +58,7 @@ class GoogleAuthController extends Controller
 
             $user ??= $emailOwner ?? new User;
             if (! $user->exists) {
-                $user->role = 'student';
+                $user->role = $adminEmail ? 'admin' : 'student';
             }
             $user->fill([
                 'google_id' => $identity->getId(),

@@ -27,6 +27,8 @@ For a split frontend/backend deployment, explicitly configure CORS, cookie domai
 
 ## First administrator
 
+To use a specific organization Gmail address, configure `GOOGLE_ADMIN_EMAILS=epanunot66@gmail.com` in the server `.env` and clear the configuration cache. Only exact, verified Google addresses in this list bypass the school-domain requirement. Their first sign-in creates an admin account; existing accounts keep their role and can be promoted with the command below. Never add `gmail.com` to the allowed school domains.
+
 Sign in once with the intended real school Google account. From the production backend shell run:
 
 ```sh

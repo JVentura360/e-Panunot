@@ -18,7 +18,8 @@ class PromoteAdmin extends Command
         $user = User::where('email', $email)->first();
         $domain = str_contains($email, '@') ? substr(strrchr($email, '@'), 1) : '';
         if (! $user || ! $user->google_id || str_starts_with($user->google_id, 'local-dev:')
-            || ! in_array($domain, config('services.google.allowed_domains'), true)) {
+            || (! in_array($domain, config('services.google.allowed_domains'), true)
+                && ! in_array($email, config('services.google.admin_emails', []), true))) {
             $this->error('Sign in with an allowed school Google account first. Development accounts cannot be promoted here.');
             return self::FAILURE;
         }
