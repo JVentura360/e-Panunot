@@ -47,6 +47,8 @@
   font-size: 0.88rem;
 }
 
+.programCode::placeholder { color: var(--muted); font-weight: 400; opacity: 1; }
+
 .error {
   padding: 10px 12px;
   border-radius: 10px;
