@@ -12,6 +12,10 @@ class TaskSeeder extends Seeder
 {
     public function run(): void
     {
+        if (! app()->environment('local')) {
+            return;
+        }
+
         Block::query()->get()->each(function (Block $block) {
             $mayor = User::find($block->mayor_id);
 

@@ -132,7 +132,7 @@ Backend paths below are relative to `backend/`.
 | `bootstrap/app.php` | Routing and JSON error rendering | Stateful SPA middleware configuration |
 | `config/services.php` | Default third-party service entries | Google provider credentials and callback configuration |
 | `.env.example` | MySQL name and blank Google/VAPID entries | Remove duplicate SESSION_DRIVER; add clear frontend URL, stateful host, DB host/port and Google callback examples |
-| `database/sql/epanunot_db.sql` | 13 application tables | Make schema reproducible through migrations; settle calendar/to-do/membership decisions |
+| `database/migrations` (standalone SQL retired) | 13 application tables | Make schema reproducible through migrations; settle calendar/to-do/membership decisions |
 | `database/migrations/` | Cache, jobs, Sanctum tokens, push subscriptions | Domain-table migrations and sessions migration if using database sessions |
 | `database/factories/UserFactory.php` | Default Laravel user factory | Remove or support fields absent from SQL: password, email_verified_at and remember_token |
 | `database/seeders/DatabaseSeeder.php` | Default Test User | Seed active term, subjects, development identities and blocks with the real schema |
@@ -145,7 +145,7 @@ Missing areas to add as needed: `app/Http/Requests`, `app/Http/Resources`, `app/
 
 ## 3. Database schema and relationships
 
-Source: `backend/database/sql/epanunot_db.sql`.
+Historical comparison below was based on the retired SQL snapshot. Current schema authority: `backend/database/migrations`.
 
 | Table | Purpose and relationships |
 | --- | --- |

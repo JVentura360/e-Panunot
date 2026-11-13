@@ -11,6 +11,10 @@ class UserSeeder extends Seeder
 {
     public function run(): void
     {
+        if (! app()->environment('local')) {
+            return;
+        }
+
         // One known admin account
         UserFactory::new()->admin()->create([
             'name' => 'Admin Office',

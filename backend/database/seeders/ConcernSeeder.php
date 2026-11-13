@@ -11,6 +11,10 @@ class ConcernSeeder extends Seeder
 {
     public function run(): void
     {
+        if (! app()->environment('local')) {
+            return;
+        }
+
         Block::all()->each(function (Block $block) {
             $students = User::where('block_id', $block->id)
                 ->where('id', '!=', $block->mayor_id)

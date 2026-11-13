@@ -13,6 +13,10 @@ class SubjectSeeder extends Seeder
      */
     public function run(): void
     {
+        if (! app()->environment('local')) {
+            return;
+        }
+
         $subjects = [
             ['code' => 'ITP08', 'name' => 'Fundamentals of Database Systems'],
             ['code' => 'ITP09', 'name' => 'Systems Integration and Architecture'],

@@ -9,6 +9,10 @@ class BlockSeeder extends Seeder
 {
     public function run(): void
     {
+        if (! app()->environment('local')) {
+            return;
+        }
+
         $blocks = [
             ['program' => 'BSIT', 'year_level' => 3, 'block_number' => 1],
             ['program' => 'BSIT', 'year_level' => 3, 'block_number' => 2],

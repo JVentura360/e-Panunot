@@ -59,7 +59,7 @@ php artisan serve --host=localhost --port=8000
 php artisan schedule:work
 ```
 
-`routes/console.php` schedules `tasks:send-reminders` every minute. It sends reminders for unfinished assigned tasks due within the next 24 hours and personal to-dos due today or tomorrow. Assigned-task reminders honor each task's reminder interval; personal-to-do reminders are limited to once per 24 hours. Both stop after three reminders or when the item is completed/overdue. The schedule command prints errors in its terminal; keep it running while testing reminders.
+`routes/console.php` schedules `tasks:send-reminders` every minute. It sends reminders for unfinished assigned tasks due within the next 24 hours and personal to-dos due today or tomorrow. Reminders run at 24, 12, 6, 3, and 1 hour, then 30 minutes before the deadline. Completed and overdue items are skipped. Subject-task reminders require enrollment in that exact block and subject. The schedule command prints errors in its terminal; keep it running while testing reminders.
 
 In production, run `php artisan schedule:run` from the platform scheduler once per minute (for example, a cron entry invoking the production PHP binary and `artisan schedule:run`). Run a queue worker separately when `QUEUE_CONNECTION=database` so existing queued integrations such as Google Calendar synchronization are processed: `php artisan queue:work --tries=3`. The deadline reminder notification itself is delivered synchronously by the scheduled command. Configure monitoring/restart policies for both long-running processes; the development-only `schedule:work` should not replace a production scheduler.
 

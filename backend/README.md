@@ -1,5 +1,7 @@
 ## Planned Backend Folder Structure
 
+For current setup instructions, use [development setup](../docs/DEVELOPMENT_SETUP.md) or [production deployment](../docs/DEPLOYMENT.md). Laravel migrations are the authoritative database schema; the standalone SQL snapshot has been retired.
+
 This is the target backend structure based on the project design references. It includes files and features that are not implemented yet; it is not an inventory of the current repository. Existing Laravel scaffold files may be omitted for clarity.
 
 ```text
