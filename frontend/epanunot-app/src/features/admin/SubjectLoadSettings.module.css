@@ -1,14 +1,16 @@
-.section { margin: 32px 0; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--paper); }
-.section h2 { font-size: 1.3rem; }
-.hint { margin: 8px 0 16px; color: var(--muted); }
-.scope { display: flex; align-items: end; gap: 14px; flex-wrap: wrap; margin: 22px 0; }
-.scope label { display: grid; gap: 7px; font-weight: 600; }
-.scope input, .scope select { min-height: 44px; padding: 10px 12px; border: 1px solid var(--control-border); border-radius: 9px; font: inherit; color: var(--ink); background: var(--surface); max-width: 100%; }
-.loadForm { border-top: 1px solid var(--line); padding-top: 22px; }
-.impact { background: var(--sage-soft); padding: 14px 16px; border-radius: 10px; margin: 16px 0; }
-.impact p { margin: 6px 0 0; overflow-wrap: anywhere; }
-.error, .notice { padding: 12px 14px; margin: 12px 0; border-radius: 9px; }
+.section { max-width: 860px; margin: 0 0 24px; padding: 24px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); }
+.section h2 { font-size: 1.3rem; letter-spacing: -0.02em; }
+.hint { margin: 8px 0 16px; color: var(--muted); font-size: 0.9rem; }
+.scope { display: flex; align-items: end; gap: 12px; flex-wrap: wrap; margin: 18px 0; }
+.scope label { display: grid; gap: 6px; font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+.scope input, .scope select { min-height: 46px; max-width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; }
+.scope input:focus-visible, .scope select:focus-visible { outline: 2px solid var(--forest); outline-offset: 1px; border-color: var(--forest); }
+.loadForm { padding-top: 20px; border-top: 1px solid var(--line); }
+.loadForm h3 { font-size: 1.1rem; }
+.impact { margin: 16px 0; padding: 12px 16px; border-radius: 12px; background: color-mix(in srgb, var(--forest) 12%, var(--surface)); font-size: 0.9rem; }
+.impact p { margin: 4px 0 0; color: var(--muted); overflow-wrap: anywhere; }
+.error, .notice { margin: 12px 0; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; }
 .error { background: var(--danger-soft); color: var(--danger); }
-.notice { background: var(--sage-soft); color: var(--ink); }
-.actions { display: flex; gap: 12px; flex-wrap: wrap; }
-@media (max-width: 600px) { .section { padding: 18px 14px; } .scope { align-items: stretch; flex-direction: column; } }
+.notice { background: color-mix(in srgb, var(--forest) 14%, var(--surface)); color: var(--ink); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 600px) { .section { padding: 18px 14px; border-radius: 16px; } .scope { align-items: stretch; flex-direction: column; } .actions button { flex: 1 1 100%; } }

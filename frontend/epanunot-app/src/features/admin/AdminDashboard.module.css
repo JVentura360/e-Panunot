@@ -1,280 +1,87 @@
-/* ---------- Page ---------- */
-.page {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 32px 24px;
-}
+/* =========================================================
+   AdminDashboard.module.css
+   1. Page & header
+   2. Application rows
+   3. Buttons & status tags
+   4. Tables
+   5. Members dialog
+   6. Responsive (phones)
+   ========================================================= */
 
-.title {
-  font-size: 2rem;
-}
-.pageHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 20px; }
-.pageHeading .title { margin: 0; min-width: 0; }
+/* ---------- 1. Page & header ---------- */
+.page { max-width: 1100px; margin: 0 auto; padding: 40px 32px; }
+.pageHeading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 24px; }
+.title { margin: 0; min-width: 0; font-size: clamp(1.6rem, 3vw, 2.2rem); letter-spacing: -0.03em; }
 .pageHeading button { flex-shrink: 0; }
+.notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 16px; padding: 10px 14px; border-radius: 12px; background: var(--danger-soft); color: var(--danger); font-size: 0.9rem; }
+.sectionTitle { margin: 0 0 10px; font-family: 'Figtree', sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.section { margin-bottom: 28px; }
+.empty { padding: 24px; text-align: center; border: 1px dashed var(--mist); border-radius: 16px; color: var(--muted); }
 
-.subtitle {
-  color: var(--muted);
-  margin: 4px 0 24px;
-}
+/* ---------- 2. Application rows ---------- */
+.list { display: grid; gap: 8px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.rowApproved { border-color: color-mix(in srgb, var(--forest) 40%, var(--line)); }
+.rowRejected { opacity: 0.65; }
+.name { font-weight: 600; }
+.meta { margin-top: 2px; font-size: 0.85rem; color: var(--muted); overflow-wrap: anywhere; }
+.motivation { max-width: 60ch; margin-top: 8px; padding-left: 12px; border-left: 3px solid var(--forest); font-size: 0.85rem; line-height: 1.5; color: var(--muted); }
+.actions { display: flex; flex-shrink: 0; gap: 8px; }
 
-/* ---------- Tabs ---------- */
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  max-width: 100%;
-  gap: 6px;
-  margin-bottom: 24px;
-  padding: 4px;
-  width: fit-content;
-  border-radius: 999px;
-  background: var(--sand);
-}
+/* ---------- 3. Buttons & status tags ---------- */
+.btn { min-height: 40px; padding: 8px 16px; border: 0; border-radius: 10px; font-weight: 600; font-size: 0.86rem; color: var(--on-primary); }
+.accept { background: var(--forest); }
+@media (hover: hover) { .accept:hover { background: var(--primary-hover); } }
+.reject { background: transparent; color: var(--danger); border: 1px solid var(--line); }
+@media (hover: hover) { .reject:hover { background: var(--danger-soft); border-color: var(--danger); } }
+.tag { padding: 3px 12px; border-radius: 999px; background: var(--sand); color: var(--ink); font-size: 0.72rem; font-weight: 700; text-transform: capitalize; }
+.approved { background: var(--forest); color: var(--on-primary); }
+.rejected { background: var(--danger-soft); color: var(--danger); }
 
-.tab {
-  padding: 8px 18px;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink);
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-}
-
-.tab:hover {
-  background: var(--surface);
-}
-
-.tabActive,
-.tabActive:hover {
-  background: var(--forest);
-  color: var(--on-primary);
-  font-weight: 600;
-}
-
-/* ---------- Notice ---------- */
-.notice {
-  margin-bottom: 16px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  background: var(--danger-soft);
-  border-left: 4px solid var(--clay);
-  font-size: 0.92rem;
-}
-
-/* ---------- Section headings ---------- */
-.sectionTitle {
-  font-size: 1.15rem;
-  margin: 0 0 12px;
-}
-
-.section {
-  margin-bottom: 28px;
-}
-
-/* ---------- Application rows ---------- */
-.list {
-  display: grid;
-  gap: 10px;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--mist);
-  border-left: 6px solid var(--peach);
-}
-
-.rowApproved {
-  border-left-color: var(--forest);
-}
-
-.rowRejected {
-  border-left-color: var(--clay);
-  opacity: 0.7;
-}
-
-.name {
-  font-weight: 600;
-}
-
-.meta {
-  font-size: 0.85rem;
-  color: var(--muted);
-  margin-top: 2px;
-}
-
-.actions {
-  display: flex;
-  gap: 8px;
-}
-
-/* ---------- Buttons ---------- */
-.btn {
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: 0;
-  font-weight: 600;
-  font-size: 0.88rem;
-  color: var(--on-primary);
-}
-
-.accept {
-  background: var(--forest);
-}
-
-.accept:hover {
-  background: var(--primary-hover);
-}
-
-.reject {
-  background: transparent;
-  color: var(--danger);
-  border: 2px solid var(--danger);
-}
-
-.reject:hover {
-  background: var(--danger-soft);
-}
-
-/* ---------- Status tags ---------- */
-.tag {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: var(--mist);
-  text-transform: capitalize;
-}
-
-.approved {
-  background: var(--sage);
-  color: var(--ink);
-}
-
-.rejected {
-  background: var(--danger-soft);
-  color: var(--danger);
-}
-
-/* ---------- Tables ---------- */
-.tableWrap {
-  overflow-x: auto;
-  border-radius: 12px;
-  border: 1px solid var(--mist);
-  background: var(--surface);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table th {
-  text-align: left;
-  padding: 12px 16px;
-  background: var(--forest);
-  color: var(--sand);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.table td {
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--line);
-  font-size: 0.92rem;
-}
-
-.table tr:last-child td {
-  border-bottom: none;
-}
-
-.table tbody tr:hover {
-  background: var(--paper);
-}
-
-/* ---------- Empty state ---------- */
-.empty {
-  padding: 24px;
-  text-align: center;
-  border: 2px dashed var(--mist);
-  border-radius: 12px;
-  color: var(--muted);
-}
-
-/* ---------- Responsive ---------- */
-@media (max-width: 760px) {
-  .page {
-    padding: 20px 16px;
-  }
-
-  .row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .actions {
-    width: 100%;
-  }
-
-  .actions .btn {
-    flex: 1;
-  }
-
-  .motivation {
-  font-size: 0.85rem;
-  font-style: italic;
-  margin-top: 6px;
-  max-width: 60ch;
-  }
-}
-
-/* Align administrative views with the student workspace */
-.page { max-width: 1200px; padding: 40px 32px; }
-.title { font-size: clamp(1.8rem, 3vw, 2.4rem); }
-.subtitle { font-size: 0.9rem; margin-top: 8px; }
-.tabs { border-radius: 10px; background: var(--surface); border: 1px solid var(--line); }
-.tab { border-radius: 7px; min-height: 44px; }
-.row { border-color: var(--line); border-left-width: 3px; padding: 20px; }
-.btn { min-height: 44px; }
-@media (max-width: 760px) {
-  .page { padding: 24px 16px; }
-  .tabs { width: 100%; }
-  .tab { flex: 1; padding-inline: 12px; }
-  .row { padding: 16px; flex-wrap: wrap; }
-}
-.membersDialog.membersDialog { width: min(760px, calc(100% - 32px)); }
-.memberSearch { display: grid; gap: 6px; margin: 16px 0 12px; font-weight: 600; }
-.memberSearch input { min-height: 48px; width: 100%; padding: 12px; background: var(--surface); border: 1px solid var(--control-border); border-radius: 8px; }
-.mayorBadge { display: inline-block; margin-left: 8px; font-size: .75rem; color: var(--forest); }
+/* ---------- 4. Tables ---------- */
+.tableWrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.table { width: 100%; border-collapse: collapse; }
+.table th { padding: 12px 18px; text-align: left; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--sand) 55%, var(--surface)); color: var(--muted); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.table td { padding: 12px 18px; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.table tr:last-child td { border-bottom: 0; }
+@media (hover: hover) { .table tbody tr:hover { background: color-mix(in srgb, var(--sand) 35%, transparent); } }
 .cellValue { min-width: 0; overflow-wrap: anywhere; }
 .mobileOnly { display: none; }
+.mayorBadge { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; background: var(--forest); color: var(--on-primary); font-size: 0.68rem; font-weight: 700; }
 
+/* ---------- 5. Members dialog ---------- */
+.memberSearch { display: grid; gap: 6px; margin: 16px 0 12px; font-weight: 600; font-size: 0.8rem; color: var(--muted); }
+.memberSearch input { width: 100%; min-height: 46px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+.memberSearch input:focus-visible { outline: 2px solid var(--forest); outline-offset: 1px; border-color: var(--forest); }
+@media (min-width: 761px) {
+  .membersDialog.membersDialog { width: min(760px, calc(100% - 32px)); }
+}
+
+/* ---------- 6. Responsive (phones) ---------- */
 @media (max-width: 760px) {
+  .page { padding: 20px 14px; }
+  .pageHeading { margin-bottom: 18px; }
+  .row { flex-direction: column; align-items: flex-start; padding: 14px; }
+  .actions { width: 100%; }
+  .actions .btn { flex: 1; min-height: 44px; }
+
   .responsiveTableWrap { overflow: visible; border: 0; background: transparent; border-radius: 0; }
   .responsiveTable { display: block; min-width: 0; }
   .responsiveTable thead { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .responsiveTable tbody { display: grid; gap: 8px; }
-  .responsiveTable tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 104px); grid-template-areas: 'identity detail' 'secondary action'; align-items: center; gap: 4px 12px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+  .responsiveTable tbody tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 104px); grid-template-areas: 'identity detail' 'secondary action'; align-items: center; gap: 4px 12px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
   .responsiveTable tbody tr:hover { background: var(--surface); }
-  .responsiveTable td { display: block; min-width: 0; padding: 0; border: 0; font-size: .875rem; }
+  .responsiveTable td { display: block; min-width: 0; padding: 0; border: 0; font-size: 0.875rem; }
   .responsiveTable td:nth-child(1) { grid-area: identity; }
-  .responsiveTable td:nth-child(2) { grid-area: secondary; color: var(--muted); font-size: .8125rem; }
-  .responsiveTable td:nth-child(3) { grid-area: detail; text-align: right; font-size: .75rem; color: var(--muted); }
+  .responsiveTable td:nth-child(2) { grid-area: secondary; color: var(--muted); font-size: 0.8125rem; }
+  .responsiveTable td:nth-child(3) { grid-area: detail; text-align: right; font-size: 0.75rem; color: var(--muted); }
   .responsiveTable td:nth-child(4) { grid-area: action; justify-self: end; }
   .responsiveTable td:first-child .cellValue { font-weight: 600; }
-  .responsiveTable td button { min-width: 0; max-width: 100%; min-height: 44px; padding: 8px 12px; font-size: .8125rem; }
+  .responsiveTable td button { min-width: 0; max-width: 100%; min-height: 44px; padding: 8px 12px; font-size: 0.8125rem; }
   .mobileOnly { display: inline; }
+
   .membersTable tbody tr { grid-template-areas: 'identity detail' 'secondary detail'; }
-  .membersTable td:nth-child(3) .cellValue { display: inline-block; padding: 4px 8px; border-radius: 6px; background: var(--sage-soft); color: var(--ink); font-size: .6875rem; line-height: 1.4; }
-  .membersTable .mayorBadge { margin-left: 4px; font-size: .6875rem; }
-  .membersDialog.membersDialog { padding: 20px 16px; }
+  .membersTable td:nth-child(3) .cellValue { display: inline-block; padding: 4px 8px; border-radius: 999px; background: var(--sand); color: var(--ink); font-size: 0.6875rem; line-height: 1.4; }
+  .membersTable .mayorBadge { margin-left: 4px; font-size: 0.6875rem; }
   .membersDialog h2 { overflow-wrap: anywhere; }
-  .memberSearch { min-width: 0; }
-  .memberSearch input { min-width: 0; }
 }
