@@ -1,165 +1,92 @@
-.page {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 40px 32px;
-}
+/* =========================================================
+   JoinBlock.module.css
+   1. Page & header
+   2. Search
+   3. Messages
+   4. Result card & choices
+   5. Sections & lists
+   6. Ledger subject cards
+   7. Status pills
+   8. Responsive
+   ========================================================= */
 
+/* ---------- 1. Page & header ---------- */
+.page { max-width: 860px; margin: 0 auto; padding: 40px 32px; }
+.page > .section > h2 { font-family: 'Bricolage Grotesque', 'Figtree', sans-serif; font-size: 1.5rem; letter-spacing: -0.02em; text-transform: none; color: var(--ink); }
+.page > .section > .notice { margin-top: 10px; }
+.page > .section > .meta { margin-bottom: 4px; }
 .top { margin-bottom: 24px; }
-.top h1 { font-size: clamp(1.8rem, 3vw, 2.4rem); }
-.top p { color: var(--muted); margin-top: 4px; }
+.top h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); letter-spacing: -0.03em; }
+.top p { margin-top: 4px; color: var(--muted); }
+.hint, .muted { color: var(--muted); font-size: 0.9rem; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.search {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 6px 10px;
-  margin-bottom: 16px;
-}
-
-.codeField { flex: 1; min-width: 0; display: grid; gap: 6px; }
-.codeField .input { width: 100%; }
-.fieldError { grid-column: 1 / -1; margin: 0; color: var(--danger); font-size: .875rem; line-height: 1.5; }
+/* ---------- 2. Search ---------- */
+.search { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 6px 10px; margin-bottom: 16px; }
+.codeField { min-width: 0; display: grid; gap: 6px; }
+.input { flex: 1; width: 100%; min-width: 0; min-height: 44px; padding: 0 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; text-transform: uppercase; }
+.input:focus-visible { outline: 2px solid var(--forest); outline-offset: 1px; border-color: var(--forest); }
 .input[aria-invalid='true'] { border-color: var(--danger); }
+.fieldError { grid-column: 1 / -1; margin: 0; color: var(--danger); font-size: 0.875rem; line-height: 1.5; }
 
-.input {
-  flex: 1;
-  min-width: 0;
-  min-height: 44px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid var(--control-border);
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  text-transform: uppercase;
-}
-
-.srOnly {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-}
-
-.error,
-.notice {
-  padding: 10px 14px;
-  border-radius: 10px;
-  margin-bottom: 16px;
-}
-
+/* ---------- 3. Messages ---------- */
+.error, .notice { margin-bottom: 16px; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; }
 .error { background: var(--danger-soft); color: var(--danger); }
-.notice { background: var(--sage-soft); color: var(--ink); }
+.notice { background: color-mix(in srgb, var(--forest) 14%, var(--surface)); color: var(--ink); }
 
-.result {
-  padding: 18px;
-  border-radius: 14px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-left: 6px solid var(--forest);
-  margin-bottom: 28px;
-}
-
-.resultHead {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.code {
-  font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
-  font-size: 1.6rem;
-  font-weight: 700;
-}
-
+/* ---------- 4. Result card & choices ---------- */
+.result { margin-bottom: 28px; padding: 18px; border: 1px solid color-mix(in srgb, var(--forest) 35%, var(--line)); border-radius: 18px; background: color-mix(in srgb, var(--forest) 7%, var(--surface)); }
+.resultHead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.code { font-family: 'Bricolage Grotesque', 'Figtree', sans-serif; font-size: 1.5rem; font-weight: 700; }
 .meta { font-size: 0.85rem; color: var(--muted); }
+.actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.explanation { max-width: 72ch; margin: 8px 0 16px; color: var(--muted); }
+.typeChoice { display: grid; gap: 10px; margin: 18px 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.typeChoice legend { padding: 0 6px; font-weight: 700; font-size: 0.9rem; }
+.typeChoice label { display: flex; gap: 10px; align-items: flex-start; font-size: 0.9rem; }
+.typeChoice input, .item input[type='checkbox'] { width: 18px; height: 18px; flex-shrink: 0; margin-top: 3px; accent-color: var(--forest); }
+.offerings { display: grid; gap: 8px; list-style: none; padding: 0; margin: 18px 0 0; }
+.result > h2 { margin-bottom: 8px; font-family: 'Figtree', sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.result > p + p, .result > p + .actions { margin-top: 8px; }
 
-.actions {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.hint,
-.muted { color: var(--muted); font-size: 0.9rem; }
-
+/* ---------- 5. Sections & lists ---------- */
 .section { margin-bottom: 28px; }
-.section h2 { font-size: 1.15rem; margin-bottom: 12px; }
-.sectionHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
-.sectionControls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.section h2 { margin-bottom: 10px; font-family: 'Figtree', sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.sectionHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .sectionHead h2 { margin: 0; }
-.count { display: inline-block; margin-left: 6px; padding: 2px 8px; border-radius: 6px; background: var(--sage-soft); font-size: .85rem; }
-.explanation { color: var(--muted); margin: 8px 0 18px; max-width: 72ch; }
-.typeChoice { display: grid; gap: 12px; margin: 20px 0; padding: 16px; border: 1px solid var(--line); border-radius: 10px; }
-.typeChoice legend { font-weight: 700; padding: 0 6px; }
-.typeChoice label { display: flex; gap: 10px; align-items: start; }
-.typeChoice input, .item input[type='checkbox'] { width: 18px; height: 18px; flex-shrink: 0; accent-color: var(--forest); margin-top: 3px; }
-.offerings { display: grid; gap: 10px; list-style: none; padding: 0; margin: 20px 0 0; }
-.name { overflow-wrap: anywhere; font-size: 1rem; }
-@media (max-width: 600px) {
-  .page { padding: 24px 16px; }
-  .item { flex-wrap: wrap; }
-  .item .grow { flex-basis: 100%; }
-}
-
-.list {
-  display: grid;
-  gap: 10px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.item {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-left: 6px solid var(--sage);
-}
-
+.sectionControls { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.count { display: inline-grid; place-items: center; min-width: 22px; height: 22px; margin-left: 6px; padding-inline: 6px; border-radius: 999px; background: var(--sand); color: var(--ink); font-size: 0.7rem; font-weight: 600; letter-spacing: 0; }
+.list { display: grid; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
 .grow { flex: 1; min-width: 0; }
-.name { font-weight: 600; }
+.name { font-weight: 600; font-size: 0.95rem; overflow-wrap: anywhere; }
 
-.subjectGrid { display: grid; gap: 10px; list-style: none; padding: 0; margin: 0; }
-.subjectCard { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 14px 16px; border: 1px solid var(--line); border-left: 6px solid var(--sage); border-radius: 12px; background: var(--surface); }
+/* ---------- 6. Ledger subject cards ---------- */
+.subjectGrid { display: grid; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.subjectCard { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
 .subjectContent { flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.subjectTitle { margin: 0; font-size: 1rem; font-weight: 600; line-height: 1.4; }
-.subjectIdentifiers { margin: 4px 0 0; font-size: .85rem; color: var(--muted); line-height: 1.5; }
-.subjectCode { font-weight: 600; }
-.subjectTerm, .subjectMayor { margin: 2px 0 0; font-size: .8125rem; line-height: 1.5; color: var(--muted); }
-.withdrawButton { flex-shrink: 0; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--danger); font: inherit; font-size: .8125rem; font-weight: 600; cursor: pointer; transition: background-color .15s ease, border-color .15s ease; }
-.withdrawButton:hover:not(:disabled) { background: var(--danger-soft); border-color: var(--danger); }
+.subjectTitle { margin: 0; font-family: 'Figtree', sans-serif; font-size: 0.95rem; font-weight: 600; line-height: 1.4; letter-spacing: 0; }
+.subjectIdentifiers { margin: 4px 0 0; font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+.subjectCode { font-weight: 700; color: var(--forest); }
+.subjectTerm, .subjectMayor { margin: 2px 0 0; font-size: 0.78rem; line-height: 1.5; color: var(--muted); }
+.withdrawButton { flex-shrink: 0; min-height: 44px; padding: 8px 14px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--danger); font: inherit; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: background-color 150ms ease, border-color 150ms ease; }
+@media (hover: hover) { .withdrawButton:hover:not(:disabled) { background: var(--danger-soft); border-color: var(--danger); } }
 .withdrawButton:focus-visible { outline: 2px solid var(--forest); outline-offset: 3px; }
-.withdrawButton:disabled { opacity: .5; cursor: not-allowed; }
+.withdrawButton:disabled { opacity: 0.5; cursor: not-allowed; }
 
-
-@media (prefers-reduced-motion: reduce) {
-  .withdrawButton { transition: none; }
-}
-
-.pill {
-  font-size: 0.78rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-.pending { background: var(--warning-soft); color: var(--warning); }
-.approved { background: var(--sage-soft); color: var(--aurora-green); }
+/* ---------- 7. Status pills ---------- */
+.pill { padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 700; white-space: nowrap; }
+.pending { background: var(--highlight-soft); color: var(--highlight); }
+.approved { background: var(--forest); color: var(--on-primary); }
 .rejected { background: var(--danger-soft); color: var(--danger); }
 
+/* ---------- 8. Responsive ---------- */
 @media (max-width: 760px) {
-  .page { padding: 24px 16px; }
+  .page { padding: 20px 14px; }
   .item { flex-wrap: wrap; }
-  .grow { flex-basis: 100%; }
+  .item .grow { flex-basis: 100%; }
+  .subjectCard { flex-wrap: wrap; }
+  .subjectContent { flex-basis: 100%; }
+  .withdrawButton { width: 100%; }
+  .result { padding: 14px; border-radius: 16px; }
 }
