@@ -19,3 +19,6 @@
 .fields + .actions { margin-top: 0; }
 .error { color: var(--danger); font-size: 0.875rem; margin: 0 0 12px; }
 @media (max-width: 480px) { .modal { padding: 18px 18px 16px; } .actions button { flex: 1; } }
+@media (max-width: 760px) {
+  .modal[open] { inset: auto 12px max(12px, env(safe-area-inset-bottom)) 12px; width: auto; max-width: none; border: 1px solid var(--line); border-radius: 24px; }
+}

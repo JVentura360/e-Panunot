@@ -11,6 +11,7 @@ import { useTasks } from '../../context/TaskContext.jsx';
 import { canReplyToConcern, concernActions } from './concernVisibility.js';
 import SkeletonList from '../../components/Skeleton.jsx';
 import { fitImage, uniqueName } from './fitImage.js';
+import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
 // Single-file Concerns feature (prototype). Sections, in order:
 // helpers, StatusTag, ConcernList, ConcernThread, NewConcernModal, Concerns (page).
@@ -170,34 +171,6 @@ return (
 );
 }
 
-// ======================= ConfirmDialog =======================
-function ConfirmDialog({ title, message, confirmLabel, onConfirm, onCancel }) {
-const ref = useRef(null);
-useEffect(() => {
-    const dialog = ref.current;
-    dialog.showModal();
-    return () => dialog.close();
-}, []);
-
-return (
-    <dialog
-    ref={ref}
-    className={styles.dialog}
-    aria-labelledby="confirm-title"
-    onCancel={(e) => { e.preventDefault(); onCancel(); }}
-    >
-    <div className={styles.modal}>
-        <h2 id="confirm-title">{title}</h2>
-        <p>{message}</p>
-        <div className={styles.modalActions}>
-        <button type="button" className="btn ghost" onClick={onCancel}>Cancel</button>
-        <button type="button" className="btn" onClick={onConfirm}>{confirmLabel}</button>
-        </div>
-    </div>
-    </dialog>
-);
-}
-
 // ======================= ConcernThread =======================
 function Actions({ concern, viewerRole, onStatus, onAskResolve }) {
 const { status } = concern;
@@ -251,14 +224,13 @@ const [confirmingResolve, setConfirmingResolve] = useState(false);
 const isMayor = viewerRole === 'mayor';
 const canReply = canReplyToConcern(concern);
 const [text, setText] = useState('');
+const [showInfo, setShowInfo] = useState(false);
 const endRef = useRef(null);
 const prevCount = useRef(concern.messages.length);
 
 // Scroll to the newest message, but only when one is added (not on first open).
 useEffect(() => {
-    if (concern.messages.length > prevCount.current) {
-    endRef.current?.scrollIntoView({ block: 'nearest' });
-    }
+    endRef.current?.scrollIntoView({ block: 'end' });
     prevCount.current = concern.messages.length;
 }, [concern.messages.length]);
 
@@ -278,28 +250,34 @@ return (
     <>
     <Link to="/concerns" className={styles.back}>Back to concerns</Link>
 
-    <header className={styles.threadHead}>
+        <header className={styles.threadHead}>
         <div className={styles.threadTitleRow}>
         <h2>{concern.title}</h2>
         <StatusTag status={concern.status} />
         </div>
-        <div className={styles.facts}>
-        <span><strong>Subject:</strong> {concern.subject}</span>
-        <span><strong>Category:</strong> {concern.category}</span>
-        {concern.task && <span><strong>Related task:</strong> {concern.task.title} (due {formatDate(concern.task.due_date)})</span>}
-        {isMayor && <span><strong>Raised by:</strong> {concern.studentName}</span>}
-        <span><strong>Sent:</strong> {formatDateTime(concern.createdAt)}</span>
+        <button type="button" className={styles.infoToggle} aria-expanded={showInfo}
+            onClick={() => setShowInfo((v) => !v)}>
+            {showInfo ? 'Hide details' : 'Show details'}
+        </button>
+        <div className={styles.info} data-open={showInfo}>
+            <div className={styles.facts}>
+            <span><strong>Subject:</strong> {concern.subject}</span>
+            <span><strong>Category:</strong> {concern.category}</span>
+            {concern.task && <span><strong>Related task:</strong> {concern.task.title} (due {formatDate(concern.task.due_date)})</span>}
+            {isMayor && <span><strong>Raised by:</strong> {concern.studentName}</span>}
+            <span><strong>Sent:</strong> {formatDateTime(concern.createdAt)}</span>
+            </div>
+            <p className={styles.desc}>{concern.description}</p>
+            {concern.attachments.length > 0 && (
+            <ul className={styles.files} aria-label="Attachments">
+                {concern.attachments.map((a) => (
+                <li key={a.id} className={styles.file}>
+                    <button type="button" className={styles.fileLink} onClick={() => setPreview(a)}>{a.name}</button>
+                </li>
+                ))}
+            </ul>
+            )}
         </div>
-        <p className={styles.desc}>{concern.description}</p>
-        {concern.attachments.length > 0 && (
-        <ul className={styles.files} aria-label="Attachments">
-            {concern.attachments.map((a) => (
-            <li key={a.id} className={styles.file}>
-                <button type="button" className={styles.fileLink} onClick={() => setPreview(a)}>{a.name}</button>
-            </li>
-            ))}
-        </ul>
-        )}
     </header>
 
     <div className={styles.actions}>

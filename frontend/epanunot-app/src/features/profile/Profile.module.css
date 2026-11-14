@@ -1,213 +1,72 @@
-.page {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 32px 24px;
-}
+/* =========================================================
+   Profile.module.css
+   1. Page & header
+   2. Identity card
+   3. Sections & account details
+   4. Name editor
+   5. Role section (block, application)
+   6. Responsive
+   ========================================================= */
 
-/* ---------- Top section ---------- */
-.top {
-  margin-bottom: 24px;
-}
-
-.top h1 { font-size: 2rem; }
-.top p { color: var(--muted); margin-top: 4px; }
-
+/* ---------- 1. Page & header ---------- */
+.page { max-width: 860px; margin: 0 auto; padding: 40px 32px; }
+.top { margin-bottom: 24px; }
+.top h1 { font-size: clamp(1.6rem, 3vw, 2.2rem); letter-spacing: -0.03em; }
+.top p { margin-top: 4px; color: var(--muted); }
 .muted { color: var(--muted); font-size: 0.9rem; }
 
-/* ---------- Identity banner ---------- */
-.identity {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 24px;
-  border-radius: 14px;
-  background: var(--header-bg);
-  color: var(--header-ink);
-  margin-bottom: 28px;
-}
-
-.identity::before { content: ''; position: absolute; top: -6px; right: 28px; width: 40px; height: 13px; border-radius: 3px; background: #9ad0c1 ; transform: rotate(5deg); pointer-events: none; }
+/* ---------- 2. Identity card ---------- */
+.identity { display: flex; align-items: center; gap: 18px; margin-bottom: 28px; padding: 20px; border: 1px solid color-mix(in srgb, var(--forest) 35%, var(--line)); border-radius: 18px; background: color-mix(in srgb, var(--forest) 9%, var(--surface)); color: var(--ink); }
 .identity > div:last-child { min-width: 0; overflow-wrap: anywhere; }
+.identity h2 { font-size: 1.4rem; color: var(--ink); }
+.avatar { flex-shrink: 0; display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--forest); color: var(--on-primary); font-family: 'Bricolage Grotesque', 'Figtree', sans-serif; font-size: 1.8rem; font-weight: 800; text-transform: uppercase; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.tag { padding: 3px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); font-size: 0.72rem; font-weight: 600; text-transform: capitalize; }
 
-.identity h2 { font-size: 1.5rem; color: var(--header-ink); }
-.identity .muted { color: var(--on-header-muted); }
-
-.avatar {
-  flex-shrink: 0;
-  width: 72px;
-  height: 72px;
-  border-radius: 22px 26px 20px 26px;
-  background: var(--peach);
-  color: var(--ink);
-  display: grid;
-  place-items: center;
-  font-family: 'Bricolage Grotesque', 'Figtree', sans-serif;
-  font-size: 2rem;
-  font-weight: 800;
-}
-
-.tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.tag {
-  font-size: 0.75rem;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: var(--mist);
-  color: var(--ink);
-  text-transform: capitalize;
-}
-
-/* ---------- Sections ---------- */
+/* ---------- 3. Sections & account details ---------- */
 .section { margin-bottom: 28px; }
-.section h3 { font-size: 1.15rem; margin-bottom: 12px; }
-
-/* ---------- Account details ---------- */
-.card {
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--mist);
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 16px;
-  align-items: center;
-  padding: 14px 16px;
-}
-
+.section h3 { margin-bottom: 10px; font-family: 'Figtree', sans-serif; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.card { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; }
+.row { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 16px; align-items: center; padding: 14px 16px; overflow-wrap: anywhere; }
 .row + .row { border-top: 1px solid var(--line); }
+.rowLabel { font-weight: 600; font-size: 0.9rem; }
+.hint { display: block; font-weight: 400; font-size: 0.76rem; color: var(--muted); }
+.rowValue { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.link { position: relative; border: 0; background: transparent; color: var(--forest); font-weight: 600; padding: 4px 10px; border-radius: 8px; }
+.link::before { content: ''; position: absolute; inset: -8px; }
+@media (hover: hover) { .link:hover { background: var(--sand); } }
+.notice { margin-top: 12px; padding: 10px 14px; border-radius: 12px; background: color-mix(in srgb, var(--forest) 14%, var(--surface)); color: var(--ink); font-size: 0.88rem; animation: savedIn 200ms ease-out; }
+@keyframes savedIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-.rowLabel { font-weight: 600; }
-
-.hint {
-  display: block;
-  font-weight: 400;
-  font-size: 0.78rem;
-  color: var(--muted);
-}
-
-.rowValue {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.link {
-  border: 0;
-  background: transparent;
-  color: var(--clay);
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 8px;
-}
-
-.link:hover { background: var(--paper); }
-
-/* ---------- Name editor ---------- */
+/* ---------- 4. Name editor ---------- */
 .editForm { width: 100%; }
-
-.input {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 2px solid var(--control-border);
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-}
-
+.input { width: 100%; min-height: 44px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font: inherit; }
+.input:focus-visible { outline: 2px solid var(--forest); outline-offset: 1px; border-color: var(--forest); }
 .input[aria-invalid='true'] { border-color: var(--danger); }
+.editActions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.fieldError { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--danger-soft); color: var(--danger); font-size: 0.88rem; }
 
-.editActions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 10px;
-}
+/* ---------- 5. Role section (block, application) ---------- */
+.stats { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; }
+.stat { min-width: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); font-size: 0.82rem; color: var(--muted); }
+.stat:nth-child(1) { background: var(--forest); border-color: var(--forest); color: var(--on-primary); }
+.stat strong { display: block; margin-bottom: 2px; font-family: 'Bricolage Grotesque', sans-serif; font-size: clamp(1.3rem, 4vw, 2rem); line-height: 1.2; color: inherit; overflow-wrap: anywhere; }
+.stat:not(:nth-child(1)) strong { color: var(--ink); }
 
-.fieldError {
-  margin-top: 10px;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--danger-soft);
-  border-left: 4px solid var(--clay);
-  font-size: 0.9rem;
-}
-
-.notice {
-  animation: savedIn 200ms ease-out;
-  margin-top: 12px;
-  padding: 10px 14px;
-  border-radius: 10px;
-  background: var(--mist);
-  font-size: 0.9rem;
-}
-
-@keyframes savedIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
-
-/* ---------- Role section ---------- */
-.stats {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-  gap: 14px;
-}
-
-.stat {
-  min-width: 0;
-  padding: 18px;
-  border-radius: 14px;
-  background: var(--sand);
-}
-
-.stat:nth-child(1) { background: var(--forest); color: var(--sand); }
-.stat strong { display: block; font-family: 'Bricolage Grotesque'; font-size: clamp(1.2rem, 4vw, 2.2rem); overflow-wrap: anywhere; }
-
-.application {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: var(--surface);
-  border: 1px solid var(--mist);
-}
-
-.status {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 999px;
-  background: var(--mist);
-  text-transform: capitalize;
-}
-
-.pending { background: var(--peach); }
-.approved { background: var(--sage); }
+.application { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
+.status { flex-shrink: 0; padding: 3px 10px; border-radius: 999px; background: var(--sand); color: var(--ink); font-size: 0.72rem; font-weight: 700; text-transform: capitalize; }
+.pending { background: var(--highlight-soft); color: var(--highlight); }
+.approved { background: var(--forest); color: var(--on-primary); }
 .rejected { background: var(--danger-soft); color: var(--danger); }
 
-/* ---------- Responsive ---------- */
+/* ---------- 6. Responsive ---------- */
 @media (max-width: 760px) {
-  .page { padding: 20px 16px; }
-  .identity { padding: 18px; gap: 14px; }
-  .avatar { width: 56px; height: 56px; font-size: 1.6rem; }
-  .row { grid-template-columns: 1fr; gap: 4px; }
-  .stats { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 10px; }
-  .stat { padding: 16px 12px; }
+  .page { padding: 20px 14px; }
+  .identity { padding: 16px; gap: 14px; border-radius: 16px; }
+  .identity h2 { font-size: 1.2rem; }
+  .avatar { width: 52px; height: 52px; font-size: 1.5rem; }
+  .row { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 12px 14px; }
+  .stats { gap: 10px; }
+  .stat { padding: 14px 12px; }
+  .application { flex-wrap: wrap; }
 }
-/* Shared typography and spacing */
-.page { max-width: 1200px; padding: 40px 32px; }
-.top h1 { font-size: clamp(1.8rem, 3vw, 2.4rem); }
-.identity { border-color: var(--line); }
-.row { min-width: 0; overflow-wrap: anywhere; }
-@media (max-width: 760px) { .page { padding: 24px 16px; } }
