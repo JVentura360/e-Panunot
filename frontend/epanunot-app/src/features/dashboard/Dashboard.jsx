@@ -1,5 +1,5 @@
 import AnimatedList from '../../components/AnimatedList.jsx';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from '../../components/Modal.jsx';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
@@ -18,13 +18,24 @@ import { applicationEligibility } from '../block/enrollmentRules.js';
 import AnnouncementDialog from './AnnouncementDialog.jsx';
 import DailyQuote from './DailyQuote.jsx';
 import { useOffline } from '../../offline/useOffline.js';
-import { blockLabel, shortDate, readSeen, writeSeen } from './announcementUtils.js';
+import { readSeen, writeSeen } from './announcementUtils.js';
+import AnnouncementCard from './AnnouncementCard.jsx';
+import AnnouncementDialogs from './AnnouncementDialogs.jsx';
+import TaskDialogs from './TaskDialogs.jsx';
+import { useToday } from './useToday.js';
+
+const dateTitle = new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
 
 export default function Dashboard({ user }) {
+  const today = useToday();
   const { online } = useOffline();
-  const { tasks, error: taskError, addTask: saveTask, toggleTask: toggle, updateTask, removeTask } = useTasks();
+  const { tasks, error: taskError, addTask: saveTask, toggleTask: toggle } = useTasks();
   const annQuery = useApiQuery('/announcements', { enabled: online && Boolean(user.block_id) });
-  const anns = annQuery.data?.data ?? [];
+  const anns = useMemo(
+    () => [...(annQuery.data?.data ?? [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
+    [annQuery.data],
+  );
+  const latest = anns.slice(0, 4);
   const [modal, setModal] = useState(null);
   const [filter, setFilter] = useState('open');
   const [editingAnn, setEditingAnn] = useState(null);
@@ -54,11 +65,13 @@ export default function Dashboard({ user }) {
   const pendingJoin = user.pending_join_request;
   const pending = tasks.filter((task) => !task.done);
   const completed = tasks.length - pending.length;
+  const percent = tasks.length ? Math.round((completed / tasks.length) * 100) : 0;
   const dueSoon = pending.filter((task) => daysLeft(task.due) <= 1).length;
   const matchesFilter = (task) => filter === 'all' || (filter === 'open' ? !task.done : task.done);
-  const assigned = tasks.filter((task) => !task.personal && matchesFilter(task))
-    .sort((a, b) => Number(a.done) - Number(b.done));
-  const personal = tasks.filter((task) => task.personal && matchesFilter(task));
+  const LIMIT = 5;
+  const byDue = (a, b) => Number(a.done) - Number(b.done) || a.due - b.due;
+  const assigned = tasks.filter((task) => !task.personal && matchesFilter(task)).sort(byDue);
+  const personal = tasks.filter((task) => task.personal && matchesFilter(task)).sort(byDue);
 
   const addTask = async (values, personalTask) => {
     await saveTask({
@@ -93,6 +106,7 @@ export default function Dashboard({ user }) {
       <header className={styles.top}>
         <div>
           <p className={styles.eyebrow}>{user.block && user.block !== '-' ? user.block : 'Your workspace'} <span> / </span> Overview</p>
+          <div className={styles.date}>{dateTitle.format(today)}</div>
           <DailyQuote userId={user.id} heading />
         </div>
         <div className={styles.headerActions}>
@@ -104,10 +118,17 @@ export default function Dashboard({ user }) {
 
       {taskError && <p role="alert" className={styles.error}>{taskError}</p>}
 
-      <div className={styles.stats} aria-label="Task summary">
-        <div className={styles.stat}><span>To Do</span><strong>{pending.length.toString().padStart(2, '0')}</strong><small>One task at a time.</small></div>
-        <div className={styles.stat}><span>Due Soon</span><strong>{dueSoon.toString().padStart(2, '0')}</strong><small>Overdue, today or tomorrow</small></div>
-        <div className={styles.stat}><span>Completed</span><strong>{completed.toString().padStart(2, '0')}</strong><small>{tasks.length ? Math.round(completed / tasks.length * 100) + '% of your tasks checked off' : 'Your progress starts here'}</small></div>
+      <div className={styles.summary} aria-label="Task summary">
+        <svg className={styles.ring} viewBox="0 0 36 36" aria-hidden="true">
+          <circle className={styles.ringTrack} cx="18" cy="18" r="15.5" />
+          <circle className={styles.ringFill} cx="18" cy="18" r="15.5" pathLength="100" strokeDasharray={`${percent} 100`} />
+        </svg>
+        <p className={styles.summaryText}>
+          <span><strong>{pending.length}</strong> to do</span>
+          <span className={dueSoon ? styles.soon : ''}><strong>{dueSoon}</strong> due soon</span>
+          <span><strong>{completed}</strong> done</span>
+        </p>
+        <small>{tasks.length ? `${percent}% checked off` : 'Your progress starts here'}</small>
       </div>
 
       <div className={styles.workspace}>
@@ -136,38 +157,44 @@ export default function Dashboard({ user }) {
                 {!eligibility.allowed && <p>{eligibility.reason}</p>}
                 </>}
               </PlannerEmpty>
-            ) : assigned.length ? <AnimatedList className={styles.list}>{assigned.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} calendarEmail={user.email} onEdit={isMayor ? setEditingTask : undefined} onDelete={isMayor ? setDeletingTask : undefined} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}
-          </section>
+                ) : assigned.length ? (
+                  <>
+                    <AnimatedList className={styles.list}>
+                      {assigned.slice(0, LIMIT).map((task) => (
+                        <TaskItem key={task.id} t={task} onToggle={toggle} calendarEmail={user.email}
+                          onEdit={isMayor ? setEditingTask : undefined}
+                          onDelete={isMayor ? setDeletingTask : undefined} />
+                      ))}
+                    </AnimatedList>
+                    {assigned.length > LIMIT && <Link className={styles.viewAll} to={`/tasks?filter=${filter}`}>See all {assigned.length}</Link>}
+                  </>
+                ) : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}          </section>
           {(!isMayor || !online) && <section className={styles.section}>
             <h3>Personal tasks <span>{personal.length}</span></h3>
-            {personal.length ? <AnimatedList className={styles.list}>{personal.map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} />)}</AnimatedList> : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'A fresh page for your own plans.'}{filter !== 'done' && <button className={styles.inlineAction} onClick={() => setModal('mine')}>Add your first task</button>}</PlannerEmpty>}
+              {personal.length ? (
+                <>
+                  <AnimatedList className={styles.list}>
+                    {personal.slice(0, LIMIT).map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} />)}
+                  </AnimatedList>
+                  {personal.length > LIMIT && <Link className={styles.viewAll} to={`/tasks?filter=${filter}`}>See all {personal.length}</Link>}
+                </>
+              ) : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'A fresh page for your own plans.'}{filter !== 'done' && <button className={styles.inlineAction} onClick={() => setModal('mine')}>Add your first task</button>}</PlannerEmpty>}
           </section>}
         </div>
 
         {online && <aside className={styles.noticePanel}>
           <div className={styles.sectionHead}><div><p className={styles.eyebrow}>The block board</p><h2>Announcements</h2></div><span className={styles.count}>{anns.length}</span></div>
-          {anns.length ? anns.map((announcement, index) => (
-            <article className={styles.ann} key={announcement.id} onClick={() => setViewingAnn(announcement)}>
-              <span className={styles.annIndex}>{String(index + 1).padStart(2, '0')}</span>
-              <div className={styles.annMeta}>
-                <span className={announcement.subject ? styles.annTag : `${styles.annTag} ${styles.annTagBlock}`}>
-                  {announcement.subject ? announcement.subject.code : 'Whole block'}
-                </span>
-                {announcement.block && <span className={styles.annBlock}>{blockLabel(announcement.block)}</span>}
+            {latest.length ? (
+              <div className={styles.board}>
+                {latest.map((announcement) => (
+                  <AnnouncementCard key={announcement.id} announcement={announcement} isMayor={isMayor}
+                    onOpen={setViewingAnn} onEdit={setEditingAnn} onDelete={setDeletingAnn} />
+                ))}
               </div>
-              <h3><button type="button" className={styles.annTitle}>{announcement.title}</button></h3>
-              <p className={styles.annText}>{announcement.description}</p>
-              <small className={styles.annBy}>
-                {announcement.created_by?.name && `${announcement.created_by.name} · `}{shortDate(announcement.created_at)}
-              </small>
-              {isMayor && (
-                <div className={styles.annActions}>
-                  <button type="button" className={styles.inlineAction} onClick={(e) => { e.stopPropagation(); setEditingAnn(announcement); }}>Edit</button>
-                  <button type="button" className={styles.inlineAction} onClick={(e) => { e.stopPropagation(); setDeletingAnn(announcement); }}>Delete</button>
-                </div>
-              )}
-            </article>
-          )) : <div className="empty">No announcements yet.</div>}
+            ) : <div className="empty">No announcements yet.</div>}
+            {anns.length > latest.length && (
+              <Link className={styles.viewAll} to="/announcements">View all {anns.length}</Link>
+            )}
           <div className={styles.note}><strong>Stay in the loop.</strong><p>Check your block board for updates before planning your day.</p><Link className={styles.textLink} to="/concerns">{isMayor ? 'Review student concerns' : 'Have a concern? Let’s talk'}</Link></div>
         </aside>}
       </div>
@@ -199,69 +226,11 @@ export default function Dashboard({ user }) {
       />
     )}
     {dialogAnn && <AnnouncementDialog key={dialogAnn.id} announcement={dialogAnn} onClose={closeAnnDialog} />}
-      {editingAnn && (
-        <Modal
-          title="Edit Announcement"
-          description="Update what your block sees."
-          submitLabel="Save changes"
-          fields={[
-            { key: 'title', label: 'Title', required: true },
-            { key: 'description', label: 'Message', type: 'textarea', required: true },
-          ]}
-          initialValues={{ title: editingAnn.title, description: editingAnn.description }}
-          onSave={async (values) => {
-            await api(`/announcements/${editingAnn.id}`, { method: 'PUT', body: values });
-            setEditingAnn(null);
-          }}
-          onClose={() => setEditingAnn(null)}
-        />
-      )}
+      <AnnouncementDialogs editing={editingAnn} deleting={deletingAnn}
+        onCloseEdit={() => setEditingAnn(null)} onCloseDelete={() => setDeletingAnn(null)} />
 
-      {deletingAnn && (
-        <ConfirmDialog
-          title="Delete this announcement?"
-          message={`"${deletingAnn.title}" will be removed for everyone in your block.`}
-          confirmLabel="Delete"
-          onCancel={() => setDeletingAnn(null)}
-          onConfirm={async () => {
-            await api(`/announcements/${deletingAnn.id}`, { method: 'DELETE' });
-            setDeletingAnn(null);
-          }}
-        />
-      )}
-
-      {editingTask && (
-        <Modal
-          title="Edit task"
-          description="Change the title, deadline or platform. To change the subject, delete this task and assign it again."
-          submitLabel="Save changes"
-          fields={[
-            { key: 'title', label: 'Task title', required: true },
-            { key: 'due', label: 'Deadline date', type: 'date', required: true },
-    { key: 'time', label: 'Deadline time', type: 'time', required: true },
-            { key: 'platform', label: 'Platform or location', type: 'select', options: PLATFORMS },
-          ]}
-          initialValues={{ title: editingTask.title, due: editingTask.date, time: editingTask.time, platform: editingTask.platform || PLATFORMS[0] }}
-          onSave={async (values) => {
-            await updateTask(editingTask.id, { title: values.title, date: values.due, time: values.time, platform: values.platform });
-            setEditingTask(null);
-          }}
-          onClose={() => setEditingTask(null)}
-        />
-      )}
-
-      {deletingTask && (
-        <ConfirmDialog
-          title="Delete this task?"
-          message={`"${deletingTask.title}" will be removed for everyone in your block, including their completion records.`}
-          confirmLabel="Delete"
-          onCancel={() => setDeletingTask(null)}
-          onConfirm={async () => {
-            await removeTask(deletingTask.id);
-            setDeletingTask(null);
-          }}
-        />
-      )}
+      <TaskDialogs editing={editingTask} deleting={deletingTask}
+        onCloseEdit={() => setEditingTask(null)} onCloseDelete={() => setDeletingTask(null)} />
     </div>
   );
 }

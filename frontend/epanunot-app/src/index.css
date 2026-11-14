@@ -36,6 +36,11 @@ Page/component styles live in each feature's
   --warning: #F2CB8D;
   --warning-soft: #3E3422;
   --shadow-rgb: 3 7 12;
+  --sheet: #1A2330;
+  --rule: #2B3748;
+  --margin-line: #8A5A62;
+  --highlight: #F5CD7A;
+  --highlight-soft: #4A3C1D;
 }
 
 :root[data-theme='light'] {
@@ -70,6 +75,11 @@ Page/component styles live in each feature's
   --danger-soft: #F8E3DC;
   --warning: #795218;
   --warning-soft: #F6E9CF;
+  --sheet: #FFFDF6;
+  --rule: #E3E7D6;
+  --margin-line: #E3A8A0;
+  --highlight: #7A4E0C;
+  --highlight-soft: #FAE8A9;
 }
 
 * {

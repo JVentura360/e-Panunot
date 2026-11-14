@@ -59,7 +59,7 @@ export default function Modal({ title, description, fields, onSave, onClose, sub
     <dialog ref={dialogRef} className={styles.modal} aria-labelledby={id + '-title'} aria-describedby={description ? id + '-description' : undefined} onCancel={(event) => { event.preventDefault(); onClose(); }} onClick={(event) => { if (event.target === event.currentTarget) { const rect = event.currentTarget.getBoundingClientRect(); if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose(); } }}>
       <form onSubmit={submit}>
         <header className={styles.header}>
-          <div><p className={styles.eyebrow}>Your workspace</p><h2 id={id + '-title'}>{title}</h2></div>
+          <div><h2 id={id + '-title'}>{title}</h2></div>
           <button type="button" className={styles.close} aria-label="Close dialog" onClick={onClose}>×</button>
         </header>
         {description && <p id={id + '-description'} className={styles.description}>{description}</p>}

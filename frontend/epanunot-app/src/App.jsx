@@ -19,12 +19,14 @@ import { useDialogDismiss } from './components/useDialogDismiss.js';
 
 const Profile = lazy(() => import('./features/profile/Profile.jsx'));
 const AdminDashboard = lazy(() => import('./features/admin/AdminDashboard.jsx'));
+const AnnouncementsPage = lazy(() => import('./features/dashboard/AnnouncementsPage.jsx'));
 const BlockManagement = lazy(() => import('./features/block/BlockManagement.jsx'));
 const JoinBlock = lazy(() => import('./features/block/JoinBlock.jsx'));
 const Concerns = lazy(() => import('./features/concerns/Concerns.jsx'));
 const Calendar = lazy(() => import('./features/calendar/Calendar.jsx'));
 const NotificationsPage = lazy(() => import('./features/notifications/NotificationsPage.jsx'));
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage.jsx'));
+const TasksPage = lazy(() => import('./features/dashboard/TasksPage.jsx'));
 
 // Lives inside MainLayout's <main>, so the navigation stays on screen while a page loads.
 function PageBoundary() {
@@ -117,6 +119,10 @@ export default function App() {
 
                     <Route path="/notifications" element={member(<NotificationsPage user={user} />)} />
 
+                    <Route path="/announcements" element={member(<AnnouncementsPage user={user} />)} />
+
+                    <Route path="/tasks" element={member(<TasksPage user={user} />)} />
+                    
                     <Route
                         path="/concerns/*"
                         element={member(

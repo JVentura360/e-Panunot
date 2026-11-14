@@ -1,19 +1,21 @@
-.modal { position: fixed; inset: 0; margin: auto; width: min(480px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; border: 1px solid var(--mist); border-radius: 20px; padding: 28px; background: var(--paper); color: var(--ink); box-shadow: 0 24px 80px rgb(var(--shadow-rgb) / 20%); }
-.modal::backdrop { background: rgb(var(--shadow-rgb) / 55%); }
-.modal { height: fit-content; }
+.modal { position: fixed; inset: 0; margin: auto; width: min(460px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow-y: auto; border: 1px solid var(--line); border-radius: 24px; padding: 22px 22px 20px; background: var(--paper); color: var(--ink); box-shadow: 0 24px 80px rgb(var(--shadow-rgb) / 35%); }
+.modal::backdrop { background: rgb(var(--shadow-rgb) / 60%); backdrop-filter: blur(3px); }
 .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-.header h2 { font-size: 1.6rem; line-height: 1.2; margin-top: 6px; }
-.eyebrow { color: var(--forest); font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; }
-.description { font-size: 0.88rem; color: var(--muted); margin-top: 12px; }
-.close { width: 44px; height: 44px; flex-shrink: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--forest); font-size: 1.4rem; }
-.close:hover { background: var(--sand); }
-.fields { display: grid; gap: 20px; margin: 28px 0; }
-.field { display: grid; gap: 8px; }
-.field label { font-weight: 600; font-size: 0.8rem; }
+.header h2 { margin: 0; font-size: 1.3rem; line-height: 1.25; overflow-wrap: anywhere; }
+.eyebrow { margin-bottom: 4px; color: var(--forest); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+.description { margin-top: 8px; color: var(--muted); font-size: 0.875rem; line-height: 1.5; }
+.close { position: relative; width: 34px; height: 34px; flex-shrink: 0; border: 0; border-radius: 50%; background: var(--sand); color: var(--muted); font-size: 1.2rem; line-height: 1; }
+.close::before { content: ''; position: absolute; inset: -5px; }
+.close:hover { background: var(--peach); color: var(--ink); }
+.fields { display: grid; gap: 16px; margin: 20px 0 22px; }
+.field { display: grid; gap: 6px; }
+.field label { font-weight: 600; font-size: 0.8rem; color: var(--muted); }
 .field label span { color: var(--forest); }
-.field input, .field select, .field textarea { width: 100%; min-height: 48px; border: 1px solid var(--control-border); border-radius: 8px; padding: 12px; background: var(--surface); }
+.field input, .field select, .field textarea { width: 100%; min-height: 46px; border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px; background: var(--surface); }
 .field textarea { resize: vertical; }
-.field input:hover, .field select:hover, .field textarea:hover { border-color: var(--forest); }
-.actions { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--line); padding-top: 20px; }
-.error { color: var(--danger); font-size: 0.9rem; margin: 0 0 0.5rem; }
-@media (max-width: 480px) { .modal { padding: 24px 20px; } .actions button { flex: 1; } }
+.field input:hover, .field select:hover, .field textarea:hover { border-color: var(--control-border); }
+.field input:focus-visible, .field select:focus-visible, .field textarea:focus-visible { outline: 2px solid var(--forest); outline-offset: 1px; border-color: var(--forest); }
+.actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+.fields + .actions { margin-top: 0; }
+.error { color: var(--danger); font-size: 0.875rem; margin: 0 0 12px; }
+@media (max-width: 480px) { .modal { padding: 18px 18px 16px; } .actions button { flex: 1; } }
