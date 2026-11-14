@@ -13,6 +13,13 @@ const GoogleG = () => (
     </svg>
 );
 
+const icon = { width: 14, height: 14, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2.2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true };
+const FEATURES = [
+    { label: 'Tasks & calendar', icon: <svg {...icon}><rect x="3" y="4" width="18" height="17" rx="3" /><path d="M8 2v4M16 2v4M3 10h18" /></svg> },
+    { label: 'Announcements', icon: <svg {...icon}><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8" /><path d="M10 20a2 2 0 0 0 4 0" /></svg> },
+    { label: 'Concerns', icon: <svg {...icon}><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /></svg> },
+];
+
 export default function Login({ error: sessionError = '', onLogin }) {
     const [loading, setLoading] = useState(false);
     const [accounts, setAccounts] = useState([]);
@@ -62,88 +69,107 @@ export default function Login({ error: sessionError = '', onLogin }) {
     return (
         <main className={styles.login}>
             <div className={styles.scenery} aria-hidden="true">
+                <span className={styles.glow} />
                 <span className={styles.cornerRing} />
                 <span className={styles.bottomRing} />
             </div>
 
-            <section className={styles.panel} aria-label="Sign in">
-                <div className={styles.card}>
-                    <div className={styles.illustration} aria-hidden="true">
-                        <div className={styles.backNote} />
-                        <div className={styles.frontNote}>
-                            <span className={styles.noteTab} />
-                            <span className={styles.noteRow}><i /><b /></span>
-                            <span className={styles.noteRow}><i /><b /></span>
-                            <span className={styles.noteRow}><i /><b /></span>
+            <div className={styles.shell}>
+                {/* Zone 1: hero */}
+                <section className={styles.hero}>
+                    <div className={styles.stage} aria-hidden="true">
+                        <div className={styles.illustration}>
+                            <div className={styles.backNote} />
+                            <div className={styles.frontNote}>
+                                <span className={styles.noteTab} />
+                                <span className={styles.noteRow}><i /><b /></span>
+                                <span className={styles.noteRow}><i /><b /></span>
+                                <span className={styles.noteRow}><i /><b /></span>
+                            </div>
+                            <span className={styles.noteDot} />
                         </div>
-                        <span className={styles.noteDot} />
                     </div>
 
-                                        <h1 className={styles.brand}>e<b>Panunot</b></h1>
+                    <h1 className={styles.brand}>e<b>Panunot</b></h1>
                     <p className={styles.pitch}>
                         Your block’s tasks, announcements and concerns in one place.
                     </p>
                     <ul className={styles.features} aria-label="What you can do">
-                        <li className={styles.feature}>Tasks &amp; calendar</li>
-                        <li className={styles.feature}>Announcements</li>
-                        <li className={styles.feature}>Concerns</li>
+                        {FEATURES.map((feature) => (
+                            <li key={feature.label} className={styles.feature}>{feature.icon}{feature.label}</li>
+                        ))}
                     </ul>
+                </section>
 
-                    <button
-                        className={styles.gbtn}
-                        disabled={loading}
-                        aria-busy={loading}
-                        onClick={signInWithGoogle}
-                    >
-                        <span className={styles.providerIcon}><GoogleG /></span>
-                        <span>Continue with UdD/CdD account</span>
-                    </button>
+                {/* Zone 2 and 3: action and footer */}
+                <section className={styles.panel} aria-label="Sign in">
+                    <div className={styles.card}>
+                        <div className={styles.action}>
+                            <h2 className={styles.welcome}>Sign in</h2>
+                            <p className={styles.schoolNote}>Use your @udd.edu.ph or @cdd.edu.ph account.</p>
 
-                    <p className={styles.schoolNote}>
-                        For @udd.edu.ph and @cdd.edu.ph accounts.
-                    </p>
+                            <button
+                                className={styles.gbtn}
+                                disabled={loading}
+                                aria-busy={loading}
+                                onClick={signInWithGoogle}
+                            >
+                                <span className={styles.providerIcon}><GoogleG /></span>
+                                <span>Continue with UdD/CdD account</span>
+                            </button>
 
-                    {error && (
-                        <div className={styles.error} role="alert">
-                            {error}
-                        </div>
-                    )}
-
-                    {showInstall && (
-                        <div className={styles.install}>
-                            {install.canPrompt ? (
-                                <button type="button" className={`btn ghost ${styles.installBtn}`}
-                                    onClick={() => void promptInstall()}>
-                                    Install app
-                                </button>
-                            ) : (
-                                <p className={styles.installNote}>
-                                    Install ePanunot: tap the Share button in Safari, then “Add to Home Screen”.
-                                </p>
+                            {error && (
+                                <div className={styles.error} role="alert">
+                                    {error}
+                                </div>
                             )}
                         </div>
-                    )}
 
-                    {accounts.length > 0 && (
-                        <details className={styles.demo}>
-                            <summary>Local development accounts</summary>
-                            <p className={styles.demoHint}>
-                                Test different roles without another school account. Google sign-in stays available above.
-                            </p>
-                            <div className={styles.demoRow}>
-                                {accounts.map((account) => (
-                                    <button key={account.key} type="button" className={styles.chip}
-                                        disabled={loading} onClick={() => signInAs(account.key)}>
-                                        {account.name}
-                                    </button>
-                                ))}
+                        <ol className={styles.steps} aria-label="How it works">
+                            <li><span className={styles.stepNum}>1</span><div><strong>Sign in</strong><p>Use your school Google account.</p></div></li>
+                            <li><span className={styles.stepNum}>2</span><div><strong>Join your block</strong><p>Enter your block code, or apply as mayor.</p></div></li>
+                            <li><span className={styles.stepNum}>3</span><div><strong>Stay on track</strong><p>Tasks, deadlines and announcements in one place.</p></div></li>
+                        </ol>
+
+                        {(showInstall || accounts.length > 0) && (
+                            <div className={styles.footer}>
+                                {showInstall && (
+                                    install.canPrompt ? (
+                                        <button type="button" className={styles.installPill} onClick={() => void promptInstall()}>
+                                            <svg {...icon}><path d="M12 3v12M7 10l5 5 5-5M5 21h14" /></svg>
+                                            Install app
+                                        </button>
+                                    ) : (
+                                        <p className={styles.installNote}>
+                                            Install ePanunot: tap the Share button in Safari, then “Add to Home Screen”.
+                                        </p>
+                                    )
+                                )}
+
+                                {accounts.length > 0 && (
+                                    <details className={styles.demo}>
+    <summary>Local development accounts</summary>
+        <div className={styles.demoPanel}>
+            <p className={styles.demoHint}>
+                Test different roles without another school account. Google sign-in stays available above.
+            </p>
+            <div className={styles.demoRow}>
+                {accounts.map((account) => (
+                    <button key={account.key} type="button" className={styles.chip}
+                        disabled={loading} onClick={() => signInAs(account.key)}>
+                        {account.name}
+                    </button>
+                ))}
+            </div>
+            <p className={styles.demoHint}>Mayor and classmates share a test block. New Student starts without a block.</p>
+        </div>
+    </details>
+                                )}
                             </div>
-                            <p className={styles.demoHint}>Mayor and classmates share a test block. New Student starts without a block.</p>
-                        </details>
-                    )}
-
-                </div>
-            </section>
+                        )}
+                    </div>
+                </section>
+            </div>
         </main>
     );
 }
