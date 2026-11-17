@@ -89,6 +89,7 @@ export default function Tutorial({ role = 'student', onDone }) {
           <section key={card.id} className={styles.card} role="group" aria-roledescription="slide"
             aria-label={`${i + 1} of ${cards.length}`} aria-hidden={i !== index}>
             <div className={styles.icon}><Icon name={card.icon} /></div>
+            <p className={styles.step}>{i + 1} of {cards.length}</p>
             <h2 className={styles.title}>{card.title}</h2>
             <p className={styles.body}>{card.body}</p>
           </section>
