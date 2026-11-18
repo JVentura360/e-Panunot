@@ -12,6 +12,7 @@ import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 import { PLATFORMS } from '../../data/mockData';
 import { useCalendarEvents } from './useCalendarEvents.js';
 import { gridRange } from './calendarMapper.js';
+import { clearCompletedPersonal, clearedMessage } from './clearCompleted.js';
 import { useOffline } from '../../offline/useOffline.js';
 import { requireOnline } from '../../offline/runtime.js';
 import GoogleCalendarButtons from './GoogleCalendarButton.jsx';
@@ -75,6 +76,8 @@ export default function Calendar({ user }) {
   const [deletingTask, setDeletingTask] = useState(null);
   const [deletingEvent, setDeletingEvent] = useState(null);
   const [addingPersonal, setAddingPersonal] = useState(false);
+  const [clearingCompleted, setClearingCompleted] = useState(false);
+  const [clearNotice, setClearNotice] = useState('');
 
   const [panel, setPanel] = useState(null); // 'event' | 'task' | null
   const [form, setForm] = useState(EMPTY_FORM);
@@ -293,7 +296,14 @@ export default function Calendar({ user }) {
             + Create task
             </button>
         )}
+        {view === 'agenda' && user.role !== 'admin' && (
+            <button type="button" className="btn ghost" data-online-only
+                onClick={() => { requireOnline(); setClearNotice(''); setClearingCompleted(true); }}>
+            Clear completed
+            </button>
+        )}
         </div>
+        {clearNotice && <p className={styles.rowMeta} role="status">{clearNotice}</p>}
         <div data-online-only><GoogleCalendarButtons user={user} choices={choices} /></div>
         {eventsError && <p className={styles.error} role="alert">Could not load events. {errorMessage(eventsError)}</p>}
         {eventsLoading && <p className={styles.rowMeta}>Loading events…</p>}
@@ -625,6 +635,20 @@ export default function Calendar({ user }) {
           onConfirm={async () => {
             await removeTask(deletingTask.id);
             setDeletingTask(null);
+          }}
+        />
+      )}
+
+      {clearingCompleted && (
+        <ConfirmDialog
+          title="Clear completed items?"
+          message="Your completed personal tasks and your personal events that have already ended will be permanently deleted. Class tasks, class events and announcements are not affected. This can't be undone."
+          confirmLabel="Clear"
+          onCancel={() => setClearingCompleted(false)}
+          onConfirm={async () => {
+            const result = await clearCompletedPersonal();
+            setClearNotice(clearedMessage(result));
+            setClearingCompleted(false);
           }}
         />
       )}

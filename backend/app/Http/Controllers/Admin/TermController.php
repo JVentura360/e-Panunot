@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Term;
+use App\Services\TermContentCleaner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +48,9 @@ class TermController extends Controller
                 $oldBlocks = DB::table('blocks')->whereIn('term_id', $terms->pluck('id'))->pluck('id');
                 DB::table('users')->whereIn('block_id', $oldBlocks)->where('role', 'mayor')->update(['role' => 'student', 'updated_at' => now()]);
                 DB::table('users')->whereIn('block_id', $oldBlocks)->update(['block_id' => null, 'updated_at' => now()]);
+                // A new term starts empty: the old blocks keep their history, but their
+                // tasks, announcements and class events are deleted from the database.
+                app(TermContentCleaner::class)->clearBlocks($oldBlocks->all());
                 Term::where('is_active', true)->update(['is_active' => false]);
                 $target = new Term;
             }

@@ -12,6 +12,7 @@ use App\Http\Controllers\TaskCompletionController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\CalendarEventController;
 use App\Http\Controllers\PersonalTodoController;
+use App\Http\Controllers\PersonalCleanupController;
 use App\Http\Controllers\MeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -83,6 +84,7 @@ Route::middleware(['auth:sanctum', \App\Http\Middleware\TrackClientChanges::clas
     Route::delete('/calendar-events/{calendarEvent}', [CalendarEventController::class, 'destroy']);
 
     Route::get('/personal-todos', [PersonalTodoController::class, 'index']);
+    Route::post('/personal-todos/clear-completed', [PersonalCleanupController::class, 'clearCompleted']);
     Route::post('/personal-todos', [PersonalTodoController::class, 'store']);
     Route::match(['put', 'patch'], '/personal-todos/{personalTodo}', [PersonalTodoController::class, 'update']);
     Route::delete('/personal-todos/{personalTodo}', [PersonalTodoController::class, 'destroy']);
