@@ -95,6 +95,7 @@ export async function api(path, { method = 'GET', body, query, force = false } =
   const result = await request(BASE + path, { method, body, query });
   const affected = path.includes('terms') ? null
     : path.includes('enrollment-profile') || /\/blocks\/\d+\/(enrollment|join)$/.test(path) ? ['/enrollment-profile', '/me', '/join-requests', '/subject-enrollments', '/blocks', '/subjects', '/tasks', '/calendar', '/announcements', '/mayor-applications', '/admin/mayor-applications', '/concerns']
+    : /\/admin\/blocks\/\d+\/mayor$/.test(path) ? ['/admin', '/me', '/blocks', '/mayor-applications', '/enrollment-profile', '/join-requests', '/subject-enrollments', '/subjects', '/subject-loads', '/tasks', '/calendar', '/announcements', '/concerns']
     : path.includes('subject-loads') || path.endsWith('/approve') && path.includes('mayor-applications') ? ['/subject-loads', '/subjects', '/blocks', '/admin/mayor-applications', '/mayor-applications', '/me', '/subject-enrollments', '/enrollment-profile', '/tasks', '/announcements', '/calendar', '/concerns']
     : path.includes('subject-enrollments') ? ['/subject-enrollments', '/enrollment-profile', '/mayor-applications', '/me', '/blocks', '/subjects', '/tasks', '/announcements', '/calendar', '/concerns']
     : path.includes('mayor-applications') ? ['/mayor-applications', '/admin/mayor-applications', '/blocks', '/me']

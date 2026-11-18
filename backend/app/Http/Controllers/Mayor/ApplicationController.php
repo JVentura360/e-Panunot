@@ -59,6 +59,16 @@ class ApplicationController extends Controller
             $eligibility = app(\App\Services\StudentEnrollmentService::class)->snapshot($user->id);
             abort_unless($eligibility['can_apply_as_mayor'], 403, $eligibility['mayor_application_disabled_reason']);
 
+            if ($eligibility['claimable_block_id']) {
+                $own = DB::table('blocks')->where('id', $eligibility['claimable_block_id'])->first();
+                if ($own->program !== $validated['program'] || (int) $own->year_level !== (int) $validated['year_level']
+                    || (int) $own->block_number !== (int) $validated['block_number']) {
+                    throw ValidationException::withMessages([
+                        'block_number' => 'You can only apply to lead your own block, which currently has no mayor.',
+                    ]);
+                }
+            }
+
             $load = $loads->find($term->id, $validated['program'], $validated['year_level']);
             abort_if(isset($validated['expected_term_id']) && (int) $validated['expected_term_id'] !== (int) $term->id,
                 409, 'The active term changed. Reload the application before submitting.');

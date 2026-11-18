@@ -45,7 +45,10 @@ class MayorApprovalService
                 abort_if(($load?->revision ?? 0) !== $expectedRevision, 409, 'The shared subject load changed. Reload the application review before approving.');
                 $application = $this->lockPendingApplication($applicationId);
                 $enrollment = app(StudentEnrollmentService::class);
-                if ($enrollment->hasMembership($application->user_id, $term->id)
+                $vacant = $enrollment->vacantOwnBlock((int) $application->user_id, $term->id);
+                $claimsOwnVacantBlock = $vacant && $vacant->program === $application->program
+                    && (int) $vacant->year_level === (int) $application->year_level && (int) $vacant->block_number === (int) $application->block_number;
+                if (($enrollment->hasMembership($application->user_id, $term->id) && ! $claimsOwnVacantBlock)
                     || $enrollment->profile($application->user_id, $term->id)?->student_type === 'irregular') {
                     $this->fail('application', 'The applicant already belongs to a block or is classified irregular and is no longer eligible.');
                 }

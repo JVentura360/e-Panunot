@@ -14,7 +14,7 @@
 .modal input, .modal textarea, .modal select { width: 100%; min-width: 0; min-height: 44px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; }
 .modal input:focus-visible, .modal textarea:focus-visible, .modal select:focus-visible { outline: 2px solid var(--forest); outline-offset: 1px; border-color: var(--forest); }
 .modal textarea { min-height: 90px; resize: vertical; }
-.programCode::placeholder { color: var(--muted); font-weight: 400; opacity: 1; }
+.programCode::placeholder { color: var(--muted); font-weight: 400; opacity: 0.8; }
 
 .modal .declaration { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--forest) 12%, var(--surface)); color: var(--ink); font-size: 0.88rem; font-weight: 500; }
 .modal .declaration input { width: 18px; height: 18px; min-height: 18px; flex-shrink: 0; margin-top: 2px; padding: 0; accent-color: var(--forest); }

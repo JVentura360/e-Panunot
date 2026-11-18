@@ -8,8 +8,10 @@ import styles from './ApplyMayorModal.module.css';
 import { applicationEligibility } from '../block/enrollmentRules.js';
 
 export default function ApplyMayorModal({ user, onClose }) {
-  const [form, setForm] = useState({ year_level: '1', program: '', block_number: '', motivation: '' });
-  const [lookupProgram, setLookupProgram] = useState('');
+  // A member whose block lost its mayor may only apply for that block: prefill and lock the details.
+  const own = user.claimable_block_id ? user.claimable_block : null;
+  const [form, setForm] = useState({ year_level: own ? String(own.year_level) : '1', program: own?.program ?? '', block_number: own ? String(own.block_number) : '', motivation: '' });
+  const [lookupProgram, setLookupProgram] = useState(own?.program ?? '');
   const validProgram = /^[A-Z0-9]{1,20}$/.test(form.program);
   const programReady = validProgram && lookupProgram === form.program;
   useEffect(() => {
@@ -75,7 +77,8 @@ export default function ApplyMayorModal({ user, onClose }) {
       <label className={styles.declaration}><input type="checkbox" required checked={regularDeclaration} onChange={(event) => setRegularDeclaration(event.target.checked)} disabled={busy} />
         I am a regular student and will take this block’s complete subject load if appointed mayor.
       </label>
-      <fieldset disabled={busy} className={styles.details}>
+      {own && <p className={styles.hint}>Your block has no mayor. You can only apply to lead your own block.</p>}
+      <fieldset disabled={busy || Boolean(own)} className={styles.details}>
         <label>Program code<input className={styles.programCode} value={form.program} onChange={change('program')} aria-label="Program code" aria-describedby="program-code-example" required maxLength={20} pattern="[A-Z0-9]+" autoCapitalize="characters" autoComplete="off" spellCheck={false} placeholder="ITE" /></label>
         <label>Year level<select value={form.year_level} onChange={change('year_level')} aria-label="Year level">{[1, 2, 3, 4].map((year) => <option key={year} value={year}>Year {year}</option>)}</select></label>
         <label>Block number<input type="number" min="1" max="99" step="1" value={form.block_number} onChange={change('block_number')} required placeholder="4" /></label>

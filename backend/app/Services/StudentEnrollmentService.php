@@ -20,6 +20,25 @@ class StudentEnrollmentService
         })->exists() || DB::table('subject_enrollments')->where('user_id', $userId)->where('term_id', $termId)->exists();
     }
 
+    /**
+     * The block a plain member may apply to lead: their own block this term, but only
+     * while it has no mayor (the admin removed the old one), and only if they have
+     * no enrollments in any other block.
+     */
+    public function vacantOwnBlock(int $userId, int $termId): ?object
+    {
+        $blockId = DB::table('users')->where('id', $userId)->value('block_id');
+        if (! $blockId) {
+            return null;
+        }
+        $block = DB::table('blocks')->where('id', $blockId)->where('term_id', $termId)->whereNull('mayor_id')->first();
+        if (! $block) {
+            return null;
+        }
+        $elsewhere = DB::table('subject_enrollments')->where('user_id', $userId)->where('term_id', $termId)->where('block_id', '!=', $blockId)->exists();
+        return $elsewhere ? null : $block;
+    }
+
     public function snapshot(int $userId): array
     {
         $term = DB::table('terms')->where('is_active', true)->first();
@@ -27,8 +46,9 @@ class StudentEnrollmentService
         $profile = $term ? $this->profile($userId, $term->id) : null;
         $pending = $term ? $this->pendingJoin($userId, $term->id) : null;
         $mayorBlock = $term ? DB::table('blocks')->where('term_id', $term->id)->where('mayor_id', $userId)->first() : null;
+        $vacantBlock = $term ? $this->vacantOwnBlock($userId, $term->id) : null;
         $reason = ! $term ? 'There is no active school term.' : ($user->role === 'admin' ? 'Admins cannot apply as mayor.'
-            : ($mayorBlock ? 'You are already an appointed mayor.' : ($pending ? 'Wait for your block join request to be approved, or cancel it first.' : ($this->hasMembership($userId, $term->id)
+            : ($mayorBlock ? 'You are already an appointed mayor.' : ($pending ? 'Wait for your block join request to be approved, or cancel it first.' : (! $vacantBlock && $this->hasMembership($userId, $term->id)
                 ? 'You already belong to a block with an assigned mayor.' : ($profile?->student_type === 'irregular' ? 'Only regular students can apply as mayor.' : null)))));
         $primaryBlockId = $term ? DB::table('blocks')->where('id', $user->block_id)->where('term_id', $term->id)->value('id') : null;
         return ['term' => $term, 'profile' => $profile, 'primary_block_id' => $primaryBlockId, 'mayor_block_id' => $mayorBlock?->id,
@@ -36,6 +56,7 @@ class StudentEnrollmentService
                 'block_code' => \App\Http\Resources\BlockResource::makeCode($pending->year_level, $term->semester, $pending->program, $pending->block_number),
                 'status' => 'pending', 'student_type' => $pending->student_type, 'mayor_name' => $pending->mayor_name] : null,
             'mayor_needs_reconciliation' => (bool) $mayorBlock && ($profile?->student_type !== 'regular' || (int) $profile?->regular_block_id !== (int) $mayorBlock->id),
+            'claimable_block_id' => $reason === null ? $vacantBlock?->id : null,
             'can_apply_as_mayor' => $reason === null, 'mayor_application_disabled_reason' => $reason];
     }
 

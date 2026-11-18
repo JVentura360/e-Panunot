@@ -51,6 +51,10 @@ class MeController extends Controller
                 'pending_join_request' => $profile['pending_join_request'],
                 'regular_block_id' => $profile['profile']?->regular_block_id,
                 'mayor_needs_reconciliation' => $profile['mayor_needs_reconciliation'],
+                'claimable_block_id' => $profile['claimable_block_id'],
+                'claimable_block' => $profile['claimable_block_id']
+                    ? DB::table('blocks')->where('id', $profile['claimable_block_id'])->first(['program', 'year_level', 'block_number'])
+                    : null,
                 'can_apply_as_mayor' => $profile['can_apply_as_mayor'],
                 'mayor_application_disabled_reason' => $profile['mayor_application_disabled_reason'],
                 'role' => $storedRole === 'admin' ? 'admin' : ($isMayor ? 'mayor' : 'student'),
