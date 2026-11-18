@@ -4,6 +4,7 @@ import { api, errorMessage } from '../../api/client.js';
 import EnrollmentStatus from './EnrollmentStatus.jsx';
 import PendingJoinLedger from './PendingJoinLedger.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import SkeletonList, { SkeletonText } from '../../components/Skeleton.jsx';
 import { isRegularStudent, mayWithdrawSubjects, enrollmentReadiness } from './enrollmentRules.js';
 import styles from './JoinBlock.module.css';
 
@@ -80,11 +81,11 @@ export default function JoinBlock({ user }) {
       confirmLabel="Withdraw" onCancel={() => setWithdrawing(null)} onConfirm={() => withdraw(withdrawing)} />}
     <header className={styles.top}><h1>{joined ? 'My Ledger' : 'Join a Block'}</h1>{!joined && <p>Enter your block code, then confirm whether you are a regular or irregular student.</p>}</header>
     {joined && <EnrollmentStatus user={user} />}
-    {!joined && profileQuery.isPending && <p role="status">Checking your block membership…</p>}
+    {!joined && profileQuery.isLoading && <SkeletonText lines={2} label="Checking your block membership" />}
     {!joined && profileQuery.error && <p className={styles.error} role="alert">{errorMessage(profileQuery.error)} <button className="btn ghost" onClick={() => profileQuery.refetch()}>Retry membership check</button></p>}
     <div aria-live="polite">{error && <div className={styles.error} role="alert">{error}</div>}{notice && <div className={styles.notice} role="status">{notice}</div>}</div>
     {joined && <section className={styles.section} aria-labelledby="ledger-heading" aria-busy={ledgerQuery.isFetching}>
-      <div className={styles.sectionHead}><h2 id="ledger-heading">Enrolled subjects <span className={styles.count}>{ledger.length}</span></h2>
+      <div className={styles.sectionHead}><h2 id="ledger-heading">Enrolled subjects {!ledgerQuery.isLoading && <span className={styles.count}>{ledger.length}</span>}</h2>
         <div className={styles.sectionControls}>
           <button className="btn ghost" disabled={ledgerQuery.isFetching || busy} onClick={() => Promise.all([ledgerQuery.refetch(), profileQuery.refetch()])}>Refresh</button>
           {mayWithdrawSubjects(effectiveUser) && <button className="btn ghost" aria-pressed={editingLedger}
@@ -92,7 +93,7 @@ export default function JoinBlock({ user }) {
             onClick={() => setEditingLedger((editing) => !editing)}>{editingLedger ? 'Done' : 'Edit'}</button>}
         </div>
       </div>
-      {ledgerQuery.isPending ? <p role="status">Loading your ledger…</p> : ledgerQuery.error ? <p className={styles.error} role="alert">{errorMessage(ledgerQuery.error)} <button className="btn ghost" onClick={() => ledgerQuery.refetch()}>Retry</button></p>
+      {ledgerQuery.isLoading ? <SkeletonList rows={2} label="Loading your ledger" /> : ledgerQuery.error ? <p className={styles.error} role="alert">{errorMessage(ledgerQuery.error)} <button className="btn ghost" onClick={() => ledgerQuery.refetch()}>Retry</button></p>
         : ledger.length === 0 ? <div className="empty">No subjects enrolled. You still belong to your block.{!regular && ' Find a block below to select the subjects you take.'}</div>
           : <ul className={styles.subjectGrid}>{ledger.map((entry) => <li className={styles.subjectCard} key={entry.id}>
             {editingLedger && mayWithdrawSubjects(effectiveUser) && <button className={styles.withdrawButton} disabled={busy || unavailable} onClick={() => setWithdrawing(entry)} aria-label={`Withdraw from ${entry.code} in ${entry.block_code}`}>Withdraw</button>}
@@ -126,7 +127,7 @@ export default function JoinBlock({ user }) {
           <label><input type="radio" name="student-type" value="irregular" checked={type === 'irregular'} onChange={() => setChoice('irregular')} />Irregular — choose subjects after mayor approval</label>
         </fieldset>}
         {!joined && currentType && <p className={styles.explanation}>Your confirmed status for this term is {currentType}.</p>}
-        {subjectsQuery.isPending ? <p role="status">Loading offered subjects…</p> : subjectsQuery.error ? <p role="alert">{errorMessage(subjectsQuery.error)} <button className="btn ghost" onClick={() => subjectsQuery.refetch()}>Retry</button></p>
+        {subjectsQuery.isLoading ? <SkeletonList rows={3} label="Loading offered subjects" /> : subjectsQuery.error ? <p role="alert">{errorMessage(subjectsQuery.error)} <button className="btn ghost" onClick={() => subjectsQuery.refetch()}>Retry</button></p>
           : !subjects.length ? <p className={styles.explanation}>The admin has not assigned a subject load to this block yet. Ask the admin to set its subjects before enrolling.</p>
             : <ul className={styles.offerings}>{subjects.map((subject) => {
               const enrolled = ledger.find((entry) => entry.subject_id === subject.id);

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from '../../components/Modal.jsx';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
+import SkeletonList, { SkeletonText } from '../../components/Skeleton.jsx';
 import ApplyMayorModal from '../navigation/ApplyMayorModal.jsx';
 import TaskItem from './TaskItem.jsx';
 import { daysLeft } from './dateUtils';
@@ -29,8 +30,9 @@ const dateTitle = new Intl.DateTimeFormat('en-PH', { weekday: 'long', month: 'lo
 export default function Dashboard({ user }) {
   const today = useToday();
   const { online } = useOffline();
-  const { tasks, error: taskError, addTask: saveTask, toggleTask: toggle } = useTasks();
-  const annQuery = useApiQuery('/announcements', { enabled: online && Boolean(user.block_id) });
+  const { tasks, loading, error: taskError, addTask: saveTask, toggleTask: toggle } = useTasks();
+const annQuery = useApiQuery('/announcements', { enabled: online && Boolean(user.block_id) });
+const annLoading = annQuery.isLoading; // first load only; false when the query is disabled
   const anns = useMemo(
     () => [...(annQuery.data?.data ?? [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)),
     [annQuery.data],
@@ -118,17 +120,25 @@ export default function Dashboard({ user }) {
 
       {taskError && <p role="alert" className={styles.error}>{taskError}</p>}
 
-      <div className={styles.summary} aria-label="Task summary">
-        <svg className={styles.ring} viewBox="0 0 36 36" aria-hidden="true">
-          <circle className={styles.ringTrack} cx="18" cy="18" r="15.5" />
-          <circle className={styles.ringFill} cx="18" cy="18" r="15.5" pathLength="100" strokeDasharray={`${percent} 100`} />
-        </svg>
-        <p className={styles.summaryText}>
-          <span><strong>{pending.length}</strong> to do</span>
-          <span className={dueSoon ? styles.soon : ''}><strong>{dueSoon}</strong> due soon</span>
-          <span><strong>{completed}</strong> done</span>
-        </p>
-        <small>{tasks.length ? `${percent}% checked off` : 'Your progress starts here'}</small>
+      <div className={styles.summary} aria-label="Task summary" aria-busy={loading}>
+        {loading ? (
+          <div className={styles.summarySkeleton}>
+            <SkeletonText lines={2} label="Loading task summary" />
+          </div>
+        ) : (
+          <>
+            <svg className={styles.ring} viewBox="0 0 36 36" aria-hidden="true">
+              <circle className={styles.ringTrack} cx="18" cy="18" r="15.5" />
+              <circle className={styles.ringFill} cx="18" cy="18" r="15.5" pathLength="100" strokeDasharray={`${percent} 100`} />
+            </svg>
+            <p className={styles.summaryText}>
+              <span><strong>{pending.length}</strong> to do</span>
+              <span className={dueSoon ? styles.soon : ''}><strong>{dueSoon}</strong> due soon</span>
+              <span><strong>{completed}</strong> done</span>
+            </p>
+            <small>{tasks.length ? `${percent}% checked off` : 'Your progress starts here'}</small>
+          </>
+        )}
       </div>
 
       <div className={styles.workspace}>
@@ -140,7 +150,7 @@ export default function Dashboard({ user }) {
             ))}
           </div>
           <section className={styles.section}>
-            <h3>{needsBlock ? pendingJoin ? 'Join request' : 'Find your block' : isMayor ? 'Assigned to your block' : 'From your mayor'} {!needsBlock && <span>{assigned.length}</span>}</h3>
+            <h3>{needsBlock ? pendingJoin ? 'Join request' : 'Find your block' : isMayor ? 'Assigned to your block' : 'From your mayor'} {!needsBlock && !loading && <span>{assigned.length}</span>}</h3>
             {needsBlock ? (
               <PlannerEmpty>
                 {pendingJoin ? <>
@@ -157,6 +167,8 @@ export default function Dashboard({ user }) {
                 {!eligibility.allowed && <p>{eligibility.reason}</p>}
                 </>}
               </PlannerEmpty>
+                ) : loading ? (
+                  <SkeletonList rows={3} label="Loading your tasks" />
                 ) : assigned.length ? (
                   <>
                     <AnimatedList className={styles.list}>
@@ -170,8 +182,8 @@ export default function Dashboard({ user }) {
                   </>
                 ) : <PlannerEmpty>{filter === 'done' ? 'Your next small win will appear here.' : 'All caught up. A little breathing room.'}</PlannerEmpty>}          </section>
           {(!isMayor || !online) && <section className={styles.section}>
-            <h3>Personal tasks <span>{personal.length}</span></h3>
-              {personal.length ? (
+            <h3>Personal tasks {!loading && <span>{personal.length}</span>}</h3>
+              {loading ? <SkeletonList rows={2} label="Loading personal tasks" /> : personal.length ? (
                 <>
                   <AnimatedList className={styles.list}>
                     {personal.slice(0, LIMIT).map((task) => <TaskItem key={task.id} t={task} onToggle={toggle} />)}
@@ -183,8 +195,8 @@ export default function Dashboard({ user }) {
         </div>
 
         {online && <aside className={styles.noticePanel}>
-          <div className={styles.sectionHead}><div><p className={styles.eyebrow}>The block board</p><h2>Announcements</h2></div><span className={styles.count}>{anns.length}</span></div>
-            {latest.length ? (
+          <div className={styles.sectionHead}><div><p className={styles.eyebrow}>The block board</p><h2>Announcements</h2></div>{!annLoading && <span className={styles.count}>{anns.length}</span>}</div>
+            {annLoading ? <SkeletonList rows={3} label="Loading announcements" /> : latest.length ? (
               <div className={styles.board}>
                 {latest.map((announcement) => (
                   <AnnouncementCard key={announcement.id} announcement={announcement} isMayor={isMayor}

@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useApiQuery } from '../../api/useApiQuery.js';
 import { api, errorMessage } from '../../api/client.js';
 import styles from './SchoolYearSettings.module.css';
+import { SkeletonForm } from '../../components/Skeleton.jsx';
+
 
 const valuesFor = (term) => ({
   school_year: term?.school_year ?? '2026-2027',
@@ -15,7 +17,7 @@ export default function SchoolYearSettings({ onUpdated }) {
   const current = termQuery.data?.data ?? null;
   const [draft, setValues] = useState(null);
   const values = draft ?? valuesFor(current);
-  const loading = termQuery.isPending;
+  const loading = termQuery.isLoading;
   const ready = Boolean(termQuery.data);
   const [busy, setBusy] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -53,7 +55,7 @@ export default function SchoolYearSettings({ onUpdated }) {
     <section className={styles.panel} aria-labelledby="school-year-title" aria-busy={loading || busy}>
       <h2 id="school-year-title">School year &amp; term</h2>
       <p className={styles.description}>Manage the term used for new mayor applications and block enrollment.</p>
-      {loading ? <p role="status">Loading school term…</p> : <>
+      {loading ? <SkeletonForm fields={4} label="Loading school term" /> : <>
         <p className={styles.current}>Current: <strong>{!ready ? 'Could not load settings' : current ? `${current.school_year} · ${current.semester === 3 ? 'Summer' : `Semester ${current.semester}`}` : 'No active term'}</strong></p>
         {error && <div className={styles.error} role="alert">{error} <button type="button" className="btn ghost" onClick={() => { setError(''); termQuery.refetch(); }}>Reload settings</button></div>}
         {notice && <p className={styles.success} role="status">{notice}</p>}

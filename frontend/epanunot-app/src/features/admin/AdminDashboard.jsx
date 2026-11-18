@@ -8,6 +8,7 @@ import SchoolYearSettings from './SchoolYearSettings.jsx';
 import SubjectLoadSettings from './SubjectLoadSettings.jsx';
 import ApplicationSubjectReview from './ApplicationSubjectReview.jsx';
 import styles from './AdminDashboard.module.css';
+import SkeletonList, { SkeletonTable } from '../../components/Skeleton.jsx';
 
 export default function AdminDashboard() {
     const {
@@ -47,7 +48,12 @@ export default function AdminDashboard() {
             )}
             {error && <div className={styles.notice} role="alert">{error} <button className="btn ghost" onClick={() => load(true).catch((error) => setNotice(error.message))}>Retry</button></div>}
 
-            {tab === 'term' ? <><SchoolYearSettings onUpdated={load} /><SubjectLoadSettings /></> : loading ? <p role="status">Loading {tab === 'apps' ? 'applications' : 'mayors'}…</p> : tab === 'apps' ? (
+            {tab === 'term' ? <><SchoolYearSettings onUpdated={load} /><SubjectLoadSettings /></> 
+            : loading ? (
+                tab === 'apps'
+                    ? <SkeletonList rows={4} label="Loading applications" />
+                    : <SkeletonTable rows={4} cols={4} label="Loading mayors" />
+            ) : tab === 'apps' ? (
                 <MayorApplications
                     apps={apps}
                     onApprove={setReviewing}

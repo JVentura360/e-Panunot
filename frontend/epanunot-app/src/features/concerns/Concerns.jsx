@@ -9,7 +9,7 @@ import { toConcern, toMessage } from './concernMapper.js';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
 import { useTasks } from '../../context/TaskContext.jsx';
 import { canReplyToConcern, concernActions } from './concernVisibility.js';
-import SkeletonList from '../../components/Skeleton.jsx';
+import SkeletonList, { SkeletonText } from '../../components/Skeleton.jsx';
 import { fitImage, uniqueName } from './fitImage.js';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
 
@@ -218,7 +218,7 @@ return (
 );
 }
 
-function ConcernThread({ concern, viewerRole, onReply, onStatus }) {
+function ConcernThread({ concern, messagesLoading, viewerRole, onReply, onStatus }) {
 const [preview, setPreview] = useState(null);
 const [confirmingResolve, setConfirmingResolve] = useState(false);
 const isMayor = viewerRole === 'mayor';
@@ -286,7 +286,9 @@ return (
     </div>
 
     <div className={styles.messages} role="log" aria-label="Replies">
-        {concern.messages.length === 0 && (
+        {messagesLoading ? (
+            <SkeletonText lines={3} label="Loading replies" />
+        ) : concern.messages.length === 0 && (
         <p className={styles.noReplies}>
             {isMayor ? 'No replies yet. Send the first one below.' : "No replies yet. You'll be notified when the mayor responds."}
         </p>
@@ -622,7 +624,7 @@ return (
 
     <div className={`${styles.shell} ${selectedId ? styles.hasSelection : ''}`}>
         <section className={styles.listPane} aria-label="Concerns list">
-        {concernsQuery.isPending ? (
+        {concernsQuery.isLoading ? (
             <SkeletonList rows={4} label="Loading concerns" />
         ) : (
             <ConcernList concerns={concerns} selectedId={selectedId} viewerRole={viewerRole} />
@@ -634,17 +636,20 @@ return (
             <ConcernThread
             key={selected.id}
             concern={{ ...selected, messages }}
+            messagesLoading={messagesQuery.isLoading}
             viewerRole={viewerRole}
             onReply={(text) => sendReply(selected.id, text)}
             onStatus={(status) => changeStatus(selected.id, status)}
             />
         ) : (
             <div className={styles.paneEmpty}>
-            <PlannerEmpty>
-                {selectedId
-                ? "This concern doesn't exist or isn't available to you."
-                : 'Select a concern to read the conversation.'}
-            </PlannerEmpty>
+            {selectedId && concernsQuery.isLoading
+                ? <SkeletonText lines={3} label="Loading concern" />
+                : <PlannerEmpty>
+                    {selectedId
+                        ? "This concern doesn't exist or isn't available to you."
+                        : 'Select a concern to read the conversation.'}
+                </PlannerEmpty>}
             {selectedId && (
                 <button type="button" className={`btn ghost ${styles.back}`} onClick={() => navigate('/concerns')}>
                 Back to concerns

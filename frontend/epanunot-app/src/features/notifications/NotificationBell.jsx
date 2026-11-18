@@ -7,6 +7,7 @@ import styles from './NotificationBell.module.css';
 import { useOffline } from '../../offline/useOffline.js';
 import { offlineOnly } from '../../offline/runtime.js';
 import { canOpenOffline } from '../../offline/policy.js';
+import SkeletonList from '../../components/Skeleton.jsx';
 
 const dateTime = new Intl.DateTimeFormat('en-PH', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
@@ -104,7 +105,9 @@ export default function NotificationBell({ user }) {
             </div>
             {!online && <p className={styles.empty}>Saved notifications · read status stays unchanged offline.</p>}
             {error && <p role="alert" className={styles.error}>{error}</p>}
-            {items.length === 0 ? (
+            {query.isLoading ? (
+                <SkeletonList rows={3} label="Loading notifications" />
+            ) : items.length === 0 ? (
                 <p className={styles.empty}>You&rsquo;re all caught up.</p>
             ) : (
                 <ul className={styles.list}>

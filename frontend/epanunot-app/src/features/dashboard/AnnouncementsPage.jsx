@@ -25,10 +25,10 @@ export default function AnnouncementsPage({ user }) {
       <Link to="/" className={styles.textLink}>← Back to dashboard</Link>
       <div className={styles.sectionHead} style={{ marginTop: 16 }}>
         <h2>Announcements</h2>
-        <span className={styles.count}>{anns.length}</span>
+        {!query.isLoading && <span className={styles.count}>{anns.length}</span>}
       </div>
       {!online ? <div className="empty">Announcements need an internet connection.</div>
-        : query.isPending && user.block_id ? <SkeletonList rows={4} label="Loading announcements" />
+        : query.isLoading ? <SkeletonList rows={4} label="Loading announcements" />
         : anns.length ? (
           <div className={styles.board}>
             {anns.map((a) => (

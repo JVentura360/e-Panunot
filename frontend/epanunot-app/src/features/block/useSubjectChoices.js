@@ -15,5 +15,5 @@ export function useSubjectChoices(user) {
       }
     }
   }
-  return { choices, ledger, offered };
+  return { choices, loading: ledger.isLoading || offered.isLoading, ledger, offered };
 }

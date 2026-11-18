@@ -5,6 +5,7 @@ import { api, errorMessage } from '../../api/client.js';
 import styles from './BlockManagement.module.css';
 import EnrollmentStatus from './EnrollmentStatus.jsx';
 import ConfirmDialog from '../../components/ConfirmDialog.jsx';
+import SkeletonList from '../../components/Skeleton.jsx';
 
 // The API sends UTC timestamps like "2026-10-30 11:24:00".
 const formatDate = (value) =>
@@ -19,7 +20,7 @@ export default function BlockManagement({ user }) {
   const members = memberQuery.data?.data ?? [];
   const requests = requestQuery.data?.data ?? [];
   const subjects = subjectQuery.data?.data ?? [];
-  const loading = memberQuery.isPending || requestQuery.isPending || subjectQuery.isPending;
+  const loading = memberQuery.isLoading || requestQuery.isLoading || subjectQuery.isLoading;
   const [actionError, setError] = useState('');
   const queryError = memberQuery.error || requestQuery.error || subjectQuery.error;
   const error = actionError || (queryError ? errorMessage(queryError) : '');
@@ -134,8 +135,8 @@ export default function BlockManagement({ user }) {
             disabled={busyId !== null || (!editingMembers && (loading || !members.some((member) => !member.is_mayor)))}
             onClick={() => setEditingMembers((editing) => !editing)}>{editingMembers ? 'Done' : 'Edit'}</button>
         </div>
-        {loading ? (
-          <p className={styles.loading}>Loading...</p>
+        {memberQuery.isLoading ? (
+          <SkeletonList rows={4} label="Loading blockmates" />
         ) : (
           <div className={styles.list}>
             {members.map((m) => (
@@ -167,8 +168,8 @@ export default function BlockManagement({ user }) {
 
       <section className={styles.section} id="applications">
         <h3>Join requests</h3>
-        {loading ? (
-          <p className={styles.loading}>Loading...</p>
+        {requestQuery.isLoading ? (
+          <SkeletonList rows={2} label="Loading join requests" />
         ) : requests.length === 0 ? (
           <div className="empty">No pending join requests.</div>
         ) : (
@@ -200,8 +201,8 @@ export default function BlockManagement({ user }) {
 
       <section className={styles.section} id="subjects">
         <h3>Subjects</h3>
-        {loading ? (
-          <p className={styles.loading}>Loading...</p>
+        {subjectQuery.isLoading ? (
+          <SkeletonList rows={3} label="Loading subjects" />
         ) : subjects.length === 0 ? (
           <div className="empty">No subjects have been assigned to this block yet.</div>
         ) : (

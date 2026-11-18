@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApiQuery } from '../../api/useApiQuery.js';
 import { errorMessage } from '../../api/client.js';
+import SkeletonList from '../../components/Skeleton.jsx';
 import SubjectLoadEditor, { SubjectLoadList } from '../subjects/SubjectLoadEditor.jsx';
 import { makeSubjectRows, subjectPayload, subjectRowsError } from '../subjects/subjectLoadForm.js';
 import styles from '../navigation/ApplyMayorModal.module.css';
@@ -18,7 +19,7 @@ export default function ApplicationSubjectReview({ application, onApprove, onClo
     return () => { dialog.close(); document.body.style.overflow = overflow; if (previous instanceof HTMLElement) previous.focus(); };
   }, []);
   return <dialog ref={dialogRef} className={styles.dialog} aria-labelledby="application-review-title" onCancel={(event) => { event.preventDefault(); onClose(); }}>
-    {detail.isPending ? <div className={styles.modal}><h2 id="application-review-title">Review application</h2><p role="status">Loading subjects…</p><button className="btn ghost" onClick={onClose}>Close</button></div>
+    {detail.isLoading ? <div className={styles.modal}><h2 id="application-review-title">Review application</h2><SkeletonList rows={3} label="Loading subjects" /><button className="btn ghost" onClick={onClose}>Close</button></div>
       : detail.error ? <div className={styles.modal}><h2 id="application-review-title">Review application</h2><p role="alert">{errorMessage(detail.error)}</p><button className="btn" onClick={() => detail.refetch()}>Retry</button><button className="btn ghost" onClick={onClose}>Close</button></div>
         : <ReviewForm data={detail.data.data} application={application} onApprove={onApprove} onClose={onClose} reload={() => detail.refetch()} />}
   </dialog>;

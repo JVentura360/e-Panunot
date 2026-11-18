@@ -24,6 +24,7 @@ export function TaskProvider({ user, children }) {
   const enabled = user.role !== 'admin';
   const classQuery = useApiQuery('/tasks', { enabled });
   const personalQuery = useApiQuery('/personal-todos', { enabled });
+  const loading = classQuery.isLoading || personalQuery.isLoading;
   const [error, setError] = useState('');
   const canSaveOffline = () => {
     const state = getOfflineState();
@@ -143,7 +144,7 @@ export function TaskProvider({ user, children }) {
   };
 
   return (
-    <TaskContext.Provider value={{ tasks, error, addTask, toggleTask, deleteTask, updateTask, removeTask }}>
+    <TaskContext.Provider value={{ tasks, loading, error, addTask, toggleTask, deleteTask, updateTask, removeTask }}>
       {children}
     </TaskContext.Provider>
   );

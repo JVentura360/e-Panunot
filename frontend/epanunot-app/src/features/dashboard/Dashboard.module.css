@@ -33,6 +33,7 @@
 .summaryText strong { margin-right: 4px; font-family: 'Bricolage Grotesque', sans-serif; font-size: 1.3rem; font-variant-numeric: tabular-nums; color: var(--ink); }
 .summaryText .soon strong { color: var(--highlight); }
 .summary small { margin-left: auto; font-size: 0.75rem; color: var(--muted); }
+.summarySkeleton { flex: 1; max-width: 280px; min-height: 40px; display: grid; align-content: center; }
 
 /* ---------- 3. Workspace & filters ---------- */
 /* Two columns: announcements first (left, wider), tasks fill the rest. */

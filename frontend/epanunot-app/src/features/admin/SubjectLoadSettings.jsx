@@ -4,6 +4,7 @@ import MessageDialog from '../../components/MessageDialog.jsx';
 import { api, errorMessage } from '../../api/client.js';
 import { useApiQuery } from '../../api/useApiQuery.js';
 import SubjectLoadEditor from '../subjects/SubjectLoadEditor.jsx';
+import { SkeletonForm } from '../../components/Skeleton.jsx';
 import { makeSubjectRows, scopeKey, subjectPayload, subjectRowsError } from '../subjects/subjectLoadForm.js';
 import styles from './SubjectLoadSettings.module.css';
 
@@ -74,7 +75,7 @@ function LoadForm({ snapshot, program, yearLevel, reload }) {
 
 function SelectedLoad({ program, yearLevel }) {
   const query = useApiQuery('/subject-loads/current', { query: { program, year_level: yearLevel } });
-  if (query.isPending) return <p role="status">Loading subject load…</p>;
+  if (query.isLoading) return <SkeletonForm fields={3} label="Loading subject load" />;
   if (query.error) return <p className={styles.error} role="alert">{errorMessage(query.error)} <button className="btn ghost" onClick={() => query.refetch()}>Retry</button></p>;
   const snapshot = query.data.data;
   return <LoadForm key={`${snapshot.term.id}:${scopeKey(program, yearLevel)}`} snapshot={snapshot} program={program} yearLevel={yearLevel} reload={() => query.refetch()} />;

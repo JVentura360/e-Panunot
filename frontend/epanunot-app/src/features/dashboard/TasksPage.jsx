@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import styles from './Dashboard.module.css';
 import AnimatedList from '../../components/AnimatedList.jsx';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
+import SkeletonList from '../../components/Skeleton.jsx';
 import TaskItem from './TaskItem.jsx';
 import TaskDialogs from './TaskDialogs.jsx';
 import { daysLeft } from './dateUtils';
@@ -25,7 +26,7 @@ function groupOf(task, now) {
 
 export default function TasksPage({ user }) {
   useToday(); // re-renders at midnight so groups stay correct
-  const { tasks, toggleTask } = useTasks();
+  const { tasks, loading, toggleTask } = useTasks();
   const [params, setParams] = useSearchParams();
   const filter = ['open', 'done', 'all'].includes(params.get('filter')) ? params.get('filter') : 'open';
   const [search, setSearch] = useState('');
@@ -50,7 +51,7 @@ export default function TasksPage({ user }) {
       <Link to="/" className={styles.textLink}>← Back to dashboard</Link>
       <div className={styles.sectionHead} style={{ marginTop: 16 }}>
         <h2>All tasks</h2>
-        <span className={styles.count}>{tasks.length}</span>
+        {!loading && <span className={styles.count}>{tasks.length}</span>}
       </div>
 
       <input className={styles.search} type="search" placeholder="Search tasks" aria-label="Search tasks"
@@ -64,7 +65,9 @@ export default function TasksPage({ user }) {
         ))}
       </div>
 
-      {groups.length === 0 ? (
+      {loading ? (
+        <SkeletonList rows={5} label="Loading tasks" />
+      ) : groups.length === 0 ? (
         <PlannerEmpty>{search ? 'No tasks match your search.' : 'Nothing here.'}</PlannerEmpty>
       ) : groups.map(([key, label, items]) => (
         <section key={key} className={styles.section}>

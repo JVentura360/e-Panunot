@@ -4,6 +4,8 @@ import { useApiQuery } from '../../api/useApiQuery.js';
 import { toApplication } from '../../context/BlockContext.jsx';
 import styles from './Profile.module.css';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
+import { SkeletonCards } from '../../components/Skeleton.jsx';
+import SkeletonList from '../../components/Skeleton.jsx';
 import { api, errorMessage } from '../../api/client.js';
 
 const NAME_MAX = 60;
@@ -103,8 +105,15 @@ function RoleSection({ user }) {
     const memberCount = block.data?.data?.member_count ?? null;
     const details = user.role === 'student' ? applications : block;
     if (user.role === 'student' && user.block_id) return null;
-    if ((user.role === 'student' || (user.role === 'mayor' && user.block_id)) && details.isPending) {
-        return <section className={styles.section}><p role="status">Loading account details…</p></section>;
+    if (details.isLoading) {
+        return (
+            <section className={styles.section}>
+                <h3>{user.role === 'mayor' ? 'Your Block' : 'Mayor application'}</h3>
+                {user.role === 'mayor'
+                    ? <SkeletonCards count={2} label="Loading account details" />
+                    : <SkeletonList rows={1} label="Loading account details" />}
+            </section>
+        );
     }
     if (details.error && !details.data) {
         return <section className={styles.section}><p role="alert">Couldn’t load account details.</p><button className="btn ghost" onClick={() => details.refetch()}>Retry</button></section>;

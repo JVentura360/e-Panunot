@@ -82,7 +82,7 @@ return (
         {!online && <p className={styles.note}>Saved notifications. Read status stays unchanged offline.</p>}
         {error && <p role="alert" className={styles.error}>{error}</p>}
 
-        {query.isPending && !query.data ? (
+        {query.isLoading ? (
             <SkeletonList rows={5} label="Loading notifications" />
         ) : query.error && !query.data ? (
             <p role="alert" className={styles.error}>{errorMessage(query.error)}</p>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, errorMessage } from '../../api/client.js';
 import { useApiQuery } from '../../api/useApiQuery.js';
 import SubjectLoadEditor, { SubjectLoadList } from '../subjects/SubjectLoadEditor.jsx';
+import { SkeletonText } from '../../components/Skeleton.jsx';
 import { makeSubjectRows, proposalForScope, scopeKey, subjectPayload, subjectRowsError } from '../subjects/subjectLoadForm.js';
 import styles from './ApplyMayorModal.module.css';
 import { applicationEligibility } from '../block/enrollmentRules.js';
@@ -81,7 +82,7 @@ export default function ApplyMayorModal({ user, onClose }) {
       </fieldset>
       {current && <p className={styles.hint}>{current.term.school_year} · Semester {current.term.semester} · {form.program} · Year {form.year_level}</p>}
       <p id="program-code-example" className={styles.hint}>Example: <strong>31-ITE-04</strong> — Year 3 · Semester 1 · Program code ITE · Block 04.</p>
-      {!validProgram ? <p className={styles.hint}>Enter your program code to look up its subject load.</p> : !programReady || lookup.isPending ? <p role="status">Loading approved subject load…</p> : lookup.error ? <div className={styles.error} role="alert">{errorMessage(lookup.error)} <button type="button" className="btn ghost" onClick={() => lookup.refetch()}>Retry</button></div>
+      {!validProgram ? <p className={styles.hint}>Enter your program code to look up its subject load.</p> : !programReady || lookup.isLoading ? <SkeletonText lines={3} label="Loading approved subject load" /> : lookup.error ? <div className={styles.error} role="alert">{errorMessage(lookup.error)} <button type="button" className="btn ghost" onClick={() => lookup.refetch()}>Retry</button></div>
         : current?.load ? <section aria-label="Approved subject load"><h3>Approved subject load</h3><p className={styles.hint}>Shared with matching blocks. Only the admin can change these subjects.</p><SubjectLoadList subjects={current.load.subjects} /></section>
           : <><p className={styles.hint}>No approved load exists for this program and year this term. Propose the subjects for admin review; they will not be published until approved.</p>
             <SubjectLoadEditor value={proposal} onChange={(rows) => setDraft({ scope, rows })} disabled={busy} idPrefix="proposal" /></>}

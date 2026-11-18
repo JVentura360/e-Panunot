@@ -3,6 +3,7 @@ import TaskCalendarLink from './TaskCalendarLink.jsx';
 import styles from './Calendar.module.css';
 import DatePicker from '../../components/DatePicker';
 import PlannerEmpty from '../../components/PlannerEmpty.jsx';
+import SkeletonList from '../../components/Skeleton.jsx';
 import { Pencil, Trash } from '../../components/icons.jsx';
 import { useTasks } from '../../context/TaskContext.jsx';
 import { useSubjectChoices } from '../block/useSubjectChoices.js';
@@ -71,7 +72,7 @@ export default function Calendar({ user }) {
 
   // Tasks come from the store shared with the Dashboard. Class tasks and the
   // student's own tasks both show on the calendar.
-  const { tasks: allTasks, error: taskError, addTask, toggleTask, updateTask, removeTask } = useTasks();
+  const { tasks: allTasks, loading: tasksLoading, error: taskError, addTask, toggleTask, updateTask, removeTask } = useTasks();
   const [editingTask, setEditingTask] = useState(null);
   const [deletingTask, setDeletingTask] = useState(null);
   const [deletingEvent, setDeletingEvent] = useState(null);
@@ -97,6 +98,7 @@ export default function Calendar({ user }) {
     to: range.to,
     enabled: online && user.role !== 'admin',
   });
+  const loading = tasksLoading || eventsLoading; // first load only
 
   const itemsByDay = useMemo(() => {
     const map = {};
@@ -306,7 +308,6 @@ export default function Calendar({ user }) {
         {clearNotice && <p className={styles.rowMeta} role="status">{clearNotice}</p>}
         <div data-online-only><GoogleCalendarButtons user={user} choices={choices} /></div>
         {eventsError && <p className={styles.error} role="alert">Could not load events. {errorMessage(eventsError)}</p>}
-        {eventsLoading && <p className={styles.rowMeta}>Loading events…</p>}
         {taskError && <p className={styles.error} role="alert">{taskError}</p>}
         {panel === 'event' && (
         <form className={styles.form} onSubmit={submitEvent}>
@@ -518,10 +519,10 @@ export default function Calendar({ user }) {
           {view === 'agenda' && (
             <div className={styles.agenda}>
             <div className={styles.agendaTools}>{tools}</div>
-              {agendaDays.length === 0 && (
+              {loading ? <SkeletonList rows={4} label="Loading agenda" /> : agendaDays.length === 0 && (
                 <PlannerEmpty>A fresh month, room for new plans.</PlannerEmpty>
               )}
-              {agendaDays.map((key) => (
+              {!loading && agendaDays.map((key) => (
                 <div key={key} className={styles.agendaDay}>
                   <button
                     type="button"
@@ -582,7 +583,9 @@ export default function Calendar({ user }) {
             )}
 
             <h3 className={styles.sectionLabel}>Schedule</h3>
-            {selectedItems.length === 0 ? (
+            {loading ? (
+              <SkeletonList rows={2} label="Loading schedule" />
+            ) : selectedItems.length === 0 ? (
               <PlannerEmpty>A little breathing room. Nothing scheduled for this day.</PlannerEmpty>
             ) : (
               <ul className={styles.list}>{selectedItems.map(renderRow)}</ul>

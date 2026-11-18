@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef } from 'react';
 import { useApiQuery } from '../../api/useApiQuery.js';
 import { errorMessage } from '../../api/client.js';
+import SkeletonList from '../../components/Skeleton.jsx';
 import modal from '../../components/Modal.module.css';
 import styles from './BlockManagement.module.css';
 
@@ -18,7 +19,7 @@ export default function MemberTasksDialog({ blockId, member, onClose }) {
   return <dialog ref={dialogRef} className={modal.modal} aria-labelledby={titleId}
     onCancel={event => { event.preventDefault(); onClose(); }}>
     <header className={modal.header}><h2 id={titleId}>{member.name}</h2></header>
-    {query.isPending ? <p role="status">Loading tasks…</p> : query.error ?
+    {query.isLoading ? <SkeletonList rows={3} label="Loading tasks" /> : query.error ?
       <div role="alert"><p>{errorMessage(query.error)}</p><button className="btn ghost" onClick={() => query.refetch()}>Retry</button></div> :
       query.data?.data?.length ? <ul className={styles.memberTasks}>
         {query.data.data.map(task => <li key={task.id}>
