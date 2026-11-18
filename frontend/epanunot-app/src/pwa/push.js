@@ -29,6 +29,20 @@ export async function getPushState() {
     };
   }
 
+  try {
+    await api('/notifications/push/public-key');
+  } catch (error) {
+    if (error.status === 503) {
+      return {
+        supported: false,
+        enabled: false,
+        hint: 'Deadline alerts are not configured on the server.',
+      };
+    }
+
+    throw error;
+  }
+
   const registration = await navigator.serviceWorker.getRegistration(pushWorkerUrl().href);
   const subscription = await registration?.pushManager.getSubscription();
 
