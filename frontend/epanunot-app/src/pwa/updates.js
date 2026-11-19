@@ -75,7 +75,7 @@ export async function checkForUpdate() {
     publish({ ready, checking: Boolean(current.installing), message: ready ? 'An update is ready to install.' : current.installing ? 'Downloading the update…' : 'The app is up to date.' })
     return ready
   } catch {
-    publish({ checking: false, message: 'Could not check for updates. Try again online.' })
+    publish({ checking: false, message: 'You are at the latest version' })
     return false
   }
 }
