@@ -237,7 +237,7 @@ export default function Profile({ user, onUpdateUser }) {
                                         setEditing(true);
                                     }}
                                 >
-                                    Edit
+                                    
                                 </button>
                             </>
                         )}
