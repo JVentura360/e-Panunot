@@ -22,7 +22,7 @@ class MayorRegularEnrollmentTest extends TestCase
             'proposed_subjects' => [['code' => 'ITE301', 'name' => 'Database Systems']]], $extra));
     }
 
-    public function test_application_requires_regular_declaration_and_unjoined_student(): void
+    public function test_application_requires_regular_declaration_and_rejects_irregular_students(): void
     {
         $term = Term::factory()->active()->create();
         $data = ['program' => 'ITE', 'year_level' => 3, 'block_number' => 4,
@@ -32,8 +32,42 @@ class MayorRegularEnrollmentTest extends TestCase
         $this->postJson('/api/mayor-applications', $data + ['is_regular_student' => false])->assertUnprocessable();
         $this->putJson('/api/enrollment-profile', ['student_type' => 'irregular'])->assertOk();
         $this->postJson('/api/mayor-applications', $data + ['is_regular_student' => true])->assertForbidden();
-        $block = Block::factory()->create(['term_id' => $term->id]);
-        $this->actingAs(User::factory()->student($block)->create())->postJson('/api/mayor-applications', $data + ['is_regular_student' => true])->assertForbidden();
+    }
+
+    public function test_member_can_only_apply_to_lead_their_own_vacant_block(): void
+    {
+        $term = Term::factory()->active()->create();
+        $block = Block::factory()->create(['term_id' => $term->id, 'program' => 'ITE', 'year_level' => 3, 'block_number' => 4]);
+        $student = User::factory()->student($block)->create();
+        $data = ['program' => 'ITE', 'year_level' => 3, 'block_number' => 4,
+            'is_regular_student' => true, 'proposed_subjects' => [['code' => 'ITE301', 'name' => 'Database Systems']]];
+
+        $this->actingAs($student)->postJson('/api/mayor-applications', $data)->assertCreated();
+    }
+
+    public function test_member_cannot_apply_to_lead_a_different_vacant_block(): void
+    {
+        $term = Term::factory()->active()->create();
+        $block = Block::factory()->create(['term_id' => $term->id, 'program' => 'ITE', 'year_level' => 3, 'block_number' => 4]);
+        $student = User::factory()->student($block)->create();
+        $data = ['program' => 'ITE', 'year_level' => 3, 'block_number' => 5,
+            'is_regular_student' => true, 'proposed_subjects' => [['code' => 'ITE301', 'name' => 'Database Systems']]];
+
+        $this->actingAs($student)->postJson('/api/mayor-applications', $data)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('block_number');
+    }
+
+    public function test_member_of_a_block_with_a_mayor_cannot_apply(): void
+    {
+        $term = Term::factory()->active()->create();
+        $block = Block::factory()->create(['term_id' => $term->id, 'program' => 'ITE', 'year_level' => 3, 'block_number' => 4]);
+        $block->update(['mayor_id' => User::factory()->create()->id]);
+        $student = User::factory()->student($block)->create();
+        $data = ['program' => 'ITE', 'year_level' => 3, 'block_number' => 4,
+            'is_regular_student' => true, 'proposed_subjects' => [['code' => 'ITE301', 'name' => 'Database Systems']]];
+
+        $this->actingAs($student)->postJson('/api/mayor-applications', $data)->assertForbidden();
     }
 
     public function test_approval_makes_mayor_regular_and_enrolls_the_full_load(): void
