@@ -29,6 +29,11 @@ export function createSyncSession({ accountId, read, refresh, available, account
         if (previous) {
           const changed = Object.keys(paths).concat('access').filter((domain) => next[domain] !== previous[domain]);
           if (changed.length) await refresh(changed);
+        } else {
+          // Query data can be restored by the PWA before this session has a
+          // server version to compare against. Refresh once so a student who
+          // was removed from a block cannot keep seeing cached class tasks.
+          await refresh(['access']);
         }
         if (!stopped) previous = next;
       } finally {

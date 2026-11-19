@@ -3,18 +3,29 @@ import assert from 'node:assert/strict';
 import { setImmediate as flush } from 'node:timers/promises';
 import { createSyncSession, startClientSync, syncPaths } from './clientSync.js';
 
-test('another device changes shared data; only changed domains refresh, with no work for unchanged versions', async () => {
+test('the first confirmed sync refreshes cached data, then only changed domains refresh', async () => {
   let snapshot = { account_id: 4, access: 'a', tasks: '1', personal: '1' };
   const changes = [];
   const session = createSyncSession({ accountId: 4, read: async () => ({ ...snapshot }), refresh: async (domains) => changes.push(domains), available: () => true });
   await session.check();
   await session.check();
-  assert.deepEqual(changes, []);
+  assert.deepEqual(changes, [['access']]);
   snapshot = { ...snapshot, tasks: '2' };
   await session.check();
-  assert.deepEqual(changes, [['tasks']]);
+  assert.deepEqual(changes, [['access'], ['tasks']]);
   assert.deepEqual(syncPaths(['tasks']), ['/tasks', '/calendar']);
   assert.equal(syncPaths(['access']), null);
+});
+
+test('the first confirmed sync invalidates cached views after a membership change made on another device', async () => {
+  const changes = [];
+  const session = createSyncSession({ accountId: 4, read: async () => ({ account_id: 4, access: 'after-removal' }),
+    refresh: async (domains) => changes.push(domains), available: () => true });
+
+  await session.check();
+
+  assert.deepEqual(changes, [['access']]);
+  assert.equal(syncPaths(changes[0]), null);
 });
 
 test('hidden or offline sessions send no requests, and logged-out sessions ignore late responses', async () => {
@@ -81,6 +92,7 @@ test('hiding the tab during a check defers changed-data refresh until the next v
     read: async () => pending ? new Promise((resolve) => { finish = resolve; }) : { account_id: 4, tasks: version },
     refresh: async (domains) => changes.push(domains) });
   await session.check();
+  changes.length = 0;
   pending = true;
   const request = session.check();
   visible = false;
